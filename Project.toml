@@ -1,0 +1,4 @@
+name = "RPCFResolver"
+uuid = "54c0c897-3bff-4ba2-acae-d4c1acf2c14a"
+authors = ["Thomas Burton <tburton5572@gmail.com>"]
+version = "0.1.0"
