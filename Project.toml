@@ -2,3 +2,6 @@ name = "RPCFResolver"
 uuid = "54c0c897-3bff-4ba2-acae-d4c1acf2c14a"
 authors = ["Thomas Burton <tburton5572@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

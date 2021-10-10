@@ -1,5 +1,5 @@
 module RPCFResolver
 
-greet() = print("Hello World!")
+include("scalarfield.jl")
 
-end # module
+end
