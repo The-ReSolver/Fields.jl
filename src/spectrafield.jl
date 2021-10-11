@@ -1,8 +1,10 @@
-# This file will contain the custom type to define a scalar field in a rotating
-# plane couette flow.
+# This file contains the custom type to define a scalar field in spectral space
+# for a rotating plane couette flow.
 
 # TODO: Physical and spectral fields (with transform)
-# TODO: Rename package for just fields
+# TODO: Tests
+# TODO: Transform between spectral and physical space
+# TODO: Grid object to make the discretisation explicit (not completely necessary unless I want to change the discretisation?)
 
 struct SpectraField{Ny, Nz, Nt, T} <: AbstractArray{Complex{T}, 3}
     data::AbstractArray{Complex{T}, 3}
