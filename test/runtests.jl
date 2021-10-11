@@ -1,4 +1,4 @@
-using RPCFResolver
+using Fields
 using Test
 
-include("test_scalarfield.jl")
+include("test_spectrafield.jl")
