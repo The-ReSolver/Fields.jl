@@ -24,5 +24,18 @@ end
 # define interface
 Base.size(::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
 Base.IndexStyle(::Type{<:SpectralField}) = Base.IndexLinear()
-Base.getindex(u::SpectralField, i::Int) = u.data[i]
-Base.setindex!(u::SpectralField, v, i::Int) = (u.data[i] = v)
+
+# get parent array
+Base.parent(U::SpectralField) = U.data
+
+Base.@propagate_inbounds function Base.getindex(U::SpectralField, I...)
+    @boundscheck checkbounds(parent(U), I...)
+    @inbounds ret = parent(U)[I...]
+    return ret
+end
+
+Base.@propagate_inbounds function Base.setindex!(U::SpectralField, v, I...)
+    @boundscheck checkbounds(parent(U), I...)
+    @inbounds parent(U)[I...] = v
+    return v
+end

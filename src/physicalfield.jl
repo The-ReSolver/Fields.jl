@@ -19,5 +19,18 @@ end
 # define interface
 Base.size(::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
 Base.IndexStyle(::Type{<:PhysicalField}) = Base.IndexLinear()
-Base.getindex(u::PhysicalField, i::Int) = u.data[i]
-Base.setindex!(u::PhysicalField, v, i::Int) = (u.data[i] = v)
+
+# get parent array
+Base.parent(u::PhysicalField) = u.data
+
+Base.@propagate_inbounds function Base.getindex(u::PhysicalField, I...)
+    @boundscheck checkbounds(parent(u), I...)
+    @inbounds ret = parent(u)[I...]
+    return ret
+end
+
+Base.@propagate_inbounds function Base.setindex!(u::PhysicalField, v, I...)
+    @boundscheck checkbounds(parent(u), I...)
+    @inbounds parent(u)[I...] = v
+    return v
+end
