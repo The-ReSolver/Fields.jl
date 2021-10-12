@@ -1,7 +1,6 @@
 # This file contains the custom type to define a scalar field in spectral space
 # for a rotating plane couette flow.
 
-# TODO: Physical field
 # TODO: Tests
 # TODO: Transform between spectral and physical space
 # TODO: Grid object to make the discretisation explicit (not completely necessary unless I want to change the discretisation?)
