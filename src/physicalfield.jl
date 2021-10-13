@@ -3,21 +3,19 @@
 
 export PhysicalField
 
-# TODO: Check for even input
-
-struct PhysicalField{Ny, Nz, Nt, T} <: AbstractArray{T, 3}
-    data::Array{T, 3}
+struct PhysicalField{Ny, Nz, Nt, T<:Real, A<:AbstractArray{T, 3}} <: AbstractArray{T, 3}
+    data::A
 
     # construct from size and type
     function PhysicalField(Ny::Int, Nz::Int, Nt::Int, ::Type{T}=Float64) where {T<:Real}
-        data = zeros(Ny, Nz, Nt)
-        new{Ny, Nz, Nt, T}(data)
+        data = zeros(T, Ny, Nz, Nt)
+        new{Ny, Nz, Nt, T, typeof(data)}(data)
     end
 
     # construct from data
     function PhysicalField(data::A) where {T<:Real, A<:AbstractArray{T, 3}}
         shape = size(data)
-        new{shape[1], shape[2], shape[3], T}(data)
+        new{shape[1], shape[2], shape[3], T, A}(data)
     end
 end
 

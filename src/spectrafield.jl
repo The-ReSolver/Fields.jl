@@ -11,7 +11,7 @@ struct SpectraField{Ny, Nz, Nt, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: Abs
     data::A
 
     # constrcut from size and type
-    function SpectraField(Ny::Int, Nz::Int, Nt::Int, ::Type{T}=Float64) where {T}
+    function SpectraField(Ny::Int, Nz::Int, Nt::Int, ::Type{T}=Float64) where {T<:Real}
         data = zeros(Complex{T}, Ny, Nz, Nt)
         new{Ny, Nz, Nt, T, typeof(data)}(data)
     end
