@@ -1,6 +1,8 @@
 # This file contains the custom type to define a scalar field in physical space
 # for a rotating plane couette flow.
 
+export PhysicalField
+
 struct PhysicalField{Ny, Nz, Nt, T, A<:AbstractArray{T, 3}} <: AbstractArray{T, 3}
     data::A
     # construct from size and type

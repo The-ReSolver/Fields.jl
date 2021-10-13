@@ -5,6 +5,8 @@
 # TODO: Transform between spectral and physical space
 # TODO: Grid object to make the discretisation explicit (not completely necessary unless I want to change the discretisation?)
 
+export SpectralField
+
 struct SpectralField{Ny, Nz, Nt, T, A<:AbstractArray{Complex{T}, 3}} <: AbstractArray{Complex{T}, 3}
     data::A
 
