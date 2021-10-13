@@ -7,19 +7,19 @@
 
 export SpectraField
 
-struct SpectraField{Ny, Nz, Nt, T} <: AbstractArray{Complex{T}, 3}
-    data::Array{Complex{T}, 3}
+struct SpectraField{Ny, Nz, Nt, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: AbstractArray{Complex{T}, 3}
+    data::A
 
     # constrcut from size and type
     function SpectraField(Ny::Int, Nz::Int, Nt::Int, ::Type{T}=Float64) where {T}
         data = zeros(Complex{T}, Ny, Nz, Nt)
-        new{Ny, Nz, Nt, T}(data)
+        new{Ny, Nz, Nt, T, typeof(data)}(data)
     end
 
     # construct from data
-    function SpectraField(data::A) where {T, A<:AbstractArray{Complex{T}, 3}}
+    function SpectraField(data::A) where {T<:Real, A<:AbstractArray{Complex{T}, 3}}
         shape = size(data)
-        new{shape[1], shape[2], shape[3], T}(data)
+        new{shape[1], shape[2], shape[3], T, A}(data)
     end
 end
 

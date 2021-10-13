@@ -5,6 +5,8 @@ export VectorField
 # Just a wrapper around a N-tuple of fields
 struct VectorField{N, S} <: AbstractVector{S}
     elements::NTuple{N, S}
+
+    # construct using 
     function VectorField(elements::Vararg{S, N}) where {S, N}
         return new{N, S}(elements)
     end

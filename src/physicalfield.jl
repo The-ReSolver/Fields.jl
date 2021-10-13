@@ -3,6 +3,8 @@
 
 export PhysicalField
 
+# TODO: Check for even input
+
 struct PhysicalField{Ny, Nz, Nt, T} <: AbstractArray{T, 3}
     data::Array{T, 3}
 
