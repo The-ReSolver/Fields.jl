@@ -3,18 +3,19 @@
 
 export PhysicalField
 
-struct PhysicalField{Ny, Nz, Nt, T, A<:AbstractArray{T, 3}} <: AbstractArray{T, 3}
-    data::A
+struct PhysicalField{Ny, Nz, Nt, T} <: AbstractArray{T, 3}
+    data::Array{T, 3}
+
     # construct from size and type
     function PhysicalField(Ny::Int, Nz::Int, Nt::Int, ::Type{T}=Float64) where {T<:Real}
         data = zeros(Ny, Nz, Nt)
-        new{Ny, Nz, Nt, T, typeof(data)}(data)
+        new{Ny, Nz, Nt, T}(data)
     end
 
     # construct from data
     function PhysicalField(data::A) where {T<:Real, A<:AbstractArray{T, 3}}
         shape = size(data)
-        new{shape[1], shape[2], shape[3], T, A}(data)
+        new{shape[1], shape[2], shape[3], T}(data)
     end
 end
 
