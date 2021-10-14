@@ -12,13 +12,14 @@ struct SpectraField{Ny, Nz, Nt, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: Abs
 
     # constrcut from size and type
     function SpectraField(Ny::Int, Nz::Int, Nt::Int, ::Type{T}=Float64) where {T<:Real}
-        data = zeros(Complex{T}, Ny, Nz, Nt)
+        data = zeros(Complex{T}, Ny, (Nz >> 1) + 1, Nt)
         new{Ny, Nz, Nt, T, typeof(data)}(data)
     end
 
     # construct from data
     function SpectraField(data::A) where {T<:Real, A<:AbstractArray{Complex{T}, 3}}
         shape = size(data)
+        # inverse bitwise operation?
         new{shape[1], shape[2], shape[3], T, A}(data)
     end
 end
