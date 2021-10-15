@@ -17,10 +17,12 @@ struct SpectraField{Ny, Nz, Nt, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: Abs
     end
 
     # construct from data
+    # THIS CONSTRUCTOR IS NOT INTENDED FOR USE SINCE IT HAS AMBIGUITY IN THE
+    # CORRESPONDING SIZE OF THE PHYSICAL SPACE ARRAY.
     function SpectraField(data::A) where {T<:Real, A<:AbstractArray{Complex{T}, 3}}
         shape = size(data)
-        # inverse bitwise operation?
-        new{shape[1], shape[2], shape[3], T, A}(data)
+        # the inverse bitwise operation always outputs a even number
+        new{shape[1], (shape[2] - 1) << 1, shape[3], T, A}(data)
     end
 end
 
