@@ -20,7 +20,7 @@ export FFTPlan!, IFFTPlan!
 struct FFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
 
-    function FFTPlan!(  u::PhysicalField{Ny, Nz, Nt},
+    function FFTPlan!(  u::PhysicalField{Ny, Nz, Nt};
                         flags::UInt32=FFTW.EXHAUSTIVE,
                         timelimit::Real=FFTW.NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
@@ -42,7 +42,7 @@ end
 struct IFFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
 
-    function IFFTPlan!( û::SpectraField{Ny, Nz, Nt},
+    function IFFTPlan!( û::SpectraField{Ny, Nz, Nt};
                         flags::UInt32=FFTW.EXHAUSTIVE,
                         timelimit::Real=FFTW.NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
