@@ -1,10 +1,6 @@
 # This file contains the custom type to define a scalar field in spectral space
 # for a rotating plane couette flow.
 
-# TODO: Tests
-# TODO: Transform between spectral and physical space
-# TODO: Grid object to make the discretisation explicit (not completely necessary unless I want to change the discretisation?)
-
 export SpectraField
 
 struct SpectraField{Ny, Nz, Nt, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: AbstractArray{Complex{T}, 3}

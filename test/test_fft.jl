@@ -2,14 +2,16 @@
 # physcial scalar fields.
 
 @testset "FFT Transforms" begin
-    Ny = 3; Nz = 3; Nt = 3
-    A = PhysicalField(ones(Ny, Nz, Nt))
-    simple = Fields.simple_fft(A)
-    println(A)
-    Â = SpectraField(ones(Ny, Nz, Nt)+ones(Ny, Nz, Nt)*2im)
-    Aplan = FFTPlan!(A)
-    println(A)
-    Aplan(Â, A)
-    println(simple)
+    # Ny = 4; Nz = 4; Nt = 4
+    # A = PhysicalField(ones(Ny, Nz, Nt))
+    # B = PhysicalField(similar(parent(A)))
+    # Â = SpectraField(size(A)...)
+    # Aplan = FFTPlan!(A)
+    # Âplan = IFFTPlan!(Â)
+    # Aplan(Â, A)
+    # println(parent(Â))
+    # Âplan(B, Â)
+    # println(parent(B))
+    # println(parent(A) == parent(B)) # true!
     @test true
 end
