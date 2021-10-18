@@ -1,6 +1,7 @@
 # This file contains the test set for the grid custom type.
 
-@testset "Field Grid" begin
+
+@testset "Field Grid                    " begin
     # generate random inputs
     Ny = rand(3:50)
     Nz = rand(3:50)

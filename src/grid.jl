@@ -5,7 +5,7 @@
 export Grid
 
 struct Grid{S, T<:Real}
-    psy::Vector{T}
+    y::Vector{T}
     Dy::Matrix{T}
     ws::Vector{T}
 
