@@ -31,7 +31,7 @@ struct SpectraField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: 
             throw(ArgumentError("Grid not a valid shape: $S should equal $shape"))
         end
         # the inverse bitwise operation always outputs a even number
-        new{shape[1], shape[2] - 1, shape[3], T, A}(data)
+        new{shape[1], shape[2], shape[3], G, T, A}(data)
     end
 end
 
