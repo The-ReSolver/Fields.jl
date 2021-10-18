@@ -4,7 +4,7 @@ include("grid.jl")
 include("physicalfield.jl")
 include("spectrafield.jl")
 include("vectorfields.jl")
-include("fft.jl")
+# include("fft.jl")
 
 # TODO: Tests
 # TODO: Transform between spectral and physical space
