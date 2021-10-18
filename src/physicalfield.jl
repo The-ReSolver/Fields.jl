@@ -3,19 +3,31 @@
 
 export PhysicalField
 
-struct PhysicalField{Ny, Nz, Nt, T<:Real, A<:AbstractArray{T, 3}} <: AbstractArray{T, 3}
+struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: AbstractArray{T, 3}
     data::A
 
-    # construct from size and type
-    function PhysicalField(Ny::Int, Nz::Int, Nt::Int, ::Type{T}=Float64) where {T<:Real}
+    # construct from size and type and grid
+    function PhysicalField(Ny::Int, Nz::Int, Nt::Int, G::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
         data = zeros(T, Ny, Nz, Nt)
-        new{Ny, Nz, Nt, T, typeof(data)}(data)
+        if (Ny, Nz, Nt) != S
+            throw(ArgumentError("Grid not a valid shape: $S should equal ($Ny, $Nz, $Nt)"))
+        end
+        new{Ny, Nz, Nt, G, T, typeof(data)}(data)
+    end
+
+    # construct from grid
+    function PhysicalField(G::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
+        data = zeros(T, S[1], S[2], S[3])
+        new{S[1], S[2], S[3], G, T, typeof(data)}(data)
     end
 
     # construct from data
-    function PhysicalField(data::A) where {T<:Real, A<:AbstractArray{T, 3}}
+    function PhysicalField(data::A, G::Grid{S}) where {T<:Real, A<:AbstractArray{T, 3}, S}
         shape = size(data)
-        new{shape[1], shape[2], shape[3], T, A}(data)
+        if shape != S
+            throw(ArgumentError("Grid not a valid shape: $S should equal $shape"))
+        end
+        new{shape[1], shape[2], shape[3], G, T, A}(data)
     end
 end
 

@@ -11,6 +11,6 @@ include("fft.jl")
 # TODO: Grid object to make the discretisation explicit (not completely necessary unless I want to change the discretisation?)
 # TODO: What is going on with "#undef" elements in SpectraField (causes problems with indexing)
 # TODO: add differentiation operators
-# TODO: add weights for inner products and norms
+# TODO: generate weights for inner products and norms
 
 end
