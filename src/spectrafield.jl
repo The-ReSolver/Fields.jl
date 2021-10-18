@@ -17,7 +17,7 @@ struct SpectraField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: 
 
     # construct from grid
     function SpectraField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
-        data = zeros(T, S[1], S[2], S[3])
+        data = zeros(Complex{T}, S[1], S[2], S[3])
         new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data)
     end
 
@@ -26,12 +26,13 @@ struct SpectraField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: 
     # CORRESPONDING SIZE OF THE PHYSICAL SPACE ARRAY.
     function SpectraField(data::A, grid::Grid{S}) where {T<:Real, A<:AbstractArray{Complex{T}, 3}, S}
         shape = size(data)
-        shape[2] = (shape[2] - 1) << 1
-        if shape != S
+        Nz = (shape[2] - 1) << 1
+        if shape[1] != S[1] || (Nz != S[2] && Nz + 1 != S[2]) || shape[3] != S[3]
             throw(ArgumentError("Grid not a valid shape: $S should equal $shape"))
         end
+        Nz = S[2]
         # the inverse bitwise operation always outputs a even number
-        new{shape[1], shape[2], shape[3], typeof(grid), T, A}(data)
+        new{shape[1], Nz, shape[3], typeof(grid), T, A}(data)
     end
 end
 
