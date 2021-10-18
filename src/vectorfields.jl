@@ -2,15 +2,13 @@ import LinearAlgebra
 
 export VectorField
 
-# TODO: Restrict this to only take subtypes of abtract arrays as type inputs to the constructor
-
 # Just a wrapper around a N-tuple of fields
 struct VectorField{N, S} <: AbstractVector{S}
     elements::NTuple{N, S}
 
     # construct using scalar fields as arguments
-    function VectorField(elements::Vararg{S, N}) where {S, N}
-        return new{N, S}(elements)
+    function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
+        new{N, S}(elements)
     end
 end
 
