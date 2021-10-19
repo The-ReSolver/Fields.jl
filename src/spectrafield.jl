@@ -17,7 +17,7 @@ struct SpectraField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: 
 
     # construct from grid
     function SpectraField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
-        data = zeros(Complex{T}, S[1], S[2], S[3])
+        data = zeros(Complex{T}, S[1], (S[2] >> 1) + 1, S[3])
         new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data)
     end
 
