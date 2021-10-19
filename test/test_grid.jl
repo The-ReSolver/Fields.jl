@@ -14,7 +14,7 @@
     w2 = rand(Float64, Ny + randD)
 
     # initialise correct ones
-    @test typeof(Grid(y, Nz, Nt, D1, w1)) == Grid{(Ny, Nz, Nt), Float64}
+    @test typeof(Grid(y, Nz, Nt, D1, w1)) == Grid{(Ny, Nz, Nt), Float64, Matrix{Float64}}
 
     # initialise bad versions to catch errors
     @test_throws ArgumentError Grid(y, Nz, Nt, D2, w1)
