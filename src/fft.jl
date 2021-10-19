@@ -36,16 +36,18 @@ function (f::FFTPlan!{Ny, Nz, Nt})( û::SpectraField{Ny, Nz, Nt},
     FFTW.unsafe_execute!(f.plan, parent(u), parent(û))
     
     # normalise
-    parent(û) .*= (1/(Ny*Nz))
+    parent(û) .*= (1/(Nz*Nt))
+
+    return û
 end
 
-function    (f::FFTPlan!{Ny, Nz, Nt})
-            (𝐮̂::VectorField{N, S}, 𝐮::VectorField{N, P}) where
-            {Ny, Nz, Nt, N, S<:SpectraField{Ny, Nz, Nt},
-                            P<:PhysicalField{Ny, Nz, Nt}}
+function (f::FFTPlan!{Ny, Nz, Nt})(𝐮̂::VectorField{N, S}, 𝐮::VectorField{N, P}) where
+            {Ny, Nz, Nt, N, S<:SpectraField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}}
     for i in 1:N
         f(𝐮̂[i], 𝐮[i])
     end
+
+    return 𝐮̂
 end
 
 struct IFFTPlan!{Ny, Nz, Nt, PLAN}
@@ -65,13 +67,15 @@ function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
                                     û::SpectraField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # perform transform
     FFTW.unsafe_execute!(f.plan, parent(û), parent(u))
+
+    return u
 end
 
-function (f::IFFTPlan!{Ny, Nz, Nt})
-            (𝐮::VectorField{N, P}, 𝐮̂::VectorField{N, S}) where
-            {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt},
-                            S<:SpectraField{Ny, Nz, Nt}}
+function (f::IFFTPlan!{Ny, Nz, Nt})(𝐮::VectorField{N, P}, 𝐮̂::VectorField{N, S}) where
+            {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectraField{Ny, Nz, Nt}}
     for i in 1:N
         f(𝐮[i], 𝐮̂[i])
     end
+
+    return 𝐮
 end
