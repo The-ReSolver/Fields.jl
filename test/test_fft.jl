@@ -6,7 +6,10 @@
     Ny = rand(3:50)
     Nz = rand(3:50)
     Nt = rand(3:50)
-    grid = Grid(rand(Float64, Ny), Nz, Nt, rand(Float64, (Ny, Ny)), rand(Float64, Ny))
+    grid = Grid(rand(Float64, Ny), Nz, Nt,
+                rand(Float64, (Ny, Ny)),
+                rand(Float64, (Ny, Ny)),
+                rand(Float64, Ny))
     A = PhysicalField(grid); Â = SpectraField(grid); B = PhysicalField(grid)
     A.data .= rand(Float64, (Ny, Nz, Nt))
 

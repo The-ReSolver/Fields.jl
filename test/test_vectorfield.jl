@@ -3,12 +3,9 @@
 
 @testset "Vector Field                  " begin
     # generate random arrays
-    # Ny = rand(3:50)
-    # Nz = rand(3:50)
-    # Nt = rand(3:50)
-    Ny = 2
-    Nz = 2
-    Nt = 2
+    Ny = rand(3:50)
+    Nz = rand(3:50)
+    Nt = rand(3:50)
     u1 = rand(Float64, (Ny, Nz, Nt))
     u2 = rand(Float64, (Ny, Nz))
     v1 = rand(Float64, (Ny, Nz, Nt))

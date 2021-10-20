@@ -8,8 +8,9 @@
         Nt = rand(3:50)
         y = rand(Float64, Ny)
         Dy = rand(Float64, (Ny, Ny))
+        Dy2 = rand(Float64, (Ny, Ny))
         ws = rand(Float64, Ny)
-        grid = Grid(y, Nz, Nt, Dy, ws)
+        grid = Grid(y, Nz, Nt, Dy, Dy2, ws)
 
         # intialise using different constructors
         @test   typeof(SpectraField(Ny, Nz, Nt, grid)) ==
