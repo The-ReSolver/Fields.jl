@@ -6,15 +6,6 @@ export SpectraField
 struct SpectraField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: AbstractArray{Complex{T}, 3}
     data::A
 
-    # constrcut from size and type
-    function SpectraField(Ny::Int, Nz::Int, Nt::Int, grid::Grid{S}, ::Type{T}=Float64) where {T<:Real, S}
-        data = zeros(Complex{T}, Ny, (Nz >> 1) + 1, Nt)
-        if (Ny, Nz, Nt) != S
-            throw(ArgumentError("Grid not a valid shape: $S should equal ($Ny, $Nz, $Nt)"))
-        end
-        new{Ny, Nz, Nt, typeof(grid), T, typeof(data)}(data)
-    end
-
     # construct from grid
     function SpectraField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
         data = zeros(Complex{T}, S[1], (S[2] >> 1) + 1, S[3])

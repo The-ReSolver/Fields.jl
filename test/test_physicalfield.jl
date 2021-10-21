@@ -13,8 +13,6 @@
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws)
 
         # intialise using different constructors
-        @test   typeof(PhysicalField(Ny, Nz, Nt, grid)) ==
-                PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}
         @test   typeof(PhysicalField(grid)) ==
                 PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}
         @test   typeof(PhysicalField(ones(Ny, Nz, Nt), grid)) ==

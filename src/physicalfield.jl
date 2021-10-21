@@ -1,19 +1,10 @@
 # This file contains the custom type to define a scalar field in physical space
 # for a rotating plane couette flow.
-    
+
 export PhysicalField
 
 struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: AbstractArray{T, 3}
     data::A
-
-    # construct from size and type and grid
-    function PhysicalField(Ny::Int, Nz::Int, Nt::Int, grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
-        data = zeros(T, Ny, Nz, Nt)
-        if (Ny, Nz, Nt) != S
-            throw(ArgumentError("Grid not a valid shape: $S should equal ($Ny, $Nz, $Nt)"))
-        end
-        new{Ny, Nz, Nt, typeof(grid), T, typeof(data)}(data)
-    end
 
     # construct from grid
     function PhysicalField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
