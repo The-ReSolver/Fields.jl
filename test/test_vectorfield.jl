@@ -22,4 +22,19 @@
     @test_throws MethodError VectorField(u1, v2, w1)
     @test_throws MethodError VectorField(u1, v1, w2)
     @test_throws MethodError VectorField("string1", "string2")
+
+    # test in place broadcasting
+    grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny))
+
+    a = VectorField(PhysicalField(grid), PhysicalField(grid), PhysicalField(grid))
+    b = VectorField(PhysicalField(grid), PhysicalField(grid), PhysicalField(grid))
+    c = VectorField(PhysicalField(grid), PhysicalField(grid), PhysicalField(grid))
+
+    # check broadcasting is done efficiently and does not allocate
+    nalloc(a, b, c) = @allocated a .= 3 .* b .+ c ./ 2
+
+    @test nalloc(a, b, c) == 0
+
+    # test broadcasting
+    @test typeof(a .+ b) == typeof(a)
 end
