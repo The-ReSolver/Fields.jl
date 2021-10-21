@@ -38,6 +38,8 @@ Base.similar(bc::Base.Broadcast.Broadcasted{VectorFieldStyle}, ::Type{T}) where 
 find_field(bc::Base.Broadcast.Broadcasted) = find_field(bc.args)
 find_field(args::Tuple) = find_field(find_field(args[1]), Base.tail(args))
 find_field(a::VectorField, rest) = a
+find_field(a::SpectralField, rest) = a
+find_field(a::PhysicalField, rest) = a
 find_field(::Any, rest) = find_field(rest)
 find_field(x) = x
 find_field(::Tuple{}) = nothing

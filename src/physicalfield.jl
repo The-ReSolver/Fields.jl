@@ -33,6 +33,16 @@ Base.parent(u::PhysicalField) = u.data
 # similar
 Base.similar(u::PhysicalField, ::Type{T}=eltype(u)) where {T} = PhysicalField(u.grid, T)
 
+# ~ BROADCASTING ~
+# taken from MultiscaleArrays.jl
+const PhysicalFieldStyle = Broadcast.ArrayStyle{PhysicalField}
+Base.BroadcastStyle(::Type{<:PhysicalField}) = Broadcast.ArrayStyle{PhysicalField}()
+
+# for broadcasting to construct new objects
+Base.similar(bc::Base.Broadcast.Broadcasted{PhysicalFieldStyle}, ::Type{T}) where {T} =
+    similar(find_field(bc))
+
+
 Base.@propagate_inbounds function Base.getindex(u::PhysicalField, I...)
     @boundscheck checkbounds(parent(u), I...)
     @inbounds ret = parent(u)[I...]

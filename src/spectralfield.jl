@@ -38,6 +38,15 @@ Base.parent(U::SpectralField) = U.data
 # similar
 Base.similar(U::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt, G, T, S} = SpectralField(U.grid, S)
 
+# ~ BROADCASTING ~
+# taken from MultiscaleArrays.jl
+const SpectralFieldStyle = Broadcast.ArrayStyle{SpectralField}
+Base.BroadcastStyle(::Type{<:SpectralField}) = Broadcast.ArrayStyle{SpectralField}()
+
+# for broadcasting to construct new objects
+Base.similar(bc::Base.Broadcast.Broadcasted{SpectralFieldStyle}, ::Type{T}) where {T} =
+    similar(find_field(bc))
+
 Base.@propagate_inbounds function Base.getindex(U::SpectralField, I...)
     @boundscheck checkbounds(parent(U), I...)
     @inbounds ret = parent(U)[I...]
