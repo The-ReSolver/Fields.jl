@@ -30,6 +30,9 @@ Base.IndexStyle(::Type{<:PhysicalField}) = Base.IndexLinear()
 # get parent array
 Base.parent(u::PhysicalField) = u.data
 
+# similar
+Base.similar(u::PhysicalField, ::Type{T}=eltype(u)) where {T} = PhysicalField(u.grid, T)
+
 Base.@propagate_inbounds function Base.getindex(u::PhysicalField, I...)
     @boundscheck checkbounds(parent(u), I...)
     @inbounds ret = parent(u)[I...]

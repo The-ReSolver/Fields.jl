@@ -35,6 +35,9 @@ Base.IndexStyle(::Type{<:SpectralField}) = Base.IndexLinear()
 # get parent array
 Base.parent(U::SpectralField) = U.data
 
+# similar
+Base.similar(u::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt, G, T, S} = SpectralField(u.grid, S)
+
 Base.@propagate_inbounds function Base.getindex(U::SpectralField, I...)
     @boundscheck checkbounds(parent(U), I...)
     @inbounds ret = parent(U)[I...]
