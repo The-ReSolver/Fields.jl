@@ -1,13 +1,13 @@
 # This file contains the custom type to define a scalar field in spectral space
 # for a rotating plane couette flow.
 
-export SpectraField
+export SpectralField
 
-struct SpectraField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: AbstractArray{Complex{T}, 3}
+struct SpectralField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: AbstractArray{Complex{T}, 3}
     data::A
 
     # construct from grid
-    function SpectraField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
+    function SpectralField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
         data = zeros(Complex{T}, S[1], (S[2] >> 1) + 1, S[3])
         new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data)
     end
@@ -15,7 +15,7 @@ struct SpectraField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: 
     # construct from data
     # THIS CONSTRUCTOR IS NOT INTENDED FOR USE SINCE IT HAS AMBIGUITY IN THE
     # CORRESPONDING SIZE OF THE PHYSICAL SPACE ARRAY.
-    function SpectraField(data::A, grid::Grid{S}) where {T<:Real, A<:AbstractArray{Complex{T}, 3}, S}
+    function SpectralField(data::A, grid::Grid{S}) where {T<:Real, A<:AbstractArray{Complex{T}, 3}, S}
         shape = size(data)
         Nz = (shape[2] - 1) << 1
         if shape[1] != S[1] || (Nz != S[2] && Nz + 1 != S[2]) || shape[3] != S[3]
@@ -28,19 +28,19 @@ struct SpectraField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: 
 end
 
 # define interface
-Base.size(::SpectraField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, (Nz >> 1) + 1, Nt)
-Base.IndexStyle(::Type{<:SpectraField}) = Base.IndexLinear()
+Base.size(::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, (Nz >> 1) + 1, Nt)
+Base.IndexStyle(::Type{<:SpectralField}) = Base.IndexLinear()
 
 # get parent array
-Base.parent(U::SpectraField) = U.data
+Base.parent(U::SpectralField) = U.data
 
-Base.@propagate_inbounds function Base.getindex(U::SpectraField, I...)
+Base.@propagate_inbounds function Base.getindex(U::SpectralField, I...)
     @boundscheck checkbounds(parent(U), I...)
     @inbounds ret = parent(U)[I...]
     return ret
 end
 
-Base.@propagate_inbounds function Base.setindex!(U::SpectraField, v, I...)
+Base.@propagate_inbounds function Base.setindex!(U::SpectralField, v, I...)
     @boundscheck checkbounds(parent(U), I...)
     @inbounds parent(U)[I...] = v
     return v

@@ -13,8 +13,8 @@
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws)
 
         # intialise using different constructors
-        @test   typeof(SpectraField(grid)) ==
-                SpectraField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
-        @test   typeof(SpectraField(ones(Complex{Float64}, Ny, (Nz >> 1) + 1, Nt), grid)) ==
-                SpectraField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
+        @test   typeof(SpectralField(grid)) ==
+                SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
+        @test   typeof(SpectralField(ones(Complex{Float64}, Ny, (Nz >> 1) + 1, Nt), grid)) ==
+                SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
 end

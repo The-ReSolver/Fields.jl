@@ -30,7 +30,7 @@ struct FFTPlan!{Ny, Nz, Nt, PLAN}
     end
 end
 
-function (f::FFTPlan!{Ny, Nz, Nt})( û::SpectraField{Ny, Nz, Nt},
+function (f::FFTPlan!{Ny, Nz, Nt})( û::SpectralField{Ny, Nz, Nt},
                                     u::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # perform transform
     FFTW.unsafe_execute!(f.plan, parent(u), parent(û))
@@ -42,7 +42,7 @@ function (f::FFTPlan!{Ny, Nz, Nt})( û::SpectraField{Ny, Nz, Nt},
 end
 
 function (f::FFTPlan!{Ny, Nz, Nt})(𝐮̂::VectorField{N, S}, 𝐮::VectorField{N, P}) where
-            {Ny, Nz, Nt, N, S<:SpectraField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}}
+            {Ny, Nz, Nt, N, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}}
     for i in 1:N
         f(𝐮̂[i], 𝐮[i])
     end
@@ -53,7 +53,7 @@ end
 struct IFFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
 
-    function IFFTPlan!( û::SpectraField{Ny, Nz, Nt};
+    function IFFTPlan!( û::SpectralField{Ny, Nz, Nt};
                         flags::UInt32=FFTW.EXHAUSTIVE,
                         timelimit::Real=FFTW.NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
@@ -64,7 +64,7 @@ struct IFFTPlan!{Ny, Nz, Nt, PLAN}
 end
 
 function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
-                                    û::SpectraField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+                                    û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # perform transform
     FFTW.unsafe_execute!(f.plan, parent(û), parent(u))
 
@@ -72,7 +72,7 @@ function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
 end
 
 function (f::IFFTPlan!{Ny, Nz, Nt})(𝐮::VectorField{N, P}, 𝐮̂::VectorField{N, S}) where
-            {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectraField{Ny, Nz, Nt}}
+            {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
     for i in 1:N
         f(𝐮[i], 𝐮̂[i])
     end

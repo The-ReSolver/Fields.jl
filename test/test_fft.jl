@@ -10,7 +10,7 @@
                 rand(Float64, (Ny, Ny)),
                 rand(Float64, (Ny, Ny)),
                 rand(Float64, Ny))
-    A = PhysicalField(grid); Â = SpectraField(grid); B = PhysicalField(grid)
+    A = PhysicalField(grid); Â = SpectralField(grid); B = PhysicalField(grid)
     A.data .= rand(Float64, (Ny, Nz, Nt))
 
     # create plans
