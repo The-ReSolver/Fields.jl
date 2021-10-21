@@ -18,6 +18,12 @@
     @test   typeof(PhysicalField(ones(Ny, Nz, Nt), grid)) ==
             PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}
 
+    # construct from function
+    fun(y, z, t) = (1 - y^2)
+    y = range(-1, stop=1, length=11)
+    f = PhysicalField(Grid(collect(y), 1, 1, rand(11, 11), rand(11, 11), rand(11)), fun)
+    @test vec(parent(f)) == fun.(y, 0, 0)
+
     # test in place broadcasting
     grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny))
 
