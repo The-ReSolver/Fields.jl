@@ -13,7 +13,7 @@ struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: Abstract
         return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data, grid)
     end
 
-    # construct from data
+    # construct from data: #FIXME: this method should be removed
     function PhysicalField(data::A, grid::Grid{S}) where {T<:Real, A<:AbstractArray{T, 3}, S}
         shape = size(data)
         if shape != S
@@ -23,9 +23,11 @@ struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: Abstract
     end
 
     # construct from function
-    function PhysicalField(f::Function, grid::Grid{S}) where {T<:Real, S}
-        # call the function for all the grid points (how to I expand out all the points??? Broadcasting???)
-        new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data)
+    function PhysicalField(grid::Grid{S}, fun::F, ::Type{T}=Float64) where {T<:Real, S, F}
+        # this assumes that z is along the second direction and t along the third
+        y, z, t = points(grid)
+        data = fun.(reshape(y, :, 1, 1), reshape(z, 1, :, 1), reshape(t, 1, 1, :))
+        return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(T.(data), grid)
     end
 end
 
