@@ -21,6 +21,12 @@ struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: Abstract
         end
         return new{shape[1], shape[2], shape[3], typeof(grid), T, A}(data, grid)
     end
+
+    # construct from function
+    function PhysicalField(f::Function, grid::Grid{S}) where {T<:Real, S}
+        # call the function for all the grid points (how to I expand out all the points??? Broadcasting???)
+        new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data)
+    end
 end
 
 # define interface

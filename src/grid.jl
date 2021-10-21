@@ -2,7 +2,7 @@
 # important information about how to perform operations on a given grid, such
 # as inner product/norms and derivatives.
 
-export Grid
+export Grid, points
 
 struct Grid{S, T<:Real, M<:AbstractMatrix{T}}
     y::Vector{T}
@@ -27,3 +27,6 @@ struct Grid{S, T<:Real, M<:AbstractMatrix{T}}
         new{(size(y)[1], Nz, Nt), T, typeof(Dy)}(y, (Dy, Dy2), ws)
     end
 end
+
+# get points
+points(g::Grid{S}) where {S} = (g.y, ntuple(i -> (0:(S[i + 1] - 1))/(S[i + 1])*2π, 2)...)
