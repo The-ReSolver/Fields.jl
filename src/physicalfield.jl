@@ -48,7 +48,6 @@ Base.BroadcastStyle(::Type{<:PhysicalField}) = Broadcast.ArrayStyle{PhysicalFiel
 Base.similar(bc::Base.Broadcast.Broadcasted{PhysicalFieldStyle}, ::Type{T}) where {T} =
     similar(find_field(bc))
 
-
 Base.@propagate_inbounds function Base.getindex(u::PhysicalField, I...)
     @boundscheck checkbounds(parent(u), I...)
     @inbounds ret = parent(u)[I...]
