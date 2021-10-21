@@ -5,11 +5,12 @@ export SpectralField
 
 struct SpectralField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: AbstractArray{Complex{T}, 3}
     data::A
+    grid::G
 
     # construct from grid
     function SpectralField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
         data = zeros(Complex{T}, S[1], (S[2] >> 1) + 1, S[3])
-        new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data)
+        return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data, grid)
     end
 
     # construct from data
@@ -23,7 +24,7 @@ struct SpectralField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <:
         end
         Nz = S[2]
         # the inverse bitwise operation always outputs a even number
-        new{shape[1], Nz, shape[3], typeof(grid), T, A}(data)
+        return new{shape[1], Nz, shape[3], typeof(grid), T, A}(data, grid)
     end
 end
 
@@ -33,6 +34,9 @@ Base.IndexStyle(::Type{<:SpectralField}) = Base.IndexLinear()
 
 # get parent array
 Base.parent(U::SpectralField) = U.data
+
+# similar
+Base.similar(U::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt, G, T, S} = SpectralField(U.grid, S)
 
 Base.@propagate_inbounds function Base.getindex(U::SpectralField, I...)
     @boundscheck checkbounds(parent(U), I...)

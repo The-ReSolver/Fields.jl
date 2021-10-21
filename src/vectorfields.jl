@@ -5,14 +5,13 @@ export VectorField
 # Just a wrapper around a N-tuple of fields
 struct VectorField{N, S} <: AbstractVector{S}
     elements::NTuple{N, S}
-
     # construct using scalar fields as arguments
     function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
         new{N, S}(elements)
     end
 end
 
-# extract i-th component
+# extract/set i-th component
 Base.getindex(q::VectorField, i::Int) = q.elements[i]
 
 # these might not be needed, but
@@ -31,8 +30,19 @@ LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} =  sum(dot(q[i
 const VectorFieldStyle = Broadcast.ArrayStyle{VectorField}
 Base.BroadcastStyle(::Type{<:VectorField}) = Broadcast.ArrayStyle{VectorField}()
 
-@inline function Base.copyto!(dest::VectorField{N},
-    bc::Broadcast.Broadcasted{VectorFieldStyle}) where {N}
+# for broadcasting to construct new objects
+Base.similar(bc::Base.Broadcast.Broadcasted{VectorFieldStyle}, ::Type{T}) where {T} =
+    VectorField(similar.(find_field(bc).elements)...)
+
+# f = find_field(bc)` returns the first VectorField among the arguments
+find_field(bc::Base.Broadcast.Broadcasted) = find_field(bc.args)
+find_field(args::Tuple) = find_field(find_field(args[1]), Base.tail(args))
+find_field(a::VectorField, rest) = a
+find_field(::Any, rest) = find_field(rest)
+find_field(x) = x
+find_field(::Tuple{}) = nothing
+
+@inline function Base.copyto!(dest::VectorField{N}, bc::Broadcast.Broadcasted{VectorFieldStyle}) where {N}
     for i in 1:N
         copyto!(dest.elements[i], unpack(bc, i))
     end
