@@ -5,11 +5,12 @@ export PhysicalField
 
 struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: AbstractArray{T, 3}
     data::A
+    grid::G
 
     # construct from grid
     function PhysicalField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
         data = zeros(T, S[1], S[2], S[3])
-        new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data)
+        return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data, grid)
     end
 
     # construct from data
@@ -18,7 +19,7 @@ struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: Abstract
         if shape != S
             throw(ArgumentError("Grid not a valid shape: $S should equal $shape"))
         end
-        new{shape[1], shape[2], shape[3], typeof(grid), T, A}(data)
+        return new{shape[1], shape[2], shape[3], typeof(grid), T, A}(data, grid)
     end
 end
 
