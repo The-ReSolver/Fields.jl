@@ -1,5 +1,8 @@
 module Fields
 
+import FFTW
+import LinearAlgebra
+
 include("grid.jl")
 include("physicalfield.jl")
 include("spectralfield.jl")

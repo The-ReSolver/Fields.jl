@@ -30,7 +30,5 @@
     FFTplan(𝐀̂, 𝐀)
     IFFTplan(𝐁, 𝐀̂)
     @test A1 ≈ B1
-    for i in 1:2
-        @test 𝐀[i] ≈ 𝐁[i]
-    end
+    @test 𝐀 ≈ 𝐁
 end

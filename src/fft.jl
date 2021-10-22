@@ -12,9 +12,6 @@
 # profile to figure out which direction to choose!
 # Profile is for a bunch of different combinations of Nz and Nt
 
-import FFTW
-import LinearAlgebra
-
 export FFTPlan!, IFFTPlan!
 
 struct FFTPlan!{Ny, Nz, Nt, PLAN}
