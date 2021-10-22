@@ -13,15 +13,6 @@ struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: Abstract
         return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data, grid)
     end
 
-    # construct from data: #FIXME: this method should be removed
-    function PhysicalField(data::A, grid::Grid{S}) where {T<:Real, A<:AbstractArray{T, 3}, S}
-        shape = size(data)
-        if shape != S
-            throw(ArgumentError("Grid not a valid shape: $S should equal $shape"))
-        end
-        return new{shape[1], shape[2], shape[3], typeof(grid), T, A}(data, grid)
-    end
-
     # construct from function
     function PhysicalField(grid::Grid{S}, fun::F, ::Type{T}=Float64) where {T<:Real, S, F}
         # this assumes that z is along the second direction and t along the third

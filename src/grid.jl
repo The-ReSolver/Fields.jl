@@ -9,12 +9,12 @@ struct Grid{S, T<:Real, M<:AbstractMatrix{T}}
     Dy::NTuple{2, M}
     ws::Vector{T}
 
-    function Grid(    y::Vector{T},
-                     Nz::Int,
-                     Nt::Int,
-                     Dy::AbstractMatrix{T},
+    function Grid(  y::Vector{T},
+                    Nz::Int,
+                    Nt::Int,
+                    Dy::AbstractMatrix{T},
                     Dy2::AbstractMatrix{T},
-                     ws::Vector{T}) where {T<:Real}
+                    ws::Vector{T}) where {T<:Real}
         if size(Dy)[1] != size(y)[1] || size(Dy)[2] != size(y)[1]
             throw(ArgumentError("Derivative matrix and points vector not compatible!"))
         end

@@ -12,20 +12,6 @@ struct SpectralField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <:
         data = zeros(Complex{T}, S[1], (S[2] >> 1) + 1, S[3])
         return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data, grid)
     end
-
-    # construct from data
-    # THIS CONSTRUCTOR IS NOT INTENDED FOR USE SINCE IT HAS AMBIGUITY IN THE
-    # CORRESPONDING SIZE OF THE PHYSICAL SPACE ARRAY.
-    function SpectralField(data::A, grid::Grid{S}) where {T<:Real, A<:AbstractArray{Complex{T}, 3}, S}
-        shape = size(data)
-        Nz = (shape[2] - 1) << 1
-        if shape[1] != S[1] || (Nz != S[2] && Nz + 1 != S[2]) || shape[3] != S[3]
-            throw(ArgumentError("Grid not a valid shape: $S should equal $shape"))
-        end
-        Nz = S[2]
-        # the inverse bitwise operation always outputs a even number
-        return new{shape[1], Nz, shape[3], typeof(grid), T, A}(data, grid)
-    end
 end
 
 # define interface
