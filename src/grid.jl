@@ -4,6 +4,8 @@
 
 export Grid, points
 
+# NOTE: store domain size info
+
 struct Grid{S, T<:Real, M<:AbstractMatrix{T}}
     y::Vector{T}
     Dy::NTuple{2, M}

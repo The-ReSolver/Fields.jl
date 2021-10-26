@@ -1,6 +1,3 @@
-# This file contains the test set for the spectral scalar field type
-# definition.
-
 @testset "Spectral Scalar Field         " begin
         # take random variables
         Ny = rand(3:50)

@@ -1,6 +1,3 @@
-# This file contains the test set for the vector field type definition.
-
-
 @testset "Vector Field                  " begin
     # generate random arrays
     Ny = rand(3:50)

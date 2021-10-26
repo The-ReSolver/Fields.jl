@@ -1,6 +1,3 @@
-# This file contains the test set for the transform between spectral and
-# physcial scalar fields.
-
 @testset "FFT Transforms                " begin
     # randon signal
     Ny = rand(3:50)
