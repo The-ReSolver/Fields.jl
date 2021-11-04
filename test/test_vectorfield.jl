@@ -9,6 +9,8 @@
     v2 = rand(Int, (Ny, Nz, Nt))
     w1 = rand(Float64, (Ny, Nz, Nt))
     w2 = "String"
+    ω = abs(randn())
+    β = abs(randn())
 
     # initialise
     @test typeof(VectorField(u1, v1)) == VectorField{2, Array{Float64, 3}}
@@ -21,7 +23,7 @@
     @test_throws MethodError VectorField("string1", "string2")
 
     # test in place broadcasting
-    grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny))
+    grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny), ω, β)
 
     a = VectorField(PhysicalField(grid), PhysicalField(grid), PhysicalField(grid))
     b = VectorField(PhysicalField(grid), PhysicalField(grid), PhysicalField(grid))

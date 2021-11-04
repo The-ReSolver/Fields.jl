@@ -4,19 +4,20 @@
 
 export Grid, points
 
-# NOTE: store domain size info
-
-struct Grid{S, T<:Real, M<:AbstractMatrix{T}}
+struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix{T}}
     y::Vector{T}
     Dy::NTuple{2, M}
     ws::Vector{T}
+    dom::NTuple{2, T}
 
     function Grid(  y::Vector{T},
                     Nz::Int,
                     Nt::Int,
                     Dy::AbstractMatrix{T},
                     Dy2::AbstractMatrix{T},
-                    ws::Vector{T}) where {T<:Real}
+                    ws::Vector{T},
+                    ω::T,
+                    β::T) where {T<:Real}
         if size(Dy)[1] != size(y)[1] || size(Dy)[2] != size(y)[1]
             throw(ArgumentError("Derivative matrix and points vector not compatible!"))
         end
@@ -26,7 +27,7 @@ struct Grid{S, T<:Real, M<:AbstractMatrix{T}}
         if size(ws)[1] != size(y)[1]
             throw(ArgumentError("Weights vector and points vector not compatible!"))
         end
-        new{(size(y)[1], Nz, Nt), T, typeof(Dy)}(y, (Dy, Dy2), ws)
+        new{(size(y)[1], Nz, Nt), T, typeof(Dy)}(y, (Dy, Dy2), ws, (ω, β))
     end
 end
 

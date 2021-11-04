@@ -3,10 +3,13 @@
     Ny = rand(3:50)
     Nz = rand(3:50)
     Nt = rand(3:50)
+    ω = abs(randn())
+    β = abs(randn())
     grid = Grid(rand(Float64, Ny), Nz, Nt,
                 rand(Float64, (Ny, Ny)),
                 rand(Float64, (Ny, Ny)),
-                rand(Float64, Ny))
+                rand(Float64, Ny),
+                ω, β)
     A1 = PhysicalField(grid); Â1 = SpectralField(grid); B1 = PhysicalField(grid)
     A2 = PhysicalField(grid); Â2 = SpectralField(grid); B2 = PhysicalField(grid)
     A1.data .= rand(Float64, (Ny, Nz, Nt))

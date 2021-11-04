@@ -7,14 +7,16 @@
         Dy = rand(Float64, (Ny, Ny))
         Dy2 = rand(Float64, (Ny, Ny))
         ws = rand(Float64, Ny)
-        grid = Grid(y, Nz, Nt, Dy, Dy2, ws)
+        ω = abs(randn())
+        β = abs(randn())
+        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 
         # intialise using different constructors
         @test   typeof(SpectralField(grid)) ==
                 SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
 
         # test in place broadcasting
-        grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny))
+        grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny), ω, β)
 
         a = SpectralField(grid)
         b = SpectralField(grid)

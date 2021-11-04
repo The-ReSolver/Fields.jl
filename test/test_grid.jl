@@ -10,19 +10,18 @@
     D_sec = rand(Float64, (Ny, Ny))
     w1 = rand(Float64, Ny)
     w2 = rand(Float64, Ny + randD)
-
-    # initialise correct ones #FIXME: this test can be removed.. do not test types explicitly
-    # @test typeof(Grid(y, Nz, Nt, D1, D_sec, w1)) == Grid{(Ny, Nz, Nt), Float64, Matrix{Float64}}
+    ω = abs(randn())
+    β = abs(randn())
 
     # initialise bad versions to catch errors
-    @test_throws ArgumentError Grid(y, Nz, Nt, D2, D_sec, w1)
-    @test_throws ArgumentError Grid(y, Nz, Nt, D1, D_sec, w2)
-    @test_throws ArgumentError Grid(y, Nz, Nt, D2, D_sec, w2)
-    @test_throws MethodError Grid(y, Nz, Nt, D1, D_sec, rand(Int, Ny))
-    @test_throws MethodError Grid(y, Nz, Nt, rand(Int, (Ny, Ny)), D_sec, w1)
+    @test_throws ArgumentError Grid(y, Nz, Nt, D2, D_sec, w1, ω, β)
+    @test_throws ArgumentError Grid(y, Nz, Nt, D1, D_sec, w2, ω, β)
+    @test_throws ArgumentError Grid(y, Nz, Nt, D2, D_sec, w2, ω, β)
+    @test_throws MethodError Grid(y, Nz, Nt, D1, D_sec, rand(Int, Ny), ω, β)
+    @test_throws MethodError Grid(y, Nz, Nt, rand(Int, (Ny, Ny)), D_sec, w1, ω, β)
 
     # test point generation
-    g = Grid(y, Nz, Nt, D1, D_sec, w1)
+    g = Grid(y, Nz, Nt, D1, D_sec, w1, ω, β)
     gpoints = points(g)
     @test gpoints[1] == y
     @test gpoints[2] ≈ range(0, 2π*(1 - 1/Nz), length = Nz) # the precision differences in these two operations
