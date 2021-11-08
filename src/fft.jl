@@ -5,7 +5,6 @@
 #   - Ny_spec = Ny_phys
 #   - Nz_spec = (Nz_phys >> 1) + 1
 #   - Nt_spec = Nt_phys
-# NZ AND NT MAY SWAP DEPENDING ON WHICH DIRECTION IS TRANSFORMED FIRST
 
 # What direction transforms first?
 # One direction may be faster?

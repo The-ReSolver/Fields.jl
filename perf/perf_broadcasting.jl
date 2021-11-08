@@ -3,7 +3,7 @@ using Fields, BenchmarkTools
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # test broadcasting speed of single field
 Ny, Nz, Nt = 12, 12, 12
-grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny))
+grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny), 1.0, 1.0)
 
 a = PhysicalField(grid)
 b = PhysicalField(grid)
@@ -23,5 +23,3 @@ c = VectorField(PhysicalField(grid), PhysicalField(grid), PhysicalField(grid))
 
 # this time should be three times the time of a single field
 @btime foo!($a, $b, $c)
-
-
