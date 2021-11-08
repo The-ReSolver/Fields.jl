@@ -17,17 +17,17 @@ export FFTPlan!, IFFTPlan!
 struct FFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
 
-    function FFTPlan!(  u::PhysicalField{Ny, Nz, Nt};
+    function FFTPlan!(u::PhysicalField{Ny, Nz, Nt};
                         flags::UInt32=FFTW.EXHAUSTIVE,
                         timelimit::Real=FFTW.NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
-        plan = FFTW.plan_rfft(  similar(parent(u)), order;
+        plan = FFTW.plan_rfft(similar(parent(u)), order;
                                 flags = flags, timelimit = timelimit)
         new{Ny, Nz, Nt, typeof(plan)}(plan)
     end
 end
 
-function (f::FFTPlan!{Ny, Nz, Nt})( û::SpectralField{Ny, Nz, Nt},
+function (f::FFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt},
                                     u::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # perform transform
     FFTW.unsafe_execute!(f.plan, parent(u), parent(û))
@@ -50,11 +50,11 @@ end
 struct IFFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
 
-    function IFFTPlan!( û::SpectralField{Ny, Nz, Nt};
+    function IFFTPlan!(û::SpectralField{Ny, Nz, Nt};
                         flags::UInt32=FFTW.EXHAUSTIVE,
                         timelimit::Real=FFTW.NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
-        plan = FFTW.plan_brfft( similar(parent(û)), Nz, order;
+        plan = FFTW.plan_brfft(similar(parent(û)), Nz, order;
                                 flags = flags, timelimit = timelimit)
         new{Ny, Nz, Nt, typeof(plan)}(plan)
     end
@@ -63,7 +63,9 @@ end
 function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
                                     û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # perform transform
-    FFTW.unsafe_execute!(f.plan, parent(û), parent(u))
+    # NOTE: required to make copy because otherwise input spectral field is altered
+    spec = copy(parent(û))
+    FFTW.unsafe_execute!(f.plan, spec, parent(u))
 
     return u
 end
