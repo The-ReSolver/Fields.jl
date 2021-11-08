@@ -3,6 +3,7 @@ export VectorField
 # Just a wrapper around a N-tuple of fields
 struct VectorField{N, S} <: AbstractVector{S}
     elements::NTuple{N, S}
+
     # construct using scalar fields as arguments
     function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
         new{N, S}(elements)

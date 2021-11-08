@@ -21,14 +21,14 @@
     𝐁 = VectorField(B1, B2)
 
     # create plans
-    FFTplan = FFTPlan!(A1, flags = FFTW.ESTIMATE)
-    IFFTplan = IFFTPlan!(Â1, flags = FFTW.ESTIMATE)
+    FFT = FFTPlan!(grid, flags = FFTW.ESTIMATE)
+    IFFT = IFFTPlan!(grid, flags = FFTW.ESTIMATE)
 
     # is the transform invertible correctly
-    FFTplan(Â1, A1)
-    IFFTplan(B1, Â1)
-    FFTplan(𝐀̂, 𝐀)
-    IFFTplan(𝐁, 𝐀̂)
+    FFT(Â1, A1)
+    IFFT(B1, Â1)
+    FFT(𝐀̂, 𝐀)
+    IFFT(𝐁, 𝐀̂)
     @test A1 ≈ B1
     @test 𝐀 ≈ 𝐁
 end

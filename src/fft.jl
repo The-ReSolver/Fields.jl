@@ -25,6 +25,15 @@ struct FFTPlan!{Ny, Nz, Nt, PLAN}
                                 flags = flags, timelimit = timelimit)
         new{Ny, Nz, Nt, typeof(plan)}(plan)
     end
+
+    function FFTPlan!(grid::Grid{S, T};
+                        flags::UInt32=FFTW.EXHAUSTIVE,
+                        timelimit::Real=FFTW.NO_TIMELIMIT,
+                        order::Vector{Int}=[2, 3]) where {S, T}
+        plan = FFTW.plan_rfft(similar(parent(PhysicalField(grid, T))), order;
+                                flags = flags, timelimit = timelimit)
+        new{S[1], S[2], S[3], typeof(plan)}(plan)
+    end
 end
 
 function (f::FFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt},
@@ -57,6 +66,15 @@ struct IFFTPlan!{Ny, Nz, Nt, PLAN}
         plan = FFTW.plan_brfft(similar(parent(û)), Nz, order;
                                 flags = flags, timelimit = timelimit)
         new{Ny, Nz, Nt, typeof(plan)}(plan)
+    end
+
+    function IFFTPlan!(grid::Grid{S, T};
+                        flags::UInt32=FFTW.EXHAUSTIVE,
+                        timelimit::Real=FFTW.NO_TIMELIMIT,
+                        order::Vector{Int}=[2, 3]) where {S, T}
+        plan = FFTW.plan_brfft(similar(parent(SpectralField(grid, T))), S[2], order;
+                                flags = flags, timelimit = timelimit)
+        new{S[1], S[2], S[3], typeof(plan)}(plan)
     end
 end
 
