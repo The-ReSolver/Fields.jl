@@ -9,7 +9,8 @@ include("spectralfield.jl")
 include("vectorfields.jl")
 include("fft.jl")
 include("operators.jl")
+include("quadweights.jl")
 
-# TODO: generate weights for inner products and norms (Inside FDGrids.jl package)
+# TODO: norms and inner product functions based off of quadrature weights
 
 end

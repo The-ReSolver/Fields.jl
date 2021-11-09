@@ -10,7 +10,7 @@ struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix{T}}
     ws::Vector{T}
     dom::NTuple{2, T}
 
-    function Grid(  y::Vector{T},
+    function Grid(y::Vector{T},
                     Nz::Int,
                     Nt::Int,
                     Dy::AbstractMatrix{T},
