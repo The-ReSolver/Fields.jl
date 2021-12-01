@@ -19,6 +19,14 @@ function ddy!(u::SpectralField{Ny, Nz, Nt},
     return dudy
 end
 
+function ddy!(u::VectorField{N, S}, dudy::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+    for i in 1:N
+        ddy!(u[i], dudy[i])
+    end
+
+    return dudy
+end
+
 function d2dy2!(u::SpectralField{Ny, Nz, Nt},
                 d2udy2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # take second differentiation matrix from grid
@@ -27,6 +35,14 @@ function d2dy2!(u::SpectralField{Ny, Nz, Nt},
     # multiply field at every nz and nt
     for nz in 1:((Nz >> 1) + 1), nt in 1:Nt
         d2udy2[:, nz, nt] = Dy2*u[:, nz, nt]
+    end
+
+    return d2udy2
+end
+
+function d2dy2!(u::VectorField{N, S}, d2udy2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+    for i in 1:N
+        d2dy2!(u[i], d2udy2[i])
     end
 
     return d2udy2
@@ -45,6 +61,14 @@ function ddz!(u::SpectralField{Ny, Nz, Nt},
     return dudz
 end
 
+function ddz!(u::VectorField{N, S}, dudz::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+    for i in 1:N
+        ddz!(u[i], dudz[i])
+    end
+
+    return dudz
+end
+
 function d2dz2!(u::SpectralField{Ny, Nz, Nt},
                 d2udz2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract spanwise domain info from grid
@@ -53,6 +77,14 @@ function d2dz2!(u::SpectralField{Ny, Nz, Nt},
     # loop over spanwise modes multiplying by modifier
     for nz in 1:((Nz >> 1) + 1)
         d2udz2[:, nz, :] = -(((nz - 1)*β)^2)*u[:, nz, :]
+    end
+
+    return d2udz2
+end
+
+function d2dz2!(u::VectorField{N, S}, d2udz2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+    for i in 1:N
+        d2ddz2!(u[i], d2udz2[i])
     end
 
     return d2udz2
@@ -71,6 +103,14 @@ function ddt!(u::SpectralField{Ny, Nz, Nt},
     # loop over negative temporal modes multiplying by modifier
     for nt in floor(Int, (Nt/2) + 1):Nt
         dudt[:, :, nt] = 1im*(nt - 1 - Nt)*ω*u[:, :, nt]
+    end
+
+    return dudt
+end
+
+function ddt!(u::VectorField{N, S}, dudt::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+    for i in 1:N
+        ddt!(u[i], dudt[i])
     end
 
     return dudt
