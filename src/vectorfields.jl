@@ -8,6 +8,16 @@ struct VectorField{N, S} <: AbstractVector{S}
     function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
         new{N, S}(elements)
     end
+
+    # TODO: test this construction
+    function VectorField(grid::Grid, N::Int=3, field_type::Symbol=:Spectral, ::Type{T}=Float64) where {T}
+        if field_type == :Spectral
+            fields = [SpectralField(grid, T) for i in 1:N]
+        elseif field_type == :Physical
+            fields = [PhysicalField(grid, T) for i in 1:N]
+        end
+        new{N, typeof(fields[1])}(collect(fields))
+    end
 end
 
 # extract/set i-th component
