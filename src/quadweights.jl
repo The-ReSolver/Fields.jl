@@ -1,9 +1,6 @@
 # This file computes the quadrature weights for a discretisation in the wall-
 # normal direction.
 
-# NOTE: the input to these functions assumes y is sorted from largest to
-#       smallest value.
-
 export quadweights
 
 function quadweights(y::AbstractVector, order::Int)
