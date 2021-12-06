@@ -3,7 +3,7 @@
 
 export PhysicalField
 
-struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{T, 3}} <: AbstractArray{T, 3}
+struct PhysicalField{Ny, Nz, Nt, G, T, A} <: AbstractArray{T, 3}
     data::A
     grid::G
 

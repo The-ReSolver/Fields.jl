@@ -3,7 +3,7 @@
 
 export SpectralField
 
-struct SpectralField{Ny, Nz, Nt, G, T<:Real, A<:AbstractArray{Complex{T}, 3}} <: AbstractArray{Complex{T}, 3}
+struct SpectralField{Ny, Nz, Nt, G, T, A} <: AbstractArray{Complex{T}, 3}
     data::A
     grid::G
 
@@ -25,10 +25,9 @@ Base.parent(U::SpectralField) = U.data
 Base.similar(U::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt, G, T, S} = SpectralField(U.grid, S)
 
 # inner-product and norm
-# TODO: test this
 function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     sum = 0.0
-    for ny in 1:Ny, nz in 2:Nz, nt in 1:Nt
+    for ny in 1:Ny, nz in 2:((Nz >> 1) + 1), nt in 1:Nt
         sum += p.grid.ws[ny]*(real(p[ny, nz, nt]*conj(q[ny, nz, nt])))
     end
     for ny in 1:Ny, nt in 1:Nt
