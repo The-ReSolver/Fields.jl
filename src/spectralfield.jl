@@ -27,16 +27,25 @@ Base.similar(U::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt,
 # inner-product and norm
 function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     sum = 0.0
+
+    # loop over top half plane exclusive of mean spanwise mode
     for ny in 1:Ny, nz in 2:((Nz >> 1) + 1), nt in 1:Nt
-        sum += p.grid.ws[ny]*(real(p[ny, nz, nt]*conj(q[ny, nz, nt])))
+        sum += p.grid.ws[ny]*real(p[ny, nz, nt]*conj(q[ny, nz, nt]))
     end
-    for ny in 1:Ny, nt in 1:Nt
-        sum += 0.5*p.grid.ws[ny]*p[ny, 1, nt]*conj(q[ny, 1, nt])
+
+    # loop over positive temporal modes for mean spanwise mode
+    for ny in 1:Ny, nt in 1:((Nt >> 1) + 1)
+        sum += p.grid.ws[ny]*real(p[ny, 1, nt]*conj(q[ny, 1, nt]))
+    end
+
+    # evaluate mean component contribution
+    for ny in 1:Ny
+        sum += 0.5*p.grid.ws[ny]*real(p[ny, 1, 1]*q[ny, 1, 1])
     end
 
     return sum
 end
-LinearAlgebra.norm(p::SpectralField) = LinearAlgebra.dot(p, p)
+LinearAlgebra.norm(p::SpectralField) = sqrt(LinearAlgebra.dot(p, p))
 
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl

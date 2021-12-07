@@ -30,9 +30,9 @@ Base.length(::VectorField{N}) where {N} = N
 # construct a new object from an existing one
 Base.similar(q::VectorField) = VectorField(similar.(q.elements)...)
 
-# norm
+# inner-product and norm
 LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} =  sum(LinearAlgebra.dot(q[i], p[i]) for i = 1:N)
-LinearAlgebra.norm(q::VectorField) = LinearAlgebra.dot(q, q)
+LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
 
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl

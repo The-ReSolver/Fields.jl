@@ -32,6 +32,8 @@ Base.parent(u::PhysicalField) = u.data
 # similar
 Base.similar(u::PhysicalField, ::Type{T}=eltype(u)) where {T} = PhysicalField(u.grid, T)
 
+Base.copy(u::PhysicalField) = (v = similar(u); v .= u; v)
+
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl
 const PhysicalFieldStyle = Broadcast.ArrayStyle{PhysicalField}

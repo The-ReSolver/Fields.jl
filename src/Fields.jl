@@ -11,6 +11,4 @@ include("fft.jl")
 include("derivatives.jl")
 include("quadweights.jl")
 
-# TODO: norms and inner product functions based off of quadrature weights
-
 end
