@@ -80,9 +80,7 @@ end
 function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
                                     û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # perform transform
-    # FIXME: required to make copy because otherwise input spectral field is altered
-    spec = copy(parent(û))
-    FFTW.unsafe_execute!(f.plan, spec, parent(u))
+    FFTW.unsafe_execute!(f.plan, parent(û), parent(u))
 
     return u
 end
