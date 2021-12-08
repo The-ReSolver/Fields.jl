@@ -13,10 +13,7 @@
     ω = abs(randn())
     β = abs(randn())
 
-    # initialise bad versions to catch errors
-    @test_throws ArgumentError Grid(y, Nz, Nt, D2, D_sec, w1, ω, β)
-    @test_throws ArgumentError Grid(y, Nz, Nt, D1, D_sec, w2, ω, β)
-    @test_throws ArgumentError Grid(y, Nz, Nt, D2, D_sec, w2, ω, β)
+    # catch errors
     @test_throws MethodError Grid(y, Nz, Nt, D1, D_sec, rand(Int, Ny), ω, β)
     @test_throws MethodError Grid(y, Nz, Nt, rand(Int, (Ny, Ny)), D_sec, w1, ω, β)
 

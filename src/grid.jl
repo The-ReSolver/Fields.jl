@@ -18,16 +18,6 @@ struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix{T}}
                     ws::Vector{T},
                     ω::T,
                     β::T) where {T<:Real}
-        # TODO: don't bother checking this stuff
-        if size(Dy)[1] != size(y)[1] || size(Dy)[2] != size(y)[1]
-            throw(ArgumentError("Derivative matrix and points vector not compatible!"))
-        end
-        if size(Dy2) != size(Dy)
-            throw(ArgumentError("Derivative matrix and points vector not compatible!"))
-        end
-        if size(ws)[1] != size(y)[1]
-            throw(ArgumentError("Weights vector and points vector not compatible!"))
-        end
         new{(size(y)[1], Nz, Nt), T, typeof(Dy)}(y, (Dy, Dy2), ws, (ω, β))
     end
 end
