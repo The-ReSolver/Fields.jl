@@ -1,4 +1,4 @@
-@testset "Field Operators               " begin
+@testset "Field Derivatives             " begin
     # define functions
     u_fun(y, z, t) = (1 - y^2)*exp(cos(z))*atan(sin(t))
     dudy_fun(y, z, t) = -2*y*exp(cos(z))*atan(sin(t))

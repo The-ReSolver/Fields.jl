@@ -12,8 +12,10 @@ function ddy!(u::SpectralField{Ny, Nz, Nt},
     Dy = u.grid.Dy[1]
 
     # multiply field at every nz and nt
-    for nz in 1:((Nz >> 1) + 1), nt in 1:Nt
-        dudy[:, nz, nt] = Dy*u[:, nz, nt]
+    @views begin
+        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
+            LinearAlgebra.mul!(dudy[:, nz, nt], Dy, u[:, nz, nt])
+        end
     end
 
     return dudy
@@ -33,8 +35,10 @@ function d2dy2!(u::SpectralField{Ny, Nz, Nt},
     Dy2 = u.grid.Dy[2]
 
     # multiply field at every nz and nt
-    for nz in 1:((Nz >> 1) + 1), nt in 1:Nt
-        d2udy2[:, nz, nt] = Dy2*u[:, nz, nt]
+    @views begin
+        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
+            LinearAlgebra.mul!(d2udy2[:, nz, nt], Dy2, u[:, nz, nt])
+        end
     end
 
     return d2udy2
@@ -54,8 +58,10 @@ function ddz!(u::SpectralField{Ny, Nz, Nt},
     β = u.grid.dom[2]
 
     # loop over spanwise modes multiplying by modifier
-    for nz in 1:((Nz >> 1) + 1)
-        dudz[:, nz, :] = 1im*(nz - 1)*β*u[:, nz, :]
+    @views begin
+        for nz in 1:((Nz >> 1) + 1)
+            dudz[:, nz, :] .= (1im*(nz - 1)*β).*u[:, nz, :]
+        end
     end
 
     return dudz
@@ -75,8 +81,10 @@ function d2dz2!(u::SpectralField{Ny, Nz, Nt},
     β = u.grid.dom[2]
 
     # loop over spanwise modes multiplying by modifier
-    for nz in 1:((Nz >> 1) + 1)
-        d2udz2[:, nz, :] = -(((nz - 1)*β)^2)*u[:, nz, :]
+    @views begin
+        for nz in 1:((Nz >> 1) + 1)
+            d2udz2[:, nz, :] .= (-(((nz - 1)*β)^2)).*u[:, nz, :]
+        end
     end
 
     return d2udz2
@@ -96,13 +104,17 @@ function ddt!(u::SpectralField{Ny, Nz, Nt},
     ω = u.grid.dom[1]
 
     # loop over positive temporal modes multiplying by modifier
-    for nt in 1:floor(Int, Nt/2)
-        dudt[:, :, nt] = 1im*(nt - 1)*ω*u[:, :, nt]
+    @views begin
+        for nt in 1:floor(Int, Nt/2)
+            dudt[:, :, nt] .= (1im*(nt - 1)*ω).*u[:, :, nt]
+        end
     end
 
     # loop over negative temporal modes multiplying by modifier
-    for nt in floor(Int, (Nt/2) + 1):Nt
-        dudt[:, :, nt] = 1im*(nt - 1 - Nt)*ω*u[:, :, nt]
+    @views begin
+        for nt in floor(Int, (Nt/2) + 1):Nt
+            dudt[:, :, nt] .= (1im*(nt - 1 - Nt)*ω).*u[:, :, nt]
+        end
     end
 
     return dudt
