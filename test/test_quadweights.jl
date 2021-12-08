@@ -15,10 +15,10 @@
     y = [1, 0.9, -0.1, -1]
     @test abs(sum((x->x^3).(y) .* quadweights(y, 3))) < 1e-5
 
-    # # trapz
+    # trapz
     @test Fields._quadweights([1, 0]) ≈ [1, 1]/2
 
-    # # simpson
+    # simpson
     @test Fields._quadweights([1, 0.5, 0]) ≈ [1, 4, 1]/6
 
     # generic polynomial

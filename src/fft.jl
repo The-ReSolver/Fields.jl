@@ -39,7 +39,6 @@ function (f::FFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt},
                                     u::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # perform transform
     FFTW.unsafe_execute!(f.plan, parent(u), parent(û))
-    # LinearAlgebra.mul!(parent(û), f.plan, parent(u))
     
     # normalise
     parent(û) .*= (1/(Nz*Nt))
