@@ -9,7 +9,7 @@ struct VectorField{N, S} <: AbstractVector{S}
         new{N, S}(elements)
     end
 
-    function VectorField(grid::Grid, N::Int=3, field_type::Symbol=:Spectral, ::Type{T}=Float64) where {T}
+    function VectorField(grid::Grid, ::Type{T}=Float64; N::Int=3, field_type::Symbol=:Spectral) where {T}
         if field_type == :Spectral
             fields = [SpectralField(grid, T) for i in 1:N]
         elseif field_type == :Physical

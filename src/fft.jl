@@ -6,10 +6,7 @@
 #   - Nz_spec = (Nz_phys >> 1) + 1
 #   - Nt_spec = Nt_phys
 
-# What direction transforms first?
-# One direction may be faster?
-# profile to figure out which direction to choose!
-# Profile is for a bunch of different combinations of Nz and Nt
+# TODO: analyse the profiled transforms to find optimal combinations of axes
 
 export FFTPlan!, IFFTPlan!
 
@@ -46,13 +43,13 @@ function (f::FFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt},
     return û
 end
 
-function (f::FFTPlan!{Ny, Nz, Nt})(𝐮̂::VectorField{N, S}, 𝐮::VectorField{N, P}) where
+function (f::FFTPlan!{Ny, Nz, Nt})(û::VectorField{N, S}, u::VectorField{N, P}) where
             {Ny, Nz, Nt, N, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}}
     for i in 1:N
-        f(𝐮̂[i], 𝐮[i])
+        f(û[i], u[i])
     end
 
-    return 𝐮̂
+    return û
 end
 
 struct IFFTPlan!{Ny, Nz, Nt, PLAN}
@@ -85,11 +82,11 @@ function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
     return u
 end
 
-function (f::IFFTPlan!{Ny, Nz, Nt})(𝐮::VectorField{N, P}, 𝐮̂::VectorField{N, S}) where
+function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}) where
             {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
     for i in 1:N
-        f(𝐮[i], 𝐮̂[i])
+        f(u[i], û[i])
     end
 
-    return 𝐮
+    return u
 end
