@@ -87,6 +87,25 @@ function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}
     for i in 1:N
         f(u[i], û[i])
     end
+end
+
+function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
+                                    û::SpectralField{Ny, Nz, Nt},
+                                    û_tmp::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    # copy spectral contents to temporary field
+    û_tmp .= û
+
+    # perform transform
+    FFTW.unsafe_execute!(f.plan, parent(û_tmp), parent(u))
+
+    return u
+end
+
+function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}, û_tmp::VectorField{N, S}) where
+            {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
+    for i in 1:N
+        f(u[i], û[i], û_tmp[i])
+    end
 
     return u
 end

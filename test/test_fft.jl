@@ -1,8 +1,9 @@
 @testset "FFT Transforms                " begin
     # randon signal
-    Ny = rand(3:50)
-    Nz = rand(3:50)
-    Nt = rand(3:50)
+    # Ny = rand(3:50)
+    # Nz = rand(3:50)
+    # Nt = rand(3:50)
+    Ny = 8; Nz = 8; Nt = 8
     ω = abs(randn())
     β = abs(randn())
     grid = Grid(rand(Float64, Ny), Nz, Nt,
@@ -26,9 +27,9 @@
 
     # is the transform invertible correctly
     FFT(Â1, A1)
-    IFFT(B1, Â1)
+    IFFT(B1, Â1, copy(Â1))
     FFT(𝐀̂, 𝐀)
-    IFFT(𝐁, 𝐀̂)
+    IFFT(𝐁, 𝐀̂, VectorField(grid; N = 2))
     @test A1 ≈ B1
     @test 𝐀 ≈ 𝐁
 end
