@@ -47,6 +47,29 @@ end
 
         # test broadcasting
         @test typeof(a .+ b) == typeof(a)
+
+        # test broadcasting addition with vectors
+        vec = rand(Float64, Ny)
+        a_p_vec = a .+ vec
+        bool1 = true
+        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+                if a[ny, nz, nt] + vec[ny] !== a_p_vec[ny, nz, nt]
+                        bool1 = false
+                end
+        end
+        @test bool1
+        @test a_p_vec == vec .+ a
+
+        # test broadcasting multiplication with vectors
+        a_t_vec = vec.*a
+        bool2 = true
+        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+                if vec[ny]*a[ny, nz, nt] !== a_t_vec[ny, nz, nt]
+                        bool2 = false
+                end
+        end
+        @test bool2
+        @test a_t_vec == a.*vec
 end
 
 @testset "Spectral Field Norm           " begin
