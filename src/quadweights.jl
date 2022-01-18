@@ -24,6 +24,7 @@ function quadweights(y::AbstractVector, order::Int)
     return w
 end
 
+# http://www2.math.umd.edu/~dlevy/classes/amsc466/lecture-notes/integration-chap.pdf (section 6.4)
 function _quadweights(y::AbstractVector)
     # number of points
     N = length(y)
@@ -31,7 +32,7 @@ function _quadweights(y::AbstractVector)
     # find integral of polynomial of degree d from y[1] to y[N]
     b = [(y[1]^d - y[end]^d)/d for d = 1:N]
 
-    # evaluate polynomial up to degree do on points
+    # evaluate polynomial up to degree d on points
     A = [y[i]^d for d = 0:(N - 1), i = 1:N]
 
     return A\b

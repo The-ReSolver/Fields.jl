@@ -1,8 +1,6 @@
 @testset "Spectral Field Constructor    " begin
         # take random variables
-        Ny = rand(3:50)
-        Nz = rand(3:50)
-        Nt = rand(3:50)
+        Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
         y = rand(Float64, Ny)
         Dy = rand(Float64, (Ny, Ny))
         Dy2 = rand(Float64, (Ny, Ny))
@@ -22,9 +20,7 @@ end
 
 @testset "Spectral Field Broadcasting   " begin
         # take random variables
-        Ny = rand(3:50)
-        Nz = rand(3:50)
-        Nt = rand(3:50)
+        Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
         y = rand(Float64, Ny)
         Dy = rand(Float64, (Ny, Ny))
         Dy2 = rand(Float64, (Ny, Ny))
@@ -39,6 +35,8 @@ end
         a = SpectralField(grid)
         b = SpectralField(grid)
         c = SpectralField(grid)
+        d = SpectralField(grid)
+        e = SpectralField(grid)
 
         # check broadcasting is done efficiently and does not allocate
         nalloc(a, b, c) = @allocated a .= 3 .* b .+ c ./ 2
@@ -48,39 +46,23 @@ end
         # test broadcasting
         @test typeof(a .+ b) == typeof(a)
 
-        # test broadcasting addition with vectors
+        # test broadcasting with vectors
         vec = rand(Float64, Ny)
-        a_p_vec = a .+ vec
-        bool1 = true
         for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
-                if a[ny, nz, nt] + vec[ny] !== a_p_vec[ny, nz, nt]
-                        bool1 = false
-                end
+                d[ny, nz, nt] = a[ny, nz, nt] + vec[ny]
+                e[ny, nz, nt] = a[ny, nz, nt]*vec[ny]
         end
-        @test bool1
-        @test a_p_vec == vec .+ a
-
-        # test broadcasting multiplication with vectors
-        a_t_vec = vec.*a
-        bool2 = true
-        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
-                if vec[ny]*a[ny, nz, nt] !== a_t_vec[ny, nz, nt]
-                        bool2 = false
-                end
-        end
-        @test bool2
-        @test a_t_vec == a.*vec
+        @test d == a .+ vec == vec .+ a
+        @test e == vec.*a == a.*vec
 end
 
 @testset "Spectral Field Norm           " begin
         # initialise grid variables
-        Ny = 64
-        Nz = 64
-        Nt = 64
+        Ny = 64; Nz = 64; Nt = 64
         y = chebpts(Ny)
-        Dy = rand(Float64, (Ny, Ny))
+        Dy = chebdiff(Ny)
         Dy2 = rand(Float64, (Ny, Ny))
-        ws = quadweights(y, 2)
+        ws = chebws(Dy)
         ω = 1.0
         β = 1.0
 
@@ -97,5 +79,5 @@ end
         FFT(spec_norm, phys_norm)
 
         # test norm
-        @test LinearAlgebra.norm(spec_norm) ≈ sqrt(0.41856) rtol=1e-5
+        @test norm(spec_norm) ≈ sqrt(0.4185698256) rtol=1e-5
 end
