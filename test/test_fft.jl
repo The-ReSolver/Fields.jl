@@ -1,9 +1,6 @@
 @testset "FFT Transforms                " begin
     # randon signal
-    # Ny = rand(3:50)
-    # Nz = rand(3:50)
-    # Nt = rand(3:50)
-    Ny = 8; Nz = 8; Nt = 8
+    Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
     ω = abs(randn())
     β = abs(randn())
     grid = Grid(rand(Float64, Ny), Nz, Nt,
@@ -22,8 +19,8 @@
     𝐁 = VectorField(B1, B2)
 
     # create plans
-    FFT = FFTPlan!(grid, flags = FFTW.ESTIMATE)
-    IFFT = IFFTPlan!(grid, flags = FFTW.ESTIMATE)
+    FFT = FFTPlan!(grid; flags=FFTW.ESTIMATE)
+    IFFT = IFFTPlan!(grid; flags=FFTW.ESTIMATE)
 
     # is the transform invertible correctly
     FFT(Â1, A1)
