@@ -10,20 +10,23 @@
 
 export FFTPlan!, IFFTPlan!
 
+ESTIMATE = FFTW.ESTIMATE; EXHAUSTIVE = FFTW.EXHAUSTIVE; MEASURE = FFTW.MEASURE; PATIENT = FFTW.PATIENT; WISDOM_ONLY = FFTW.WISDOM_ONLY; NO_TIMELIMIT = FFTW.NO_TIMELIMIT
+export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
+
 struct FFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
 
     function FFTPlan!(u::PhysicalField{Ny, Nz, Nt};
-                        flags::UInt32=FFTW.EXHAUSTIVE,
-                        timelimit::Real=FFTW.NO_TIMELIMIT,
+                        flags::UInt32=EXHAUSTIVE,
+                        timelimit::Real=NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
         plan = FFTW.plan_rfft(similar(parent(u)), order;
-                                flags = flags, timelimit = timelimit)
+                                flags=flags, timelimit=timelimit)
         new{Ny, Nz, Nt, typeof(plan)}(plan)
     end
 end
 
-FFTPlan!(grid::Grid{S, T}; flags=FFTW.EXHAUSTIVE, timelimit=FFTW.NO_TIMELIMIT, order=[2, 3]) where {S, T} = FFTPlan!(PhysicalField(grid, T); flags=flags, timelimit=timelimit, order=order)
+FFTPlan!(grid::Grid{S, T}; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = FFTPlan!(PhysicalField(grid, T); flags=flags, timelimit=timelimit, order=order)
 
 function (f::FFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt},
                                     u::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
@@ -49,16 +52,16 @@ struct IFFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
 
     function IFFTPlan!(û::SpectralField{Ny, Nz, Nt};
-                        flags::UInt32=FFTW.EXHAUSTIVE,
-                        timelimit::Real=FFTW.NO_TIMELIMIT,
+                        flags::UInt32=EXHAUSTIVE,
+                        timelimit::Real=NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
         plan = FFTW.plan_brfft(similar(parent(û)), Nz, order;
-                                flags = flags, timelimit = timelimit)
+                                flags=flags, timelimit=timelimit)
         new{Ny, Nz, Nt, typeof(plan)}(plan)
     end
 end
 
-IFFTPlan!(grid::Grid{S, T}; flags=FFTW.EXHAUSTIVE, timelimit=FFTW.NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T); flags=flags, timelimit=timelimit, order=order)
+IFFTPlan!(grid::Grid{S, T}; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T); flags=flags, timelimit=timelimit, order=order)
 
 function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
                                     û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}

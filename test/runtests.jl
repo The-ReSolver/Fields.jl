@@ -1,7 +1,6 @@
 using Fields
 using Random
 using ChebUtils
-using FFTW
 using LinearAlgebra
 using Test
 

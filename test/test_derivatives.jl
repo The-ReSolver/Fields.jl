@@ -14,8 +14,8 @@
     grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Float64, Ny), 1.0, 1.0)
     u = PhysicalField(grid, u_fun)
     û = SpectralField(grid)
-    FFT = FFTPlan!(u, flags = FFTW.ESTIMATE)
-    IFFT = IFFTPlan!(û, flags = FFTW.ESTIMATE)
+    FFT = FFTPlan!(u, flags=ESTIMATE)
+    IFFT = IFFTPlan!(û, flags=ESTIMATE)
     FFT(û, u)
 
     # initialise fields to hold derivatives

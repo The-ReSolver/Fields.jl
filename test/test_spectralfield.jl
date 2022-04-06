@@ -75,7 +75,7 @@ end
         # initialise fields
         phys_norm = PhysicalField(grid, func)
         spec_norm = SpectralField(grid)
-        FFT = FFTPlan!(phys_norm; flags=FFTW.ESTIMATE)
+        FFT = FFTPlan!(phys_norm; flags=ESTIMATE)
         FFT(spec_norm, phys_norm)
 
         # test norm
