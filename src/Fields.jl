@@ -1,7 +1,7 @@
 module Fields
 
-import FFTW
-import LinearAlgebra
+using FFTW
+using LinearAlgebra
 
 include("grid.jl")
 include("physicalfield.jl")
