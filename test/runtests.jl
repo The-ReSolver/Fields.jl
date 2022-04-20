@@ -1,7 +1,6 @@
 using Fields
 using Random
 using ChebUtils
-using LinearAlgebra
 using Test
 
 include("test_quadweights.jl")
