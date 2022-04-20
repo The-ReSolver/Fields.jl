@@ -1,8 +1,6 @@
 # This file computes the quadrature weights for a discretisation in the wall-
 # normal direction.
 
-export quadweights
-
 function quadweights(y::AbstractVector, order::Int)
     # number of points
     N = length(y)

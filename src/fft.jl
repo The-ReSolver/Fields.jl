@@ -8,15 +8,12 @@
 
 # TODO: analyse the profiled transforms to find optimal combinations of axes
 
-export FFTPlan!, IFFTPlan!
-
 const ESTIMATE = FFTW.ESTIMATE
 const EXHAUSTIVE = FFTW.EXHAUSTIVE
 const MEASURE = FFTW.MEASURE
 const PATIENT = FFTW.PATIENT
 const WISDOM_ONLY = FFTW.WISDOM_ONLY
 const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
-export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
 
 struct FFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN

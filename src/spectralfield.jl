@@ -1,8 +1,6 @@
 # This file contains the custom type to define a scalar field in spectral space
 # for a rotating plane couette flow.
 
-export SpectralField, norm
-
 struct SpectralField{Ny, Nz, Nt, G, T, A} <: AbstractArray{Complex{T}, 3}
     data::A
     grid::G

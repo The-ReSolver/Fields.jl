@@ -4,8 +4,6 @@
 # These functions are defined only for the spectral fields since the
 # derivatives are obtained in the most efficient manner in this space.
 
-export ddy!, d2dy2!, ddz!, d2dz2!, ddt!
-
 function ddy!(u::SpectralField{Ny, Nz, Nt},
                 dudy::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # take differentiation matrix from grid

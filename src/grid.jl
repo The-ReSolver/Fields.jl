@@ -2,8 +2,6 @@
 # important information about how to perform operations on a given grid, such
 # as inner product/norms and derivatives.
 
-export Grid, points
-
 struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix{T}}
     y::Vector{T}
     Dy::NTuple{2, M}
