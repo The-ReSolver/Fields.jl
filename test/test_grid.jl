@@ -21,8 +21,11 @@
     g1 = Grid(y, Nz, Nt, D1, D_sec, w1, ω, β)
     gpoints = points(g1)
     @test gpoints[1] == y
-    @test gpoints[2] ≈ range(0, 2π*(1 - 1/Nz), length = Nz) # the precision differences in these two operations
+    @test gpoints[2] ≈ range(0, 2π*(1 - 1/Nz), length = Nz) # precision differences in operations
     @test gpoints[3] ≈ range(0, 2π*(1 - 1/Nt), length = Nt) # mean they aren't exactly equal
+
+    # test size of grid
+    @test size(g1) == (Ny, Nz, Nt)
 
     # test comparison
     g2 = Grid(y, Nz, Nt + 1, D1, D_sec, w1, ω, β)
