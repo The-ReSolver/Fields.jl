@@ -17,6 +17,13 @@ end
 # get points
 points(g::Grid{S}) where {S} = (g.y, ntuple(i -> (0:(S[i + 1] - 1))/(S[i + 1])*2π, 2)...)
 
+# get other fields
+get_Dy(g::Grid) = g.Dy[1]
+get_Dy2(g::Grid) = g.Dy[2]
+get_ws(g::Grid) = g.ws
+get_ω(g::Grid) = g.dom[1]
+get_β(g::Grid) = g.dom[2]
+
 # number of points in grid
 Base.size(::Grid{S}) where {S} = S
 

@@ -27,6 +27,13 @@
     # test size of grid
     @test size(g1) == (Ny, Nz, Nt)
 
+    # test field extraction interface
+    @test get_Dy(g1) == D1
+    @test get_Dy2(g1) == D_sec
+    @test get_ws(g1) == w1
+    @test get_ω(g1) == ω
+    @test get_β(g1) == β
+
     # test comparison
     g2 = Grid(y, Nz, Nt + 1, D1, D_sec, w1, ω, β)
     g3 = Grid(rand(Float64, Ny), Nz, Nt, D1, D_sec, w1, ω, β)

@@ -29,7 +29,7 @@
     @test_throws MethodError VectorField("string1", "string2")
 end
 
-@testset "Field grid comparison         " begin
+@testset "Field grid methods            " begin
     # initialise random variables
     Ny = rand(3:50)
     Nz = rand(3:50)
@@ -48,6 +48,15 @@ end
         for j in [a, b, c]
             eval(:(@test grideq($i, $j)))
         end
+    end
+
+    # test grid field extraction
+    for i in [a, b, c]
+        eval(:(@test get_Dy($i) == $grid.Dy[1]))
+        eval(:(@test get_Dy2($i) == $grid.Dy[2]))
+        eval(:(@test get_ws($i) == $grid.ws))
+        eval(:(@test get_ω($i) == $grid.dom[1]))
+        eval(:(@test get_β($i) == $grid.dom[2]))
     end
 end
 
