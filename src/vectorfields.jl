@@ -32,6 +32,9 @@ Base.copy(q::VectorField) = VectorField([copy(q[i]) for i in 1:size(q)[1]]...)
 LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} =  sum(LinearAlgebra.dot(q[i], p[i]) for i = 1:N)
 LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
 
+# method to extract grid
+grid(q::VectorField) = grid(q[1])
+
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl
 const VectorFieldStyle = Broadcast.ArrayStyle{VectorField}

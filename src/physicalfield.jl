@@ -29,8 +29,10 @@ Base.parent(u::PhysicalField) = u.data
 
 # similar
 Base.similar(u::PhysicalField, ::Type{T}=eltype(u)) where {T} = PhysicalField(u.grid, T)
-
 Base.copy(u::PhysicalField) = (v = similar(u); v .= u; v)
+
+# method to extract grid
+grid(u::PhysicalField) = u.grid
 
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl

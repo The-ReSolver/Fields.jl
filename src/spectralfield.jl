@@ -21,6 +21,10 @@ Base.parent(U::SpectralField) = U.data
 
 # similar
 Base.similar(U::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt, G, T, S} = SpectralField(U.grid, S)
+Base.copy(U::SpectralField) = (V = similar(U); V .= U; V)
+
+# method to extract grid
+grid(U::SpectralField) = U.grid
 
 # inner-product and norm
 function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
