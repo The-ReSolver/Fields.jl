@@ -1,3 +1,6 @@
+# This file contains the custom type to define a vector field which stores
+# either spectral or physical space fields.
+
 # Just a wrapper around a N-tuple of fields
 struct VectorField{N, S} <: AbstractVector{S}
     elements::NTuple{N, S}
@@ -34,6 +37,9 @@ LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
 
 # method to extract grid
 grid(q::VectorField) = grid(q[1])
+
+# method for grid comparison of fields
+grideq(U::Union{SpectralField, PhysicalField, VectorField}, V::Union{SpectralField, PhysicalField, VectorField}) = (grid(U) == grid(V))
 
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl

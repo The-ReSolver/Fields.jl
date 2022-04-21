@@ -11,6 +11,7 @@ export PhysicalField
 export SpectralField, norm
 export VectorField
 export quadweights
+export grid, grideq
 
 include("grid.jl")
 include("physicalfield.jl")

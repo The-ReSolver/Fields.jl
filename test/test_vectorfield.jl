@@ -29,6 +29,28 @@
     @test_throws MethodError VectorField("string1", "string2")
 end
 
+@testset "Field grid comparison         " begin
+    # initialise random variables
+    Ny = rand(3:50)
+    Nz = rand(3:50)
+    Nt = rand(3:50)
+    ω = abs(randn())
+    β = abs(randn())
+
+    # initialise fields
+    grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny), ω, β)
+    a = SpectralField(grid)
+    b = PhysicalField(grid)
+    c = VectorField(grid)
+
+    # test grid comparison method
+    for i in [a, b, c]
+        for j in [a, b, c]
+            eval(:(@test grideq($i, $j)))
+        end
+    end
+end
+
 @testset "Vector Field Broadcasting     " begin
     # initialise random variables
     Ny = rand(3:50)
