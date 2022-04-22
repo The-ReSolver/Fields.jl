@@ -34,20 +34,20 @@ LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} =  sum(LinearA
 LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
 
 # method to extract grid
-grid(q::VectorField) = grid(q[1])
+get_grid(q::VectorField) = get_grid(q[1])
 
 # define union type of field types
 AllFields = Union{SpectralField, PhysicalField, VectorField}
 
 # method for grid comparison of fields
-grideq(U::AllFields, V::AllFields) = (grid(U) == grid(V))
+grideq(U::AllFields, V::AllFields) = (get_grid(U) == get_grid(V))
 
 # extract grid fields from parent field
-get_Dy(U::AllFields) = get_Dy(grid(U))
-get_Dy2(U::AllFields) = get_Dy2(grid(U))
-get_ws(U::AllFields) = get_ws(grid(U))
-get_ω(U::AllFields) = get_ω(grid(U))
-get_β(U::AllFields) = get_β(grid(U))
+get_Dy(U::AllFields) = get_Dy(get_grid(U))
+get_Dy2(U::AllFields) = get_Dy2(get_grid(U))
+get_ws(U::AllFields) = get_ws(get_grid(U))
+get_ω(U::AllFields) = get_ω(get_grid(U))
+get_β(U::AllFields) = get_β(get_grid(U))
 
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl

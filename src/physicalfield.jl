@@ -6,7 +6,6 @@ struct PhysicalField{Ny, Nz, Nt, G, T, A} <: AbstractArray{T, 3}
     grid::G
 
     # construct from function
-    # NOTE: can the type of fun be ommitted?
     function PhysicalField(grid::Grid{S}, fun, ::Type{T}=Float64) where {T<:Real, S}
         # this assumes that z is along the second direction and t along the third
         y, z, t = points(grid)
@@ -30,7 +29,7 @@ Base.similar(u::PhysicalField, ::Type{T}=eltype(u)) where {T} = PhysicalField(u.
 Base.copy(u::PhysicalField) = (v = similar(u); v .= u; v)
 
 # method to extract grid
-grid(u::PhysicalField) = u.grid
+get_grid(u::PhysicalField) = u.grid
 
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl

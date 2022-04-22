@@ -11,7 +11,7 @@ export PhysicalField
 export SpectralField, norm
 export VectorField
 export quadweights
-export grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
+export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 
 include("grid.jl")
 include("physicalfield.jl")
