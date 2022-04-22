@@ -34,4 +34,4 @@ Base.:(==)(x::Grid{Sx}, y::Grid{Sy}) where {Sx, Sy} = (x.y == y.y && Sx[2] == Sy
 spectralfield(g::Grid{S, T}) where {S, T} = SpectralField(g, T)
 physicalfield(g::Grid{S, T}) where {S, T} = PhysicalField(g, T)
 physicalfield(g::Grid{S, T}, fun) where {S, T} = PhysicalField(g, fun, T)
-vectorfield(g::Grid{S, T}; N::Int=3, field_type::Symbol=:spectral) where {S, T} = VectorField(g, T; N=N, field_type=field_type)
+vectorfield(g::Grid{S, T}; N::Int=3, field_type::Symbol=:spectral) where {S, T} = VectorField(g; N=N, field_type=field_type)
