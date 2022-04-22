@@ -5,20 +5,18 @@ struct PhysicalField{Ny, Nz, Nt, G, T, A} <: AbstractArray{T, 3}
     data::A
     grid::G
 
-    # construct from grid
-    function PhysicalField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
-        data = zeros(T, S[1], S[2], S[3])
-        return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data, grid)
-    end
-
     # construct from function
-    function PhysicalField(grid::Grid{S}, fun::F, ::Type{T}=Float64) where {T<:Real, S, F}
+    # NOTE: can the type of fun be ommitted?
+    function PhysicalField(grid::Grid{S}, fun, ::Type{T}=Float64) where {T<:Real, S}
         # this assumes that z is along the second direction and t along the third
         y, z, t = points(grid)
         data = fun.(reshape(y, :, 1, 1), reshape(z, 1, :, 1), reshape(t, 1, 1, :))
         return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(T.(data), grid)
     end
 end
+
+# construct from grid
+PhysicalField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real} = PhysicalField(grid, (y,z,t)->zero(T), T)
 
 # define interface
 Base.size(::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
