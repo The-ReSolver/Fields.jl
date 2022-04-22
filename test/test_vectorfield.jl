@@ -16,11 +16,11 @@
     grid = Grid(rand(Ny), Nz, Nt, rand(Ny, Ny), rand(Ny, Ny), rand(Ny), ω, β)
 
     # initialise
-    @test typeof(VectorField(u1, v1)) == VectorField{2, Array{Float64, 3}}
-    @test typeof(VectorField(u1, v1, w1)) == VectorField{3, Array{Float64, 3}}
-    @test typeof(VectorField(grid)) == VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}}
-    @test typeof(VectorField(grid; N=2)) == VectorField{2, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}}
-    @test typeof(VectorField(grid, N=5, field_type=:Physical)) == VectorField{5, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}}
+    @test isa(VectorField(u1, v1), VectorField{2, Array{Float64, 3}})
+    @test isa(VectorField(u1, v1, w1), VectorField{3, Array{Float64, 3}})
+    @test isa(VectorField(grid), VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}})
+    @test isa(VectorField(grid; N=2), VectorField{2, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}})
+    @test isa(VectorField(grid, N=5, field_type=:physical), VectorField{5, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}})
 
     # catch errors on constructors
     @test_throws MethodError VectorField(u2, v1)

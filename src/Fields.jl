@@ -6,7 +6,7 @@ using LinearAlgebra
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!
 export FFTPlan!, IFFTPlan!
 export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
-export Grid, points
+export Grid, points, spectralfield, physicalfield, vectorfield
 export PhysicalField
 export SpectralField, norm
 export VectorField
@@ -20,5 +20,7 @@ include("vectorfields.jl")
 include("fft.jl")
 include("derivatives.jl")
 include("quadweights.jl")
+
+# TODO: type parameter of fields could just be grid since that already contains all the needed information
 
 end
