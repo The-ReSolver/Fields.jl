@@ -3,11 +3,14 @@
 
 # Just a wrapper around a N-tuple of fields
 struct VectorField{N, S} <: AbstractVector{S}
-    elements::NTuple{N, S}
+    # elements::NTuple{N, S}
+    elements::Vector{S}
 
     # construct using scalar fields as arguments
-    function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
-        new{N, S}(elements)
+    # function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
+    function VectorField(elements::Vararg{<:AbstractArray{T, D}, N}) where {T<:Number, D, N}
+        # new{N, S}(elements)
+        new{N, typeof(elements[1])}(collect(elements))
     end
 end
 
@@ -18,8 +21,12 @@ function VectorField(grid::Grid; N::Int=3, field_type::Symbol=:spectral)
     VectorField(fields...)
 end
 
+# define index style
+Base.IndexStyle(::Type{<:VectorField}) = Base.IndexLinear()
+
 # extract/set i-th component
 Base.getindex(q::VectorField, i::Int) = q.elements[i]
+Base.setindex!(q::VectorField, v, i::Int) = (q.elements[i] = v)
 
 # these might not be needed, but
 Base.size(::VectorField{N}) where {N} = (N,)
