@@ -1,7 +1,17 @@
-using Fields
+using LinearAlgebra
+using FFTW
+
+# using Fields
 using ChebUtils
 using BenchmarkTools
 using FDGrids
+
+include("../src/grid.jl")
+include("../src/physicalfield.jl")
+include("../src/spectralfield.jl")
+include("../src/vectorfields.jl")
+include("../src/fft.jl")
+include("../src/derivatives.jl")
 
 # NOTE: the workflow that works for me:
 #   - include all the source files manually

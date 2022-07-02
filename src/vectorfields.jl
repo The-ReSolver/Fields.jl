@@ -34,7 +34,7 @@ Base.length(::VectorField{N}) where {N} = N
 
 # construct a new object from an existing one
 Base.similar(q::VectorField) = VectorField(similar.(q.elements)...)
-Base.copy(q::VectorField) = VectorField([copy(q[i]) for i in 1:size(q)[1]]...)
+Base.copy(q::VectorField) = copy.(q)
 
 # inner-product and norm
 LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} =  sum(LinearAlgebra.dot(q[i], p[i]) for i = 1:N)

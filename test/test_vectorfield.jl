@@ -22,6 +22,10 @@
     @test VectorField(grid; N=2) isa VectorField{2, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}}
     @test VectorField(grid, N=5, field_type=:physical) isa VectorField{5, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}}
 
+    # test copy method
+    a = VectorField(grid)
+    @test copy(a) == a
+
     # # catch errors on constructors
     @test_throws MethodError VectorField(u2, v1)
     @test_throws MethodError VectorField(u1, v2, w1)
@@ -29,7 +33,7 @@
     @test_throws MethodError VectorField("string1", "string2")
 end
 
-@testset "Field grid methods            " begin
+@testset "Vector Field grid methods     " begin
     # initialise random variables
     Ny = rand(3:50)
     Nz = rand(3:50)

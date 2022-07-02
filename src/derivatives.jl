@@ -6,6 +6,7 @@
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # private methods for differentiation
+# TODO: would passing parents directly be faster?
 _diffy!(dudy::SpectralField{Ny, Nz, Nt, G, T}, Dy::DiffMatrix{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T} = LinearAlgebra.mul!(parent(dudy), Dy, parent(u))
 function _diffy!(dudy::SpectralField{Ny, Nz, Nt, G, T}, Dy::AbstractArray{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T}
     @views begin
@@ -40,9 +41,9 @@ function ddz!(u::SpectralField{Ny, Nz, Nt}, dudz::SpectralField{Ny, Nz, Nt}) whe
     β = u.grid.dom[2]
 
     # loop over spanwise modes multiplying by modifier
-    @views begin
-        for nz in 1:((Nz >> 1) + 1)
-            dudz[:, nz, :] .= (1im*(nz - 1)*β).*u[:, nz, :]
+    @inbounds begin
+        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+            dudz[ny, nz, nt] = (1im*(nz - 1)*β)*u[ny, nz, nt]
         end
     end
 
@@ -55,9 +56,9 @@ function d2dz2!(u::SpectralField{Ny, Nz, Nt}, d2udz2::SpectralField{Ny, Nz, Nt})
     β = u.grid.dom[2]
 
     # loop over spanwise modes multiplying by modifier
-    @views begin
-        for nz in 1:((Nz >> 1) + 1)
-            d2udz2[:, nz, :] .= (-(((nz - 1)*β)^2)).*u[:, nz, :]
+    @inbounds begin
+        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+            d2udz2[ny, nz, nt] = (-(((nz - 1)*β)^2))*u[ny, nz, nt]
         end
     end
 
@@ -70,16 +71,16 @@ function ddt!(u::SpectralField{Ny, Nz, Nt}, dudt::SpectralField{Ny, Nz, Nt}) whe
     ω = u.grid.dom[1]
 
     # loop over positive temporal modes multiplying by modifier
-    @views begin
-        for nt in 1:floor(Int, Nt/2)
-            dudt[:, :, nt] .= (1im*(nt - 1)*ω).*u[:, :, nt]
+    @inbounds begin
+        for nt in 1:floor(Int, Nt/2), nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+            dudt[ny, nz, nt] = (1im*(nt - 1)*ω)*u[ny, nz, nt]
         end
     end
 
     # loop over negative temporal modes multiplying by modifier
-    @views begin
-        for nt in floor(Int, (Nt/2) + 1):Nt
-            dudt[:, :, nt] .= (1im*(nt - 1 - Nt)*ω).*u[:, :, nt]
+    @inbounds begin
+        for nt in floor(Int, (Nt/2) + 1):Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+            dudt[ny, nz, nt] = (1im*(nt - 1 - Nt)*ω)*u[ny, nz, nt]
         end
     end
 
