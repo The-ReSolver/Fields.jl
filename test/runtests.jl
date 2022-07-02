@@ -3,7 +3,6 @@ using Random
 using ChebUtils
 using Test
 
-include("test_quadweights.jl")
 include("test_grid.jl")
 include("test_physicalfield.jl")
 include("test_spectralfield.jl")

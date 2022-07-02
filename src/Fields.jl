@@ -19,7 +19,6 @@ include("spectralfield.jl")
 include("vectorfields.jl")
 include("fft.jl")
 include("derivatives.jl")
-include("quadweights.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 
