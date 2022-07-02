@@ -1,6 +1,7 @@
 using Fields
 using Random
 using ChebUtils
+using FDGrids
 using Test
 
 include("test_grid.jl")

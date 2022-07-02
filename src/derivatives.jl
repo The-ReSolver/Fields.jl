@@ -4,12 +4,10 @@
 # These functions are defined only for the spectral fields since the
 # derivatives are obtained in the most efficient manner in this space.
 
-function ddy!(u::SpectralField{Ny, Nz, Nt},
-                dudy::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    # take differentiation matrix from grid
-    Dy = u.grid.Dy[1]
-
-    # multiply field at every nz and nt
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# private methods for differentiation
+_diffy!(dudy::SpectralField{Ny, Nz, Nt, G, T}, Dy::DiffMatrix{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T} = LinearAlgebra.mul!(parent(dudy), Dy, parent(u))
+function _diffy!(dudy::SpectralField{Ny, Nz, Nt, G, T}, Dy::AbstractArray{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T}
     @views begin
         for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
             LinearAlgebra.mul!(dudy[:, nz, nt], Dy, u[:, nz, nt])
@@ -18,21 +16,8 @@ function ddy!(u::SpectralField{Ny, Nz, Nt},
 
     return dudy
 end
-
-function ddy!(u::VectorField{N, S}, dudy::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
-    for i in 1:N
-        ddy!(u[i], dudy[i])
-    end
-
-    return dudy
-end
-
-function d2dy2!(u::SpectralField{Ny, Nz, Nt},
-                d2udy2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    # take second differentiation matrix from grid
-    Dy2 = u.grid.Dy[2]
-
-    # multiply field at every nz and nt
+_ddiffy!(d2udy2::SpectralField{Ny, Nz, Nt, G, T}, Dy2::DiffMatrix{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T} = LinearAlgebra.mul!(parent(d2udy2), Dy2, parent(u))
+function _ddiffy!(d2udy2::SpectralField{Ny, Nz, Nt, G, T}, Dy2::AbstractArray{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T}
     @views begin
         for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
             LinearAlgebra.mul!(d2udy2[:, nz, nt], Dy2, u[:, nz, nt])
@@ -42,16 +27,15 @@ function d2dy2!(u::SpectralField{Ny, Nz, Nt},
     return d2udy2
 end
 
-function d2dy2!(u::VectorField{N, S}, d2udy2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
-    for i in 1:N
-        d2dy2!(u[i], d2udy2[i])
-    end
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# exposed interface for differentiation
+ddy!(u::SpectralField{Ny, Nz, Nt}, dudy::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = _diffy!(dudy, u.grid.Dy[1], u)
+ddy!(u::VectorField{N, S}, dudy::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = ddy!.(u, dudy)
 
-    return d2udy2
-end
+d2dy2!(u::SpectralField{Ny, Nz, Nt}, d2udy2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = _ddiffy!(d2udy2, u.grid.Dy[2], u)
+d2dy2!(u::VectorField{N, S}, d2udy2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = d2dy2!.(u, d2udy2)
 
-function ddz!(u::SpectralField{Ny, Nz, Nt},
-                dudz::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function ddz!(u::SpectralField{Ny, Nz, Nt}, dudz::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract spanwise domain info from grid
     β = u.grid.dom[2]
 
@@ -64,17 +48,9 @@ function ddz!(u::SpectralField{Ny, Nz, Nt},
 
     return dudz
 end
+ddz!(u::VectorField{N, S}, dudz::VectorField{N, S}) where {N, S} = ddz!.(u, dudz)
 
-function ddz!(u::VectorField{N, S}, dudz::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
-    for i in 1:N
-        ddz!(u[i], dudz[i])
-    end
-
-    return dudz
-end
-
-function d2dz2!(u::SpectralField{Ny, Nz, Nt},
-                d2udz2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function d2dz2!(u::SpectralField{Ny, Nz, Nt}, d2udz2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract spanwise domain info from grid
     β = u.grid.dom[2]
 
@@ -87,17 +63,9 @@ function d2dz2!(u::SpectralField{Ny, Nz, Nt},
 
     return d2udz2
 end
+d2dz2!(u::VectorField{N, S}, d2udz2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = d2dz2!.(u, d2udz2)
 
-function d2dz2!(u::VectorField{N, S}, d2udz2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
-    for i in 1:N
-        d2ddz2!(u[i], d2udz2[i])
-    end
-
-    return d2udz2
-end
-
-function ddt!(u::SpectralField{Ny, Nz, Nt},
-                dudt::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function ddt!(u::SpectralField{Ny, Nz, Nt}, dudt::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract temporal domain info from grid
     ω = u.grid.dom[1]
 
@@ -117,11 +85,4 @@ function ddt!(u::SpectralField{Ny, Nz, Nt},
 
     return dudt
 end
-
-function ddt!(u::VectorField{N, S}, dudt::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
-    for i in 1:N
-        ddt!(u[i], dudt[i])
-    end
-
-    return dudt
-end
+ddt!(u::VectorField{N, S}, dudt::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = ddt!.(u, dudt)

@@ -9,8 +9,9 @@
 
     # initialise original function field
     Ny = 50; Nz = 50; Nt = 50
-    Dy = chebdiff(Ny); Dy2 = chebddiff(Ny)
     y = chebpts(Ny)
+    # Dy = chebdiff(Ny); Dy2 = chebddiff(Ny)
+    Dy = DiffMatrix(y, 5, 1); Dy2 = DiffMatrix(y, 5, 2)
     grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Float64, Ny), 1.0, 1.0)
     u = physicalfield(grid, u_fun)
     û = spectralfield(grid)
