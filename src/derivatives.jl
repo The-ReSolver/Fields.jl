@@ -6,8 +6,7 @@
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # private methods for differentiation
-# TODO: would passing parents directly be faster?
-_diffy!(dudy::SpectralField{Ny, Nz, Nt, G, T}, Dy::DiffMatrix{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T} = LinearAlgebra.mul!(parent(dudy), Dy, parent(u))
+_diffy!(dudy::SpectralField{Ny, Nz, Nt, G, T}, Dy::DiffMatrix{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T} = LinearAlgebra.mul!(dudy, Dy, u)
 function _diffy!(dudy::SpectralField{Ny, Nz, Nt, G, T}, Dy::AbstractArray{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T}
     @views begin
         for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
@@ -17,7 +16,7 @@ function _diffy!(dudy::SpectralField{Ny, Nz, Nt, G, T}, Dy::AbstractArray{T}, u:
 
     return dudy
 end
-_ddiffy!(d2udy2::SpectralField{Ny, Nz, Nt, G, T}, Dy2::DiffMatrix{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T} = LinearAlgebra.mul!(parent(d2udy2), Dy2, parent(u))
+_ddiffy!(d2udy2::SpectralField{Ny, Nz, Nt, G, T}, Dy2::DiffMatrix{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T} = LinearAlgebra.mul!(d2udy2, Dy2, u)
 function _ddiffy!(d2udy2::SpectralField{Ny, Nz, Nt, G, T}, Dy2::AbstractArray{T}, u::SpectralField{Ny, Nz, Nt, G, T}) where {Ny, Nz, Nt, G, T}
     @views begin
         for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)

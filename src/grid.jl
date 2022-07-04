@@ -2,7 +2,6 @@
 # important information about how to perform operations on a given grid, such
 # as inner product/norms and derivatives.
 
-# TODO: benchmark the use of type hints in type parameters
 struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix{T}}
     y::Vector{T}
     Dy::NTuple{2, M}
