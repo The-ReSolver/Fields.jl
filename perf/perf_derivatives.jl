@@ -13,6 +13,8 @@ include("../src/vectorfields.jl")
 include("../src/fft.jl")
 include("../src/derivatives.jl")
 
+# TODO: see if th workflow can be improved by adding modules directly via github instead of the registry
+
 # NOTE: the workflow that works for me:
 #   - include all the source files manually
 #   - add and import all the required modules for those source files

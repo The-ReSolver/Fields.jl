@@ -61,7 +61,7 @@ end
         Ny = 64; Nz = 64; Nt = 64
         y = chebpts(Ny)
         Dy = chebdiff(Ny)
-        Dy2 = rand(Float64, (Ny, Ny))
+        Dy2 = chebddiff(Ny)
         ws = chebws(Dy)
         ω = 1.0
         β = 1.0
