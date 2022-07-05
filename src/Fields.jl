@@ -3,8 +3,6 @@ module Fields
 using FFTW
 using LinearAlgebra
 
-using FDGrids
-
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!
 export FFTPlan!, IFFTPlan!
 export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
