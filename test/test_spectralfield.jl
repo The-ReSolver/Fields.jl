@@ -79,5 +79,5 @@ end
         FFT(spec_norm, phys_norm)
 
         # test norm
-        @test norm(spec_norm) ≈ sqrt(0.4185698256) rtol=1e-5
+        @test norm(spec_norm)^2 ≈ 33.04894874 rtol=1e-5
 end
