@@ -21,6 +21,9 @@ function VectorField(grid::Grid; N::Int=3, field_type::Symbol=:spectral)
     VectorField(fields...)
 end
 
+# outer constructor based on grid and functions
+VectorField(grid::Grid, funcs::Vararg{<:Function}) = VectorField([PhysicalField(grid, funcs[i]) for i in 1:length(funcs)]...)
+
 # define index style
 Base.IndexStyle(::Type{<:VectorField}) = Base.IndexLinear()
 
