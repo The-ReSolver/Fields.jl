@@ -87,3 +87,33 @@ end
     # test broadcasting
     @test typeof(a .+ b) == typeof(a)
 end
+
+@testset "Vector Field Norm             " begin
+    # initialise grid variables
+    Ny = 64; Nz = 64; Nt = 64
+    y = chebpts(Ny)
+    Dy = chebdiff(Ny)
+    Dy2 = chebddiff(Ny)
+    ws = chebws(Dy)
+    ω = 1.0
+    β = 1.0
+
+    # initialise grid
+    grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+
+    # definition of fields as functions
+    u_func(y, z, t) = (1 - y^2)*exp(cos(z))*atan(sin(t))
+    v_func(y, z, t) = (cos(π*y) + 1)*exp(sin(z))*cos(sin(t))
+    w_func(y, z, t) = sin(atan(y))*(cos(z)/(sin(z)^2 + 1))*exp(cos(t))
+
+    # initialise fields
+    vec_p = VectorField(PhysicalField(grid, u_func),
+                        PhysicalField(grid, v_func),
+                        PhysicalField(grid, w_func))
+    vec_s = VectorField(grid)
+    FFT! = FFTPlan!(grid; flags=ESTIMATE)
+    FFT!(vec_s, vec_p)
+
+    # test norm
+    @test norm(vec_s)^2 ≈ 33.04894874 + 165.2156694 + 13.65625483 rtol=1e-5
+end

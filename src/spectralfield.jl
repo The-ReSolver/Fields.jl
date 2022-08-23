@@ -36,7 +36,7 @@ function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz
     end
 
     # loop over positive temporal modes for mean spanwise mode
-    for nt in 1:((Nt >> 1) + 1), ny in 1:Ny
+    for nt in 2:((Nt >> 1) + 1), ny in 1:Ny
         sum += p.grid.ws[ny]*real(p[ny, 1, nt]*conj(q[ny, 1, nt]))
     end
 

@@ -1,4 +1,4 @@
-@testset "FFT Transforms                " begin
+@testset "FFT Transforms Reversible     " begin
     # randon signal
     Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
     ω = abs(randn())
