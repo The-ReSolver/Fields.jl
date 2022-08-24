@@ -45,7 +45,11 @@ function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz
         sum += 0.5*p.grid.ws[ny]*real(p[ny, 1, 1]*q[ny, 1, 1])
     end
 
-    return 8*(π^2)*sum
+    # extract domain data for scaling
+    β = get_β(get_grid(p))
+    ω = get_ω(get_grid(p))
+
+    return ((8π^2)/(β*ω))*sum
 end
 LinearAlgebra.norm(p::SpectralField) = sqrt(LinearAlgebra.dot(p, p))
 

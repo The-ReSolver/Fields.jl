@@ -63,14 +63,14 @@ end
         Dy = chebdiff(Ny)
         Dy2 = chebddiff(Ny)
         ws = chebws(Dy)
-        ω = 1.0
-        β = 1.0
+        ω = abs(rand())
+        β = abs(rand())
 
         # initialise grid
-        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, typeof(ω)(β))
 
         # initialise function
-        func(y, z, t) = (1 - y^2)*exp(cos(z))*atan(sin(t))
+        func(y, z, t) = (1 - y^2)*exp(cos(β*z))*cos(sin(ω*t))
 
         # initialise fields
         phys_norm = PhysicalField(grid, func)
@@ -79,5 +79,5 @@ end
         FFT(spec_norm, phys_norm)
 
         # test norm
-        @test norm(spec_norm)^2 ≈ 33.04894874 rtol=1e-5
+        @test norm(spec_norm)^2 ≈ 58.74334913/(β*ω) rtol=1e-5
 end
