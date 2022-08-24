@@ -2,6 +2,8 @@
 # important information about how to perform operations on a given grid, such
 # as inner product/norms and derivatives.
 
+# TODO: add fallback so that types of ω and β are forced to be the same, or just allow them to be different types
+
 struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix{T}}
     y::Vector{T}
     Dy::NTuple{2, M}
@@ -9,19 +11,19 @@ struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix{T}}
     dom::NTuple{2, T}
 
     function Grid(y::Vector{T}, Nz::Int, Nt::Int, Dy::AbstractMatrix{T}, Dy2::AbstractMatrix{T}, ws::Vector{T}, ω::T, β::T) where {T<:Real}
-        new{(size(y)[1], Nz, Nt), T, typeof(Dy)}(y, (Dy, Dy2), ws, (ω, β))
+        new{(size(y)[1], Nz, Nt), T, typeof(Dy)}(y, (Dy, Dy2), ws, (β, ω))
     end
 end
 
 # get points
-points(g::Grid{S}) where {S} = (g.y, ntuple(i -> (0:(S[i + 1] - 1))/(S[i + 1])*2π, 2)...)
+points(g::Grid{S}) where {S} = (g.y, ntuple(i -> (0:(S[i + 1] - 1))/(S[i + 1])*(2π/g.dom[i]), 2)...)
 
 # get other fields
 get_Dy(g::Grid) = g.Dy[1]
 get_Dy2(g::Grid) = g.Dy[2]
 get_ws(g::Grid) = g.ws
-get_ω(g::Grid) = g.dom[1]
-get_β(g::Grid) = g.dom[2]
+get_β(g::Grid) = g.dom[1]
+get_ω(g::Grid) = g.dom[2]
 
 # number of points in grid
 Base.size(::Grid{S}) where {S} = S

@@ -12,7 +12,7 @@ d2dy2!(u::VectorField{N, S}, d2udy2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<
 
 function ddz!(u::SpectralField{Ny, Nz, Nt}, dudz::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract spanwise domain info from grid
-    β = u.grid.dom[2]
+    β = get_β(get_grid(u))
 
     # loop over spanwise modes multiplying by modifier
     @inbounds begin
@@ -27,7 +27,7 @@ ddz!(u::VectorField{N, S}, dudz::VectorField{N, S}) where {N, S} = ddz!.(u, dudz
 
 function d2dz2!(u::SpectralField{Ny, Nz, Nt}, d2udz2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract spanwise domain info from grid
-    β = u.grid.dom[2]
+    β = get_β(get_grid(u))
 
     # loop over spanwise modes multiplying by modifier
     @inbounds begin
@@ -42,7 +42,7 @@ d2dz2!(u::VectorField{N, S}, d2udz2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<
 
 function ddt!(u::SpectralField{Ny, Nz, Nt}, dudt::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract temporal domain info from grid
-    ω = u.grid.dom[1]
+    ω = get_ω(get_grid(u))
 
     # loop over positive temporal modes multiplying by modifier
     @inbounds begin

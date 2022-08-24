@@ -60,15 +60,6 @@ end
             eval(:(@test grideq($i, $j)))
         end
     end
-
-    # test grid field extraction
-    for i in [a, b, c]
-        eval(:(@test get_Dy($i) == $grid.Dy[1]))
-        eval(:(@test get_Dy2($i) == $grid.Dy[2]))
-        eval(:(@test get_ws($i) == $grid.ws))
-        eval(:(@test get_ω($i) == $grid.dom[1]))
-        eval(:(@test get_β($i) == $grid.dom[2]))
-    end
 end
 
 @testset "Vector Field Broadcasting     " begin
