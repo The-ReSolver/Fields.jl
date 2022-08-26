@@ -1,19 +1,18 @@
-# TODO: test with functions over different domains
 @testset "Field Derivatives             " begin
     # define functions
-    u_fun(y, z, t) = (1 - y^2)*exp(cos(z))*atan(sin(t))
-    dudy_fun(y, z, t) = -2*y*exp(cos(z))*atan(sin(t))
-    d2udy2_fun(y, z, t) = -2*exp(cos(z))*atan(sin(t))
-    dudz_fun(y, z, t) = -(1 - y^2)*sin(z)*exp(cos(z))*atan(sin(t))
-    d2udz2_fun(y, z, t) = (1 - y^2)*(sin(z)^2 - cos(z))*exp(cos(z))*atan(sin(t))
-    dudt_fun(y, z, t) = ((1 - y^2)*exp(cos(z))*cos(t))/(sin(t)^2 + 1)
+    u_fun(y, z, t) = (1 - y^2)*exp(cos(5.8*z))*atan(sin(t))
+    dudy_fun(y, z, t) = -2*y*exp(cos(5.8*z))*atan(sin(t))
+    d2udy2_fun(y, z, t) = -2*exp(cos(5.8*z))*atan(sin(t))
+    dudz_fun(y, z, t) = -5.8*(1 - y^2)*sin(5.8*z)*exp(cos(5.8*z))*atan(sin(t))
+    d2udz2_fun(y, z, t) = (5.8^2)*(1 - y^2)*(sin(5.8*z)^2 - cos(5.8*z))*exp(cos(5.8*z))*atan(sin(t))
+    dudt_fun(y, z, t) = ((1 - y^2)*exp(cos(5.8*z))*cos(t))/(sin(t)^2 + 1)
 
     # initialise original function field
     Ny = 50; Nz = 50; Nt = 50
     y = chebpts(Ny)
     # Dy = chebdiff(Ny); Dy2 = chebddiff(Ny)
     Dy = DiffMatrix(y, 5, 1); Dy2 = DiffMatrix(y, 5, 2)
-    grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Float64, Ny), 1.0, 1.0)
+    grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Float64, Ny), 1.0, 5.8)
     u = physicalfield(grid, u_fun)
     û = spectralfield(grid)
     FFT = FFTPlan!(u, flags=ESTIMATE)
