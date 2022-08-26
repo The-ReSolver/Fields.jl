@@ -2,16 +2,15 @@
 # important information about how to perform operations on a given grid, such
 # as inner product/norms and derivatives.
 
-# TODO: add fallback so that types of ω and β are forced to be the same, or just allow them to be different types
-
-struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix{T}}
+struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix}
     y::Vector{T}
     Dy::NTuple{2, M}
     ws::Vector{T}
     dom::NTuple{2, T}
 
-    function Grid(y::Vector{T}, Nz::Int, Nt::Int, Dy::AbstractMatrix{T}, Dy2::AbstractMatrix{T}, ws::Vector{T}, ω::T, β::T) where {T<:Real}
-        new{(size(y)[1], Nz, Nt), T, typeof(Dy)}(y, (Dy, Dy2), ws, (β, ω))
+    function Grid(y::Vector{<:Real}, Nz::Int, Nt::Int, Dy::AbstractMatrix{<:Real}, Dy2::AbstractMatrix{<:Real}, ws::Vector{<:Real}, ω::Real, β::Real)
+        T = eltype(y)
+        new{(size(y)[1], Nz, Nt), T, typeof(T.(Dy))}(y, (T.(Dy), T.(Dy2)), T.(ws), (T(β), T(ω)))
     end
 end
 

@@ -5,17 +5,13 @@
     Nt = rand(3:50)
     randD = rand([-2, -1, 1, 2])
     y = rand(Float64, Ny)
-    D1 = rand(Float64, (Ny, Ny))
-    D2 = rand(Float64, (Ny + randD, Ny + randD))
-    D_sec = rand(Float64, (Ny, Ny))
-    w1 = rand(Float64, Ny)
-    w2 = rand(Float64, Ny + randD)
+    D1 = rand(Float32, (Ny, Ny))
+    D2 = rand(Float16, (Ny + randD, Ny + randD))
+    D_sec = rand(Float32, (Ny, Ny))
+    w1 = rand(Int128, Ny)
+    w2 = rand(Float16, Ny + randD)
     ω = abs(randn())
-    β = abs(randn())
-
-    # catch errors
-    @test_throws MethodError Grid(y, Nz, Nt, D1, D_sec, rand(Int, Ny), ω, β)
-    @test_throws MethodError Grid(y, Nz, Nt, rand(Int, (Ny, Ny)), D_sec, w1, ω, β)
+    β = π
 
     # test point generation
     g1 = Grid(y, Nz, Nt, D1, D_sec, w1, ω, β)
@@ -28,11 +24,11 @@
     @test size(g1) == (Ny, Nz, Nt)
 
     # test field extraction interface
-    @test get_Dy(g1) == D1
-    @test get_Dy2(g1) == D_sec
-    @test get_ws(g1) == w1
-    @test get_ω(g1) == ω
-    @test get_β(g1) == β
+    @test get_Dy(g1) == convert(Matrix{eltype(y)}, D1)
+    @test get_Dy2(g1) == convert(Matrix{eltype(y)}, D_sec)
+    @test get_ws(g1) == convert(Vector{eltype(y)}, w1)
+    @test get_ω(g1) == eltype(y)(ω)
+    @test get_β(g1) == eltype(y)(β)
 
     # test comparison
     g2 = Grid(y, Nz, Nt + 1, D1, D_sec, w1, ω, β)
