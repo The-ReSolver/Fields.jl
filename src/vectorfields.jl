@@ -47,7 +47,7 @@ LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
 get_grid(q::VectorField) = get_grid(q[1])
 
 # define union type of field types
-AllFields = Union{SpectralField, PhysicalField, VectorField}
+const AllFields = Union{SpectralField, PhysicalField, VectorField}
 
 # method for grid comparison of fields
 grideq(U::AllFields, V::AllFields) = (get_grid(U) == get_grid(V))

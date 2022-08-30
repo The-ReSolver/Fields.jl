@@ -46,8 +46,8 @@ function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz
     end
 
     # extract domain data for scaling
-    β = get_β(get_grid(p))
-    ω = get_ω(get_grid(p))
+    β = get_β(p)
+    ω = get_ω(p)
 
     return ((8π^2)/(β*ω))*sum
 end

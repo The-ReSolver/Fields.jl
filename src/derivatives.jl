@@ -4,15 +4,15 @@
 # These functions are defined only for the spectral fields since the
 # derivatives are obtained in the most efficient manner in this space.
 
-ddy!(u::SpectralField{Ny, Nz, Nt}, dudy::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = LinearAlgebra.mul!(dudy, u.grid.Dy[1], u)
+ddy!(u::SpectralField{Ny, Nz, Nt}, dudy::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = LinearAlgebra.mul!(dudy, get_Dy(u), u)
 ddy!(u::VectorField{N, S}, dudy::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = ddy!.(u, dudy)
 
-d2dy2!(u::SpectralField{Ny, Nz, Nt}, d2udy2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = LinearAlgebra.mul!(d2udy2, u.grid.Dy[2], u)
+d2dy2!(u::SpectralField{Ny, Nz, Nt}, d2udy2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = LinearAlgebra.mul!(d2udy2, get_Dy2(u), u)
 d2dy2!(u::VectorField{N, S}, d2udy2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = d2dy2!.(u, d2udy2)
 
 function ddz!(u::SpectralField{Ny, Nz, Nt}, dudz::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract spanwise domain info from grid
-    β = get_β(get_grid(u))
+    β = get_β(u)
 
     # loop over spanwise modes multiplying by modifier
     @inbounds begin
@@ -27,7 +27,7 @@ ddz!(u::VectorField{N, S}, dudz::VectorField{N, S}) where {N, S} = ddz!.(u, dudz
 
 function d2dz2!(u::SpectralField{Ny, Nz, Nt}, d2udz2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract spanwise domain info from grid
-    β = get_β(get_grid(u))
+    β = get_β(u)
 
     # loop over spanwise modes multiplying by modifier
     @inbounds begin
@@ -42,7 +42,7 @@ d2dz2!(u::VectorField{N, S}, d2udz2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<
 
 function ddt!(u::SpectralField{Ny, Nz, Nt}, dudt::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # extract temporal domain info from grid
-    ω = get_ω(get_grid(u))
+    ω = get_ω(u)
 
     # loop over positive temporal modes multiplying by modifier
     @inbounds begin
