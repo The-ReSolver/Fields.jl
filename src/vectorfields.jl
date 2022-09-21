@@ -17,7 +17,7 @@ end
 # outer constructor based off grid
 function VectorField(grid::Grid; N::Int=3, field_type::Symbol=:spectral)
     field_constructor_expr = Expr(:call, Symbol(field_type, :field), grid)
-    fields = eval(:([$field_constructor_expr for i in 1:$N]))
+    fields = eval(:([$field_constructor_expr for _ in 1:$N]))
     VectorField(fields...)
 end
 
