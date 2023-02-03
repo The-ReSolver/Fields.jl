@@ -2,6 +2,8 @@ module Fields
 
 using FFTW
 using LinearAlgebra
+using IniFile
+using Mmap
 
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!
 export FFTPlan!, IFFTPlan!
@@ -13,12 +15,15 @@ export VectorField
 export quadweights
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 
+export loadDNS
+
 include("grid.jl")
 include("physicalfield.jl")
 include("spectralfield.jl")
 include("vectorfields.jl")
 include("fft.jl")
 include("derivatives.jl")
+include("dns2field.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 

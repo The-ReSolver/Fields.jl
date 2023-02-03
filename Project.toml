@@ -5,11 +5,13 @@ version = "0.5.2"
 
 [deps]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+IniFile = "83e8ac13-25f8-5344-8a64-a9f2b223428f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Mmap = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [extras]
-FDGrids = "28eb41cd-435a-4ede-8bdb-f2685fc03e8c"
 ChebUtils = "5c307136-fb89-411d-b568-fbf16049e5ad"
+FDGrids = "28eb41cd-435a-4ede-8bdb-f2685fc03e8c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
