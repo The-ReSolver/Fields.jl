@@ -21,7 +21,7 @@ end
 function DNSData(loc::String)
     ini = _read_params(loc*"params")
     snaps = readdir(loc)[1:end - 1]
-    DNSData{_fetch_param(ini, :Ny, Int), _fetch_param(ini, :Nz, Int), length(snaps)}(loc, ini, snaps)
+    DNSData{_fetch_param(ini, :Ny, Int), _fetch_param(ini, :Nz, Int), length(snaps)}(loc, ini, _sort_snaps!(snaps))
 end
 loadDNS(loc) = DNSData(string(loc))
 
@@ -45,21 +45,39 @@ function Base.getproperty(data::DNSData{Ny, Nz, Nt}, field::Symbol) where {Ny, N
         sf = getproperty(data, :stretch_factor)
         return tanh.(sf*((0:Ny - 1)*step .- 0.5))/tanh(0.5*sf)
     elseif field === :snaps
-        return sort!(tryparse.(Float64, data.snaps_string))
+        return tryparse.(Float64, data.snaps_string)
     else
         return getfield(data, field)
     end
 end
 
+# Base.iterate(data::DNSData{Ny, Nz}) where {Ny, Nz} = (Snapshot(data.loc*data.snaps_string[0]*"/", Ny, Nz), 1)
+Base.iterate(data::DNSData{Ny, Nz, Nt}, state::Int=1) where {Ny, Nz, Nt} = state > Nt ? nothing : (Snapshot(data.loc*data.snaps_string[state]*"/", Ny, Nz), state + 1)
+Base.eltype(::Type{DNSData}) = Snapshot
+Base.eltype(::DNSData) = eltype(DNSData)
+Base.length(data::DNSData) = length(data.snaps_string)
+
 function Base.getindex(data::DNSData{Ny, Nz}, t::Real) where {Ny, Nz}
-    i = findall(x->x==t, data.snaps)
-    length(i) == 0 ? throw(ArgumentError(string("Snapsot not available at time ", t))) : Snapshot(data.loc*data.snaps_string[i[1]]*"/", Ny, Nz)
+    i = findfirst(x->x==t, data.snaps)
+    isnothing(i) ? throw(ArgumentError(string("Snapsot not available at time ", t))) : Snapshot(data.loc*data.snaps_string[i[1]]*"/", Ny, Nz)
 end
 
 _read_params(loc::String) = read(Inifile(), loc)
 _fetch_param(ini::Inifile, param::Symbol, ::Type{T}=Float64) where {T} = tryparse(T, strip(get(ini, "params", string(param)), ';'))
 _getparamfield(data::DNSData, field::Symbol) = _fetch_param(getfield(data, :params), field)
+function _sort_snaps!(snaps::Vector{String})
+    # create a sorted list of snaps
+    float_snaps = tryparse.(Float64, snaps)
+    ordered_snaps = sort(float_snaps)
 
+    # loop over the sorted snaps finding where they were and assigning to permutation vector
+    p = zeros(Int, length(ordered_snaps))
+    for (i, t) in enumerate(ordered_snaps)
+        p[i] = findfirst(x->x==t, float_snaps)
+    end
+
+    return permute!(snaps, p)
+end
 
 
 # -----------------------------------------------------------------------------
@@ -78,6 +96,7 @@ end
 function Snapshot(loc::String, Ny::Int, Nz::Int)
     # extract metadata
     (_, t, K, dKdt) = open(loc*"metadata") do f; tryparse.(Float64, lstrip.(x->isnothing(tryparse(Int, string(x))), readlines(f))); end
+    t = round.(t; digits=6); K = round.(K; digits=6); dKdt = round.(dKdt; digits=6)
 
     # extract velocity field
     U = zeros(Float64, 3, Ny, Nz)
@@ -112,4 +131,7 @@ Base.iterate(::Snapshot, ::Val{:done}) = nothing
 
 
 function dns2field!(U::SpectralField, data::DNSData) end
-function _dns2physicalfield!(U::PhysicalField, data::DNSData) end
+
+function _dns2physicalfield!(U::VectorField{3, PhysicalField}, data::DNSData)
+    # * I need loop over each snapshot 
+end
