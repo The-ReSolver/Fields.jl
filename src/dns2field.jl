@@ -109,9 +109,11 @@ function Base.getproperty(snap::Snapshot{Ny, Nz}, field::Symbol) where {Ny, Nz}
     if field === :omega
         omega = zeros(Float64, Ny, Nz)
         open(snap.loc*"omega") do f; omega .= mmap(f, Matrix{Float64}, (Ny, Nz)); end
+        return omega
     elseif field === :psi
         psi = zeros(Float64, Ny, Nz)
         open(snap.loc*"psi") do f; psi .= mmap(f, Matrix{Float64}, (Ny, Nz)); end
+        return psi
     else
         getfield(snap, field)
     end
@@ -130,8 +132,23 @@ Base.iterate(::Snapshot, ::Val{:done}) = nothing
 # -----------------------------------------------------------------------------
 
 
-function dns2field!(U::SpectralField, data::DNSData) end
+dns2field!(U::VectorField{3, S}, u::VectorField{3, P}, FFT!::FFTPlan!{Ny, Nz, Nt}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}} =
+        FFT!(U, _dns2field!(u, data))
+function dns2field!(data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), data.ω, data.β)
+    u = VectorField(grid; field_type=:physical)
+    U = VectorField(grid)
+    FFT! = FFTPlan!(u)
+    dns2field!(U, u, FFT!, data)
+end
 
-function _dns2physicalfield!(U::VectorField{3, PhysicalField}, data::DNSData)
-    # * I need loop over each snapshot 
+function dns2field!(U::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, P<:PhysicalField{Ny, Nz, Nt}}
+    # loop over snaps and assign each velocity component
+    for (i, snaps) in enumerate(data)
+        U[1][:, :, i] .= snaps[1]
+        U[2][:, :, i] .= snaps[2]
+        U[3][:, :, i] .= snaps[3]
+    end
+
+    return U
 end
