@@ -62,7 +62,7 @@ end
         y = chebpts(Ny)
         Dy = chebdiff(Ny)
         Dy2 = chebddiff(Ny)
-        ws = chebws(Dy)
+        ws = chebws(Ny)
         ω = abs(rand())
         β = abs(rand())
 

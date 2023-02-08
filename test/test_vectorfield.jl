@@ -92,7 +92,7 @@ end
     y = chebpts(Ny)
     Dy = chebdiff(Ny)
     Dy2 = chebddiff(Ny)
-    ws = chebws(Dy)
+    ws = chebws(Ny)
     ω = 1.0
     β = 1.0
 
