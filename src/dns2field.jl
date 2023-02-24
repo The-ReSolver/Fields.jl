@@ -18,7 +18,8 @@ struct DNSData{Ny, Nz, Nt}
     snaps_string::Vector{String}
 end
 
-function DNSData(loc::String)
+function DNSData(loc::AbstractString)
+    loc = string(loc)
     ini = _read_params(loc*"params")
     snaps = readdir(loc)[1:end - 1]
     DNSData{_fetch_param(ini, :Ny, Int), _fetch_param(ini, :Nz, Int), length(snaps)}(loc, ini, _sort_snaps!(snaps))
@@ -131,12 +132,12 @@ Base.iterate(::Snapshot, ::Val{:done}) = nothing
 # how to manipulate
 # -----------------------------------------------------------------------------
 
-
+dns2field(loc::AbstractString) = dns2field(DNSData(loc))
 function dns2field(data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), data.ω, data.β)
     u = VectorField(grid; field_type=:physical)
     U = VectorField(grid)
-    FFT! = FFTPlan!(u)
+    FFT! = FFTPlan!(grid)
     return dns2field!(U, u, FFT!, data)
 end
 
