@@ -132,15 +132,18 @@ Base.iterate(::Snapshot, ::Val{:done}) = nothing
 # -----------------------------------------------------------------------------
 
 
-dns2field!(U::VectorField{3, S}, u::VectorField{3, P}, FFT!::FFTPlan!{Ny, Nz, Nt}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}} =
-        FFT!(U, _dns2field!(u, data))
-function dns2field!(data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function dns2field(data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), data.ω, data.β)
     u = VectorField(grid; field_type=:physical)
     U = VectorField(grid)
     FFT! = FFTPlan!(u)
-    dns2field!(U, u, FFT!, data)
+    return dns2field!(U, u, FFT!, data)
 end
+
+dns2field!(U::VectorField{3, S},
+            u::VectorField{3, P},
+            FFT!::FFTPlan!{Ny, Nz, Nt},
+            data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}} = FFT!(U, dns2field!(u, data))
 
 function dns2field!(U::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, P<:PhysicalField{Ny, Nz, Nt}}
     # loop over snaps and assign each velocity component
