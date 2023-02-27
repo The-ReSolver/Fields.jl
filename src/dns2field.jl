@@ -7,6 +7,16 @@
 # TODO: maybe change DNSData to be a subtype of abstract vector??? (simplet interface)
 
 # -----------------------------------------------------------------------------
+# Custom error for indexing at incorrect times
+# -----------------------------------------------------------------------------
+struct SnapshotTimeError{N, T<:Real} <:Exception; times::Tuple{T, Union{Nothing, T}}; end
+SnapshotTimeError(time::Real) = SnapshotTimeError{1, typeof(time)}((time, nothing))
+SnapshotTimeError(times::Vararg{Real, 2}) = SnapshotTimeError{2, eltype(times)}(times)
+Base.showerror(io::IO, e::SnapshotTimeError{1}) = print(io, "Snapshots do not exist at: ", e.times[1])
+Base.showerror(io::IO, e::SnapshotTimeError{2}) = print(io, "Snapshots do not exist between ", e.times[1], " - ", e.times[2])
+
+
+# -----------------------------------------------------------------------------
 # Interface for a set of spatiotemporal DNS data stored in a simulation
 # directory.
 # -----------------------------------------------------------------------------
@@ -60,14 +70,14 @@ Base.size(::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
 
 function Base.getindex(data::DNSData{Ny, Nz}, t::Real) where {Ny, Nz}
     i = findfirst(x->x==t, data.snaps)
-    isnothing(i) ? throw(ArgumentError(string("Snapsot not available at time ", t))) : Snapshot(data.loc*data.snaps_string[i]*"/", Ny, Nz)
+    isnothing(i) ? throw(SnapshotTimeError(t)) : Snapshot(data.loc*data.snaps_string[i]*"/", Ny, Nz)
 end
 Base.getindex(data::DNSData, ::Nothing) = data
 Base.getindex(data::DNSData, range::NTuple{2, Real}) = getindex(data, range...)
 function Base.getindex(data::DNSData{Ny, Nz}, start::Real, stop::Real) where {Ny, Nz}
     i_start = findfirst(x->x>=start, data.snaps)
     i_stop = findlast(x->x<=stop, data.snaps)
-    isnothing(i_start) || isnothing(i_stop) ? throw(ArgumentError(string("Invalid time range: ", t_start, ":", t_stop))) : DNSData{Ny, Nz, length(data.snaps_string[i_start:i_stop])}(data.loc, data.params, data.snaps_string[i_start:i_stop])
+    isnothing(i_start) || isnothing(i_stop) ? throw(SnapshotTimeError(start, stop)) : DNSData{Ny, Nz, length(data.snaps_string[i_start:i_stop])}(data.loc, data.params, data.snaps_string[i_start:i_stop])
 end
 Base.firstindex(data::DNSData) = tryparse(Float64, data.snaps_string[firstindex(data.snaps_string)])
 Base.lastindex(data::DNSData) = tryparse(Float64, data.snaps_string[lastindex(data.snaps_string)])
