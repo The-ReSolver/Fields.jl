@@ -4,7 +4,7 @@
 # This will allow the outputs of the DNS to be directly loaded into Julia for
 # manipulation with the rest of the code.
 
-# TODO: add ability for DNS simulation to simulate a certain amount of time before it begins writing data
+# TODO: maybe change DNSData to be a subtype of abstract vector??? (simplet interface)
 
 # -----------------------------------------------------------------------------
 # Interface for a set of spatiotemporal DNS data stored in a simulation
@@ -18,8 +18,7 @@ struct DNSData{Ny, Nz, Nt}
     snaps_string::Vector{String}
 end
 
-function DNSData(loc::AbstractString)
-    loc = string(loc)
+function DNSData(loc::String)
     ini = _read_params(loc*"params")
     snaps = readdir(loc)[1:end - 1]
     DNSData{_fetch_param(ini, :Ny, Int), _fetch_param(ini, :Nz, Int), length(snaps)}(loc, ini, _sort_snaps!(snaps))
@@ -56,12 +55,22 @@ end
 Base.iterate(data::DNSData{Ny, Nz, Nt}, state::Int=1) where {Ny, Nz, Nt} = state > Nt ? nothing : (Snapshot(data.loc*data.snaps_string[state]*"/", Ny, Nz), state + 1)
 Base.eltype(::Type{DNSData}) = Snapshot
 Base.eltype(::DNSData) = eltype(DNSData)
-Base.length(data::DNSData) = length(data.snaps_string)
+Base.length(::DNSData{<:Any, <:Any, Nt}) where {Nt} = Nt
+Base.size(::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
 
 function Base.getindex(data::DNSData{Ny, Nz}, t::Real) where {Ny, Nz}
     i = findfirst(x->x==t, data.snaps)
-    isnothing(i) ? throw(ArgumentError(string("Snapsot not available at time ", t))) : Snapshot(data.loc*data.snaps_string[i[1]]*"/", Ny, Nz)
+    isnothing(i) ? throw(ArgumentError(string("Snapsot not available at time ", t))) : Snapshot(data.loc*data.snaps_string[i]*"/", Ny, Nz)
 end
+Base.getindex(data::DNSData, ::Nothing) = data
+Base.getindex(data::DNSData, range::NTuple{2, Real}) = getindex(data, range...)
+function Base.getindex(data::DNSData{Ny, Nz}, start::Real, stop::Real) where {Ny, Nz}
+    i_start = findfirst(x->x>=start, data.snaps)
+    i_stop = findlast(x->x<=stop, data.snaps)
+    isnothing(i_start) || isnothing(i_stop) ? throw(ArgumentError(string("Invalid time range: ", t_start, ":", t_stop))) : DNSData{Ny, Nz, length(data.snaps_string[i_start:i_stop])}(data.loc, data.params, data.snaps_string[i_start:i_stop])
+end
+Base.firstindex(data::DNSData) = tryparse(Float64, data.snaps_string[firstindex(data.snaps_string)])
+Base.lastindex(data::DNSData) = tryparse(Float64, data.snaps_string[lastindex(data.snaps_string)])
 
 _read_params(loc::String) = read(Inifile(), loc)
 _fetch_param(ini::Inifile, param::Symbol, ::Type{T}=Float64) where {T} = tryparse(T, strip(get(ini, "params", string(param)), ';'))
@@ -132,7 +141,7 @@ Base.iterate(::Snapshot, ::Val{:done}) = nothing
 # how to manipulate
 # -----------------------------------------------------------------------------
 
-dns2field(loc::AbstractString) = dns2field(DNSData(loc))
+dns2field(loc::AbstractString; times::Union{Nothing, NTuple{2, Real}}=nothing) = dns2field(DNSData(loc)[times])
 function dns2field(data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), data.ω, data.β)
     u = VectorField(grid; field_type=:physical)
