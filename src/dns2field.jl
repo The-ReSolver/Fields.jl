@@ -151,7 +151,7 @@ Base.iterate(::Snapshot, ::Val{:done}) = nothing
 # how to manipulate
 # -----------------------------------------------------------------------------
 
-dns2field(loc::AbstractString; times::Union{Nothing, NTuple{2, Real}}=nothing) = dns2field(DNSData(loc)[times])
+dns2field(loc::AbstractString; times::Union{Nothing, NTuple{2, Real}}=nothing) = (data_range = DNSData(loc)[times]; correct_mean!(data_range, dns2field(data_range)))
 function dns2field(data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), data.ω, data.β)
     u = VectorField(grid; field_type=:physical)
@@ -175,3 +175,5 @@ function dns2field!(U::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, 
 
     return U
 end
+
+correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = (u[1][:, 1, 1] .= @view(u[1][:, 1, 1]) .+ data.y; return u)
