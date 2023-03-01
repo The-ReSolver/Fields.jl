@@ -14,12 +14,17 @@ struct VectorField{N, S} <: AbstractVector{S}
     end
 end
 
+# TODO: this can definitely be done using ::Type{T} pattern for the field_type, taking the size of the grid type
+# TODO: add another constructor to work on generators
 # outer constructor based off grid
 function VectorField(grid::Grid; N::Int=3, field_type::Symbol=:spectral)
     field_constructor_expr = Expr(:call, Symbol(field_type, :field), grid)
     fields = eval(:([$field_constructor_expr for _ in 1:$N]))
     VectorField(fields...)
 end
+# TODO: for this to work best the tuple representation of grid size should be broken into a set of integers
+# ? is this possible without specifiying the spectral field grid stuff
+# VectorField(grid::Grid{S}; N::Int=3, field_type::Type{T}=SpectralField{Ny, Nz, Nt}) where {S, Ny, Nz, Nt} = VectorField(T(grid) for _ in 1:N)
 
 # outer constructor based on grid and functions
 VectorField(grid::Grid, funcs::Vararg{<:Function}) = VectorField([PhysicalField(grid, funcs[i]) for i in 1:length(funcs)]...)
