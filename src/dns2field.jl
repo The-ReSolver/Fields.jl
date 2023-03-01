@@ -120,7 +120,7 @@ function Snapshot(loc::String, Ny::Int, Nz::Int)
 
     # extract velocity field
     U = zeros(Float64, 3, Ny, Nz)
-    open(loc*"U") do f; U .= mmap(f, Array{Float64, 3}, (3, Ny, Nz)); end
+    open(loc*"U") do f; permutedims!(U, mmap(f, Array{Float64, 3}, (Nz + 1, Ny, 3))[1:end - 1, :, :], (3, 2, 1)); end
 
     Snapshot{Ny, Nz}(loc, t, K, dKdt, U)
 end
