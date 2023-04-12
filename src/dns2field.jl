@@ -160,7 +160,7 @@ function dns2field(data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     return dns2field!(U, u, FFT!, data)
 end
 
-dns2field!(U::VectorField{3, S},
+dns2field!( U::VectorField{3, S},
             u::VectorField{3, P},
             FFT!::FFTPlan!{Ny, Nz, Nt},
             data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}} = FFT!(U, dns2field!(u, data))
@@ -177,4 +177,10 @@ function dns2field!(U::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, 
 end
 
 correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = (u[1][:, 1, 1] .+= data.y; return u)
-correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, P}) where {Ny, Nz, Nt, P<:PhysicalField{Ny, Nz, Nt}} = ((u[1][:, nz, nt] .+= data.y for nt in 1:Nt, nz in 1:Nz); return u)
+function correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, P}) where {Ny, Nz, Nt, P<:PhysicalField{Ny, Nz, Nt}}
+    for nt in 1:Nt, nz in 1:Nz
+        u[1][:, nz, nt] .+= data.y
+    end
+    
+    return u
+end
