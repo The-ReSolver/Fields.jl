@@ -1,9 +1,6 @@
 module Fields
 
-using FFTW
-using LinearAlgebra
-using IniFile
-using Mmap
+using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase
 
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!
 export FFTPlan!, IFFTPlan!
@@ -24,6 +21,7 @@ include("vectorfields.jl")
 include("fft.jl")
 include("derivatives.jl")
 include("dns2field.jl")
+include("plot_vectorfield.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 
