@@ -16,17 +16,24 @@
     end
     push!(z, 2π)
 
+    # define font
+    font = 
+
     # setup the plot
     legend := false
     framestyle := :axes
-    xlabel := "\$z\$"
-    ylabel := "\$y\$"
+    xlabel --> "\$z\$"
+    ylabel -->"\$y\$"
+    guidefont --> ("serif", 20)
+    tickfontsize --> 15
+    tick_direction --> :out
     grid := false
     xlims := (0, 2π)
-    ylims := (-1, 1)
+    ylims := (-1.03, 1.03)
     colorbar := :right
     colorbar_title --> "\$u^\\prime\$"
-    colorbar_titlefontvalign := :vcenter
+    colorbar_titlefont --> ("serif", 20)
+    colorbar_tickfontsize --> 15
 
     # contour plot
     @series begin
@@ -44,5 +51,27 @@
         linecolor --> :black
         arrow --> (:closed, :head, (0.2, 0.2)) # ! ARROWHEAD SIZE SEEMS TO NOT BE SUPPORTED IN GR
         repeat(z, inner=length(y)), repeat(y, outer=length(z))
+    end
+
+    # top wall
+    @series begin
+        seriestype := :path
+        linecolor := nothing
+        fillcolor --> :darkgrey
+        fillalpha --> 1.0
+        fillrange := 1.03
+        markershape := :none
+        z, repeat([1.0], inner=length(z))
+    end
+
+    # bottom wall
+    @series begin
+        seriestype := :path
+        linecolor := nothing
+        fillcolor --> :darkgrey
+        fillalpha --> 1.0
+        fillrange := -1.03
+        markershape := :none
+        z, repeat([-1.0], inner=length(z))
     end
 end
