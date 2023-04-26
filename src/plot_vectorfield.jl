@@ -4,20 +4,29 @@
 # TODO: add helper methods for different forms of the field (spectral field, temporal mode snapshot)
 
 @userplot FieldPlot
-@recipe function f(p::FieldPlot; arrow_scale=0.025)
+@recipe function f(p::FieldPlot; arrow_scale=0.025, skip=nothing)
     # unpack the arguments
     field, ti = p.args
     y, z, _ = points(get_grid(field)); z = collect(z)
 
     # append field for periodicity
-    extended_field = Vector{typeof(parent((field[1])))}(undef, length(field))
+    plotting_field = Vector{typeof(parent(field[1]))}(undef, length(field))
     for i in eachindex(field)
-        extended_field[i] = cat(parent(field[i]), field[i][:, 1:1, :]; dims=2)
+        plotting_field[i] = cat(parent(field[i]), field[i][:, 1:1, :]; dims=2)
     end
     push!(z, 2π)
 
-    # define font
-    font = 
+    # created new field if a slice is specified
+    sliced_field = similar(plotting_field)
+    if ~isnothing(skip)
+        # define slicing arguments
+        slice = (1:skip[1]:length(y), 1:skip[2]:length(z))
+        for i in eachindex(field)
+            sliced_field[i] = plotting_field[i][slice..., :]
+        end
+        y_slice = y[slice[1]]
+        z_slice = z[slice[2]]
+    end
 
     # setup the plot
     legend := false
@@ -38,19 +47,19 @@
     # contour plot
     @series begin
         seriestype := :contourf
-        color --> :jet
+        color --> :seismic
         levels --> 40
-        z, y, extended_field[1][:, :, ti]
+        z, y, plotting_field[1][:, :, ti]
     end
 
     # quiver plot
     @series begin
-        V = @view(extended_field[2][:, :, ti]); W = @view(extended_field[3][:, :, ti])
+        V = @view(sliced_field[2][:, :, ti]); W = @view(sliced_field[3][:, :, ti])
         quiver := arrow_scale .* (V[:], W[:])
         seriestype := :quiver
         linecolor --> :black
         arrow --> (:closed, :head, (0.2, 0.2)) # ! ARROWHEAD SIZE SEEMS TO NOT BE SUPPORTED IN GR
-        repeat(z, inner=length(y)), repeat(y, outer=length(z))
+        repeat(z_slice, inner=length(y_slice)), repeat(y_slice, outer=length(z_slice))
     end
 
     # top wall
