@@ -187,11 +187,11 @@ mean(data::DNSData{Ny}; window::NTuple{2, Real}=(firstindex(data), lastindex(dat
 # -----------------------------------------------------------------------------
 
 dns2field(loc::AbstractString; times::Union{Nothing, NTuple{2, Real}}=nothing) = dns2field(DNSData(loc)[times])
-function dns2field(data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function dns2field(data::DNSData{Ny, Nz, Nt}; fft_flag::UInt32=ESTIMATE) where {Ny, Nz, Nt}
     grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), data.ω, data.β)
     u = VectorField(grid; field_type=:physical)
     U = VectorField(grid)
-    FFT! = FFTPlan!(grid)
+    FFT! = FFTPlan!(grid, flags=fft_flag)
     return dns2field!(U, u, FFT!, data)
 end
 
