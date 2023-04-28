@@ -12,7 +12,7 @@ export VectorField
 export quadweights
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 
-export DNSData, loadDNS, dns2field!, dns2field, correct_mean!
+export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 
 include("grid.jl")
 include("physicalfield.jl")

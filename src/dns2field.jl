@@ -4,7 +4,6 @@
 # This will allow the outputs of the DNS to be directly loaded into Julia for
 # manipulation with the rest of the code.
 
-# TODO: maybe change DNSData to be a subtype of abstract vector??? (simplet interface)
 
 # -----------------------------------------------------------------------------
 # Custom error for indexing at incorrect times
@@ -61,7 +60,6 @@ function Base.getproperty(data::DNSData{Ny, Nz, Nt}, field::Symbol) where {Ny, N
     end
 end
 
-# Base.iterate(data::DNSData{Ny, Nz}) where {Ny, Nz} = (Snapshot(data.loc*data.snaps_string[0]*"/", Ny, Nz), 1)
 Base.iterate(data::DNSData{Ny, Nz, Nt}, state::Int=1) where {Ny, Nz, Nt} = state > Nt ? nothing : (Snapshot(data.loc*data.snaps_string[state]*"/", Ny, Nz), state + 1)
 Base.eltype(::Type{DNSData}) = Snapshot
 Base.eltype(::DNSData) = eltype(DNSData)
@@ -139,12 +137,49 @@ function Base.getproperty(snap::Snapshot{Ny, Nz}, field::Symbol) where {Ny, Nz}
     end
 end
 
+Base.parent(snap::Snapshot) = snap.U
+
 Base.getindex(snap::Snapshot, i::Int) = @view(snap.U[i, :, :])
 
 Base.iterate(snap::Snapshot) = (snap[1], Val(:V))
 Base.iterate(snap::Snapshot, ::Val{:V}) = (snap[2], Val(:W))
 Base.iterate(snap::Snapshot, ::Val{:W}) = (snap[3], Val(:done))
 Base.iterate(::Snapshot, ::Val{:done}) = nothing
+
+
+# -----------------------------------------------------------------------------
+# Utility methods for the DNS data set that do not require the complete
+# associated field to be loaded
+# -----------------------------------------------------------------------------
+
+function _mean!(ū::Vector{Float64}, data::DNSData{<:Any, Nz}, snap_times::Vector{Float64}) where {Nz, Nt}
+    # loop over the time window of the data and compute mean
+    for t in snap_times
+        ū .+= dropdims(sum(data[t][1], dims=2), dims=2)./Nz
+    end
+    ū ./= length(snap_times)
+
+    # add back the laminar profile
+    ū .+= data.y
+
+    return ū
+end
+
+function mean!(ū, data::DNSData; window::NTuple{2, Real}=(firstindex(data), lastindex(data)))
+    # find range of snapshots inside the provided window
+    snapshot_times = data.snaps
+    start_ti = findfirst(x->window[1]<=x, snapshot_times)
+    end_ti = findlast(x->window[2]>=x, snapshot_times)
+
+    # overwrite the mean with zeros
+    ū .= zero(Float64)
+
+    # compute mean
+    return _mean!(ū, data, snapshot_times[start_ti:end_ti])
+end
+
+mean(data::DNSData{Ny}; window::NTuple{2, Real}=(firstindex(data), lastindex(data))) where {Ny} = (ū = zeros(Float64, Ny); mean!(ū, data, window=window))
+
 
 # -----------------------------------------------------------------------------
 # Methods to convert simulation directory directly into fields which we know
