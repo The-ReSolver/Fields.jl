@@ -73,8 +73,7 @@ end
 Base.getindex(data::DNSData, ::Nothing) = data
 Base.getindex(data::DNSData, range::NTuple{2, Real}) = getindex(data, range...)
 function Base.getindex(data::DNSData{Ny, Nz}, start::Real, stop::Real) where {Ny, Nz}
-    i_start = findfirst(x->x>=start, data.snaps)
-    i_stop = findlast(x->x<=stop, data.snaps)
+    i_start = findfirst(x->x>=start, data.snaps); i_stop = findlast(x->x<=stop, data.snaps)
     isnothing(i_start) || isnothing(i_stop) ? throw(SnapshotTimeError(start, stop)) : DNSData{Ny, Nz, length(data.snaps_string[i_start:i_stop])}(data.loc, data.params, data.snaps_string[i_start:i_stop])
 end
 Base.firstindex(data::DNSData) = tryparse(Float64, data.snaps_string[firstindex(data.snaps_string)])
@@ -186,16 +185,19 @@ mean(data::DNSData{Ny}; window::NTuple{2, Real}=(firstindex(data), lastindex(dat
 # how to manipulate
 # -----------------------------------------------------------------------------
 
-dns2field(loc::AbstractString; times::Union{Nothing, NTuple{2, Real}}=nothing) = dns2field(DNSData(loc)[times])
+dns2field(loc::AbstractString; fft_flag::UInt32=ESTIMATE, times::Union{Nothing, NTuple{2, Real}}=nothing) = dns2field(DNSData(loc)[times], fft_flag=fft_flag)
+
 function dns2field(data::DNSData{Ny, Nz, Nt}; fft_flag::UInt32=ESTIMATE) where {Ny, Nz, Nt}
-    grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), data.ω, data.β)
+    # initialise grid, fields, and, and FFT plan
+    grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), 2π/(data.dt*Nt), data.β)
     u = VectorField(grid; field_type=:physical)
     U = VectorField(grid)
     FFT! = FFTPlan!(grid, flags=fft_flag)
+
     return dns2field!(U, u, FFT!, data)
 end
 
-dns2field!( U::VectorField{3, S},
+dns2field!(U::VectorField{3, S},
             u::VectorField{3, P},
             FFT!::FFTPlan!{Ny, Nz, Nt},
             data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}} = FFT!(U, dns2field!(u, data))
