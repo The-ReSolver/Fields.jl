@@ -71,10 +71,10 @@ function Base.getindex(data::DNSData{Ny, Nz}, t::Real) where {Ny, Nz}
     isnothing(i) ? throw(SnapshotTimeError(t)) : Snapshot(data.loc*data.snaps_string[i]*"/", Ny, Nz)
 end
 Base.getindex(data::DNSData, ::Nothing) = data
-Base.getindex(data::DNSData, range::NTuple{2, Real}) = getindex(data, range...)
-function Base.getindex(data::DNSData{Ny, Nz}, start::Real, stop::Real) where {Ny, Nz}
+Base.getindex(data::DNSData, range::NTuple{2, Real}; skip_step::Int=1) = getindex(data, range..., skip_step)
+function Base.getindex(data::DNSData{Ny, Nz}, start::Real, stop::Real, skip_step::Int) where {Ny, Nz}
     i_start = findfirst(x->x>=start, data.snaps); i_stop = findlast(x->x<=stop, data.snaps)
-    isnothing(i_start) || isnothing(i_stop) ? throw(SnapshotTimeError(start, stop)) : DNSData{Ny, Nz, length(data.snaps_string[i_start:i_stop])}(data.loc, data.params, data.snaps_string[i_start:i_stop])
+    isnothing(i_start) || isnothing(i_stop) ? throw(SnapshotTimeError(start, stop)) : DNSData{Ny, Nz, length(data.snaps_string[i_start:skip_step:i_stop])}(data.loc, data.params, data.snaps_string[i_start:skip_step:i_stop])
 end
 Base.firstindex(data::DNSData) = tryparse(Float64, data.snaps_string[firstindex(data.snaps_string)])
 Base.lastindex(data::DNSData) = tryparse(Float64, data.snaps_string[lastindex(data.snaps_string)])
@@ -185,11 +185,11 @@ mean(data::DNSData{Ny}; window::NTuple{2, Real}=(firstindex(data), lastindex(dat
 # how to manipulate
 # -----------------------------------------------------------------------------
 
-dns2field(loc::AbstractString; fft_flag::UInt32=ESTIMATE, times::Union{Nothing, NTuple{2, Real}}=nothing) = dns2field(DNSData(loc)[times], fft_flag=fft_flag)
+dns2field(loc::AbstractString; fft_flag::UInt32=ESTIMATE, times::Union{Nothing, NTuple{2, Real}}=nothing, skip_step::Int=1) = dns2field(DNSData(loc)[times, skip_step], fft_flag=fft_flag)
 
 function dns2field(data::DNSData{Ny, Nz, Nt}; fft_flag::UInt32=ESTIMATE) where {Ny, Nz, Nt}
     # initialise grid, fields, and, and FFT plan
-    grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), 2π/(data.dt*Nt), data.β)
+    grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), 2π/(data.dt*skip_step*Nt), data.β)
     u = VectorField(grid; field_type=:physical)
     U = VectorField(grid)
     FFT! = FFTPlan!(grid, flags=fft_flag)
