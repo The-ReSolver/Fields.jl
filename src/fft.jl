@@ -6,8 +6,6 @@
 #   - Nz_spec = (Nz_phys >> 1) + 1
 #   - Nt_spec = Nt_phys
 
-# TODO: analyse the profiled transforms to find optimal combinations of axes
-
 const ESTIMATE = FFTW.ESTIMATE
 const EXHAUSTIVE = FFTW.EXHAUSTIVE
 const MEASURE = FFTW.MEASURE
