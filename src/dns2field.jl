@@ -11,7 +11,7 @@
 struct SnapshotTimeError{N, T<:Real} <:Exception; times::Tuple{T, Union{Nothing, T}}; end
 SnapshotTimeError(time::Real) = SnapshotTimeError{1, typeof(time)}((time, nothing))
 SnapshotTimeError(times::Vararg{Real, 2}) = SnapshotTimeError{2, eltype(times)}(times)
-Base.showerror(io::IO, e::SnapshotTimeError{1}) = print(io, "Snapshots do not exist at: ", e.times[1])
+Base.showerror(io::IO, e::SnapshotTimeError{1}) = print(io, "Snapshot does not exist at: ", e.times[1])
 Base.showerror(io::IO, e::SnapshotTimeError{2}) = print(io, "Snapshots do not exist between ", e.times[1], " - ", e.times[2])
 
 
@@ -66,6 +66,7 @@ Base.eltype(::DNSData) = eltype(DNSData)
 Base.length(::DNSData{<:Any, <:Any, Nt}) where {Nt} = Nt
 Base.size(::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
 
+# TODO: fix the implementation of skip_step argument
 function Base.getindex(data::DNSData{Ny, Nz}, t::Real) where {Ny, Nz}
     i = findfirst(x->x==t, data.snaps)
     isnothing(i) ? throw(SnapshotTimeError(t)) : Snapshot(data.loc*data.snaps_string[i]*"/", Ny, Nz)
