@@ -66,14 +66,13 @@ Base.eltype(::DNSData) = eltype(DNSData)
 Base.length(::DNSData{<:Any, <:Any, Nt}) where {Nt} = Nt
 Base.size(::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
 
-# TODO: fix the implementation of skip_step argument
 function Base.getindex(data::DNSData{Ny, Nz}, t::Real) where {Ny, Nz}
     i = findfirst(x->x==t, data.snaps)
     isnothing(i) ? throw(SnapshotTimeError(t)) : Snapshot(data.loc*data.snaps_string[i]*"/", Ny, Nz)
 end
 Base.getindex(data::DNSData, ::Nothing) = data
-Base.getindex(data::DNSData, range::NTuple{2, Real}; skip_step::Int=1) = getindex(data, range..., skip_step)
-function Base.getindex(data::DNSData{Ny, Nz}, start::Real, stop::Real, skip_step::Int) where {Ny, Nz}
+Base.getindex(data::DNSData, range::NTuple{2, Real}; skip_step::Int=1) = getindex(data, range..., skip_step=skip_step)
+function Base.getindex(data::DNSData{Ny, Nz}, start::Real, stop::Real; skip_step::Int=1) where {Ny, Nz}
     i_start = findfirst(x->x>=start, data.snaps); i_stop = findlast(x->x<=stop, data.snaps)
     isnothing(i_start) || isnothing(i_stop) ? throw(SnapshotTimeError(start, stop)) : DNSData{Ny, Nz, length(data.snaps_string[i_start:skip_step:i_stop])}(data.loc, data.params, data.snaps_string[i_start:skip_step:i_stop])
 end
