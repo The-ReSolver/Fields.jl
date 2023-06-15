@@ -151,7 +151,7 @@ Base.iterate(::Snapshot, ::Val{:done}) = nothing
 # associated field to be loaded
 # -----------------------------------------------------------------------------
 
-function _mean!(ū::Vector{Float64}, data::DNSData{<:Any, Nz}, snap_times::Vector{Float64}) where {Nz, Nt}
+function _mean!(ū::Vector{Float64}, data::DNSData{<:Any, Nz}, snap_times::Vector{Float64}) where {Nz}
     # loop over the time window of the data and compute mean
     for t in snap_times
         ū .+= dropdims(sum(data[t][1], dims=2), dims=2)./Nz
