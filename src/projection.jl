@@ -13,7 +13,7 @@ channel_int(u::AbstractVector{<:Number}, w::AbstractVector{<:Number}, v::Abstrac
 """
 function project!(a::AbstractVector{<:Number}, u::AbstractVector{<:Number}, w::AbstractVector{<:Number}, modes::AbstractMatrix{<:Number})
     for i in axes(modes, 2)
-        a[i] = channel_int(u, w, @view(modes[:, i]))
+        a[i] = channel_int(@view(modes[:, i]), w, u)
     end
 
     return a

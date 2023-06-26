@@ -1,8 +1,10 @@
-using Fields
+using Test
 using Random
+using LinearAlgebra
+
+using Fields
 using ChebUtils
 using FDGrids
-using Test
 
 include("test_grid.jl")
 include("test_physicalfield.jl")
