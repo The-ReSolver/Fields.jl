@@ -40,7 +40,7 @@
     @test_throws MethodError VectorField("string1", "string2")
 end
 
-@testset "Vector Field grid methods     " begin
+@testset "Vector Field Grid Methods     " begin
     # initialise random variables
     Ny = rand(3:50)
     Nz = rand(3:50)
