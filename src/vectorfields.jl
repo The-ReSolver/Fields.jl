@@ -7,8 +7,8 @@ struct VectorField{N, S} <: AbstractVector{S}
     elements::Vector{S}
 
     # construct using scalar fields as arguments
-    # function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
-    function VectorField(elements::Vararg{<:AbstractArray{T, D}, N}) where {T<:Number, D, N}
+    function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
+    # function VectorField(elements::Vararg{<:AbstractArray{T, D}, N}) where {T<:Number, D, N}
         # new{N, S}(elements)
         new{N, typeof(elements[1])}(collect(elements))
     end
@@ -27,7 +27,7 @@ end
 # VectorField(grid::Grid{S}; N::Int=3, field_type::Type{T}=SpectralField{Ny, Nz, Nt}) where {S, Ny, Nz, Nt} = VectorField(T(grid) for _ in 1:N)
 
 # outer constructor based on grid and functions
-VectorField(grid::Grid, funcs::Vararg{<:Function}) = VectorField([PhysicalField(grid, funcs[i]) for i in 1:length(funcs)]...)
+VectorField(grid::Grid, funcs::Vararg) = VectorField([PhysicalField(grid, funcs[i]) for i in 1:length(funcs)]...)
 
 # define index style
 Base.IndexStyle(::Type{<:VectorField}) = Base.IndexLinear()
