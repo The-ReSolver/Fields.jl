@@ -25,10 +25,10 @@ project(u::AbstractVector{<:Number}, w::AbstractVector{<:Number}, modes::Abstrac
     profile
 """
 function project!(a::AbstractArray{<:Number, 3}, u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::AbstractArray{<:Number, 4})
-    for I in CartesianIndices(eachslice(A, dims=1)[1])
+    for I in CartesianIndices(eachslice(a, dims=1)[1])
         project!(@view(a[:, I]), @view(u[:, I]), w, @view(modes[:, :, I]))
     end
 
     return a
 end
-project(u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::AbstractArray{T, 4}) where {T<:Number} = project!(zeros(T, size(modes, 2), size(selectdim(u, 1, 1))), u, w, modes)
+project(u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::AbstractArray{T, 4}) where {T<:Number} = project!(zeros(T, size(modes, 2), size(selectdim(u, 1, 1))...), u, w, modes)

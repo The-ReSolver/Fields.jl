@@ -14,6 +14,7 @@ export project, project!
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 
+include("projection.jl")
 include("grid.jl")
 include("physicalfield.jl")
 include("spectralfield.jl")
@@ -22,7 +23,6 @@ include("fft.jl")
 include("derivatives.jl")
 include("dns2field.jl")
 include("plot_vectorfield.jl")
-include("projection.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 

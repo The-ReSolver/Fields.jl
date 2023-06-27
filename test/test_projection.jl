@@ -11,14 +11,34 @@ end
 
 @testset "Projection Onto Mode Set      " begin
     # construct a set of modes
-    N = 16
-    M = 12
+    N = 64
+    M = rand(1:12)
     ws = ones(N)
-    Ψ = qr(rand(ComplexF64, N, M)).Q[:, 1:M]
+    Ψ = @view(qr(rand(ComplexF64, N, M)).Q[:, 1:M])
 
     # generate channel profile as combination of modes
     a = rand(ComplexF64, M)
     u = Ψ*a
+
+    @test project(u, ws, Ψ) ≈ a
+end
+
+@testset "Projection of Field           " begin
+    # construct a field of modes
+    Ny = 16; Nz = 16; Nt = 16
+    M = rand(1:12)
+    ws = ones(Ny)
+    Ψ = zeros(ComplexF64, Ny, M, Nz, Nt)
+    for nt in 1:Nt, nz in 1:Nz
+        Ψ[:, :, nz, nt] .= @view(qr(rand(ComplexF64, Ny, M)).Q[:, 1:M])
+    end
+
+    # generate field as combination of modes
+    a = rand(ComplexF64, M, Nz, Nt)
+    u = zeros(ComplexF64, Ny, Nz, Nt)
+    for nt in 1:Nt, nz in 1:Nz
+        u[:, nz, nt] .= Ψ[:, :, nz, nt]*a[:, nz, nt]
+    end
 
     @test project(u, ws, Ψ) ≈ a
 end
