@@ -76,6 +76,8 @@ function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}
     for i in 1:N
         f(u[i], û[i])
     end
+
+    return u
 end
 
 function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
