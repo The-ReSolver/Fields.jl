@@ -2,7 +2,7 @@ module Fields
 
 using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase
 
-export ddy!, d2dy2!, ddz!, d2dz2!, ddt!
+export ddy!, d2dy2!, ddz!, d2dz2!, ddt!, divergence!, laplacian!
 export FFTPlan!, IFFTPlan!
 export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
 export Grid, points, spectralfield, physicalfield, vectorfield
