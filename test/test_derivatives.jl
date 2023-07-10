@@ -51,6 +51,9 @@
     @test dudz ≈ physicalfield(grid, dudz_fun)
     @test d2udz2 ≈ physicalfield(grid, d2udz2_fun)
     @test dudt ≈ physicalfield(grid, dudt_fun)
+
+    # test vectorfield methods
+    @test ddy!(FFT(VectorField(grid, N=2), VectorField(grid, u_fun, u_fun)), VectorField(grid, N=2)) ≈ FFT(VectorField(grid, N=2), VectorField(grid, dudy_fun, dudy_fun))
 end
 
 @testset "Vector Calculus               " begin
