@@ -66,15 +66,13 @@ IFFTPlan!(grid::Grid{S, T}; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 
 function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
                                     û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # perform transform
-    FFTW.unsafe_execute!(f.plan, parent(û), parent(u))
-
-    return u
+    return f(u, û, similar(û))
 end
 
 function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}) where
             {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
     for i in 1:N
-        f(u[i], û[i])
+        f(u[i], û[i], similar(û))
     end
 
     return u
