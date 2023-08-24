@@ -289,12 +289,20 @@ function (f::Constraint{Ny, Nz, Nt})(out::VectorField{5, S}, q::VectorField{8, S
     drzdz  = cache.spec_cache[26]
 
     # compute output
-    # TODO: check if rotation has correct sign
     @. out[1] = dudt  + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*v - rx
     @. out[2] = dvdt  + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u - ry + dpdy
     @. out[3] = dwdt  + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)          - rz + dpdz
     @. out[4] = dvdy  + dwdz
     @. out[5] = drydy + drzdz
+
+    # remove residual component from boundaries to enforce natural boundary conditions
+    # TODO: check if this assigns memory
+    @views @. out[1][1, :, :] += rx[1, :, :]
+    @. out[1][end, :, :]      += @view(rx[end, :, :])
+    @views @. out[2][1, :, :] += ry[1, :, :]
+    @. out[2][end, :, :]      += @view(ry[end, :, :])
+    @views @. out[3][1, :, :] += rz[1, :, :]
+    @. out[3][end, :, :]      += @view(rz[end, :, :])
 
     return out
 end
