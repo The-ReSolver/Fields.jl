@@ -53,6 +53,29 @@ function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}
     _update_evolution_cache!(f, u, r, ϕ)
 
     # assign aliases
+    drxdt   = cache.spec_cache[7]
+    drydt   = cache.spec_cache[8]
+    drzdt   = cache.spec_cache[9]
+    d2rxdy2 = cache.spec_cache[16]
+    d2rydy2 = cache.spec_cache[17]
+    d2rzdy2 = cache.spec_cache[18]
+    d2rxdz2 = cache.spec_cache[19]
+    d2rydz2 = cache.spec_cache[20]
+    d2rzdz2 = cache.spec_cache[21]
+    vdrxdy  = cache.spec_cache[22]
+    wdrxdz  = cache.spec_cache[23]
+    vdrydy  = cache.spec_cache[24]
+    wdrydz  = cache.spec_cache[25]
+    vdrzdy  = cache.spec_cache[26]
+    wdrzdz  = cache.spec_cache[27]
+    rxdudy  = cache.spec_cache[28]
+    rydvdy  = cache.spec_cache[29]
+    rzdwdy  = cache.spec_cache[30]
+    rxdudz  = cache.spec_cache[31]
+    rydvdz  = cache.spec_cache[32]
+    rzdwdz  = cache.spec_cache[33]
+    dϕdy    = cache.spec_cache[34]
+    dϕdz    = cache.spec_cache[35]
 
     # compute output
     @. out[1] = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
