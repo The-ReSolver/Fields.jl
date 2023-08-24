@@ -82,6 +82,14 @@ function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}
     @. out[2] = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx + dϕdy
     @. out[3] = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)           + dϕdz
 
+    # impose boundary invariance for no-slip
+    out[1][1, :, :] .= 0
+    out[1][end, :, :] .= 0
+    out[2][1, :, :] .= 0
+    out[2][end, :, :] .= 0
+    out[3][1, :, :] .= 0
+    out[3][end, :, :] .= 0
+
     return out
 end
 
