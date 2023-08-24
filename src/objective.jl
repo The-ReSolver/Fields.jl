@@ -47,10 +47,10 @@ function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}
     # unpack input
     u  = q[1]; v  = q[2]; w  = q[3]
     rx = q[4]; ry = q[5]; rz = q[6]
-    p  = q[7]; ϕ  = q[8]
+    ϕ  = q[8]
 
     # update fields for current state
-    _update_evolution_cache!(f, u, r, ϕ)
+    _update_evolution_cache!(f, [u, v, w], [rx, ry, rz], ϕ)
 
     # assign aliases
     drxdt   = cache.spec_cache[7]
@@ -289,12 +289,12 @@ end
 
 function (f::Constraint{Ny, Nz, Nt})(out::VectorField{5, S}, q::VectorField{8, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     # unpack input
-    u  = q[1]; v  = q[2];
+    u  = q[1]; v  = q[2]; w  = q[3]
     rx = q[4]; ry = q[5]; rz = q[6]
     p  = q[7]
 
     # update fields for current state
-    _update_constraint_cache!(f, u, r, p)
+    _update_constraint_cache!(f, [u, v, w], [rx, ry, rz], p)
 
     # assign aliases
     dudt   = cache.spec_cache[1]
