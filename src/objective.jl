@@ -3,6 +3,8 @@
 # residual.
 
 # TODO: come up with a way for the arrays to shared
+# TODO: find out where the goddamn allocations are coming from (mainly the update methods)
+# TODO: figure out whether the multithreading is worth it
 
 # =============================================================================
 # DAE evolution
@@ -82,12 +84,12 @@ function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}
 
     # impose boundary invariance for no-slip
     # TODO: make sure this doesn't assign memory
-    out[1][1, :, :] .= 0
-    out[1][end, :, :] .= 0
-    out[2][1, :, :] .= 0
-    out[2][end, :, :] .= 0
-    out[3][1, :, :] .= 0
-    out[3][end, :, :] .= 0
+    @view(out[1][1, :, :]).= 0
+    @view(out[1][end, :, :]).= 0
+    @view(out[2][1, :, :]).= 0
+    @view(out[2][end, :, :]).= 0
+    @view(out[3][1, :, :]).= 0
+    @view(out[3][end, :, :]).= 0
 
     return out
 end
@@ -330,20 +332,19 @@ function (f::Constraint{Ny, Nz, Nt})(out::VectorField{5, S}, q::VectorField{8, S
     drzdz  = f.spec_cache[26]
 
     # compute output
-    @. out[1] = dudt  + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*v - rx
-    @. out[2] = dvdt  + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u - ry + dpdy
-    @. out[3] = dwdt  + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)          - rz + dpdz
-    @. out[4] = dvdy  + dwdz
+    @. out[1] = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*v - rx
+    @. out[2] = dvdt + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u - ry + dpdy
+    @. out[3] = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)          - rz + dpdz
+    @. out[4] = dvdy + dwdz
     @. out[5] = drydy + drzdz
 
     # remove residual component from boundaries to enforce natural boundary conditions
-    # TODO: check if this assigns memory
     @views @. out[1][1, :, :]   += rx[1, :, :]
-    @.        out[1][end, :, :] += @view(rx[end, :, :])
+    @. @view(out[1][end, :, :]) += @view(rx[end, :, :])
     @views @. out[2][1, :, :]   += ry[1, :, :]
-    @.        out[2][end, :, :] += @view(ry[end, :, :])
+    @. @view(out[2][end, :, :]) += @view(ry[end, :, :])
     @views @. out[3][1, :, :]   += rz[1, :, :]
-    @.        out[3][end, :, :] += @view(rz[end, :, :])
+    @. @view(out[3][end, :, :]) += @view(rz[end, :, :])
 
     return out
 end
