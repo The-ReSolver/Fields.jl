@@ -3,36 +3,34 @@
 # residual.
 
 # TODO: come up with a way for the arrays to shared
-# TODO: what about the boundaries???
 
 # =============================================================================
 # DAE evolution
 # =============================================================================
-struct Evolution{Ny, Nz, Nt, G, T, A, PLAN, IPLAN}
-    spec_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, A}}
-    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, G, T, A}}
+struct Evolution{Ny, Nz, Nt, G, T, PLAN, IPLAN}
+    spec_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
+    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, G, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, IPLAN}
     Re_recip::T
     Ro::T
 
     function Evolution(grid::Grid{S}, Re::Real, Ro::Real) where {S}
-        # convert parameters to floats
-        Re = convert(Float64, Re)
-        Ro = convert(Float64, Ro)
-
         # create field caches
         spec_cache = [SpectralField(grid) for _ in 1:52]
-        phys_cache = [PhysicalField(grid) for _ in 1:17]
+        phys_cache = [PhysicalField(grid) for _ in 1:29]
 
         # create transform plans
         FFT! = FFTPlan!(grid)
         IFFT! = IFFTPlan!(grid)
 
+        # convert parameters to compatible type
+        Re = convert(eltype(phys_cache[1]), Re)
+        Ro = convert(eltype(phys_cache[1]), Ro)
+
         new{S...,
             typeof(grid),
             eltype(phys_cache[1]),
-            typeof(parent(spec_cache[1])),
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(spec_cache,
                                 phys_cache,
@@ -50,32 +48,32 @@ function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}
     ϕ  = q[8]
 
     # update fields for current state
-    _update_evolution_cache!(f, [u, v, w], [rx, ry, rz], ϕ)
+    _update_evolution_cache!(f, VectorField(u, v, w), VectorField(rx, ry, rz), ϕ)
 
     # assign aliases
-    drxdt   = cache.spec_cache[7]
-    drydt   = cache.spec_cache[8]
-    drzdt   = cache.spec_cache[9]
-    d2rxdy2 = cache.spec_cache[16]
-    d2rydy2 = cache.spec_cache[17]
-    d2rzdy2 = cache.spec_cache[18]
-    d2rxdz2 = cache.spec_cache[19]
-    d2rydz2 = cache.spec_cache[20]
-    d2rzdz2 = cache.spec_cache[21]
-    vdrxdy  = cache.spec_cache[22]
-    wdrxdz  = cache.spec_cache[23]
-    vdrydy  = cache.spec_cache[24]
-    wdrydz  = cache.spec_cache[25]
-    vdrzdy  = cache.spec_cache[26]
-    wdrzdz  = cache.spec_cache[27]
-    rxdudy  = cache.spec_cache[28]
-    rydvdy  = cache.spec_cache[29]
-    rzdwdy  = cache.spec_cache[30]
-    rxdudz  = cache.spec_cache[31]
-    rydvdz  = cache.spec_cache[32]
-    rzdwdz  = cache.spec_cache[33]
-    dϕdy    = cache.spec_cache[34]
-    dϕdz    = cache.spec_cache[35]
+    drxdt   = f.spec_cache[7]
+    drydt   = f.spec_cache[8]
+    drzdt   = f.spec_cache[9]
+    d2rxdy2 = f.spec_cache[16]
+    d2rydy2 = f.spec_cache[17]
+    d2rzdy2 = f.spec_cache[18]
+    d2rxdz2 = f.spec_cache[19]
+    d2rydz2 = f.spec_cache[20]
+    d2rzdz2 = f.spec_cache[21]
+    vdrxdy  = f.spec_cache[22]
+    wdrxdz  = f.spec_cache[23]
+    vdrydy  = f.spec_cache[24]
+    wdrydz  = f.spec_cache[25]
+    vdrzdy  = f.spec_cache[26]
+    wdrzdz  = f.spec_cache[27]
+    rxdudy  = f.spec_cache[28]
+    rydvdy  = f.spec_cache[29]
+    rzdwdy  = f.spec_cache[30]
+    rxdudz  = f.spec_cache[31]
+    rydvdz  = f.spec_cache[32]
+    rzdwdz  = f.spec_cache[33]
+    dϕdy    = f.spec_cache[34]
+    dϕdz    = f.spec_cache[35]
 
     # compute output
     @. out[1] = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
@@ -83,6 +81,7 @@ function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}
     @. out[3] = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)           + dϕdz
 
     # impose boundary invariance for no-slip
+    # TODO: make sure this doesn't assign memory
     out[1][1, :, :] .= 0
     out[1][end, :, :] .= 0
     out[2][1, :, :] .= 0
@@ -95,77 +94,89 @@ end
 
 function _update_evolution_cache!(cache::Evolution{Ny, Nz, Nt}, u::VectorField{3, S}, r::VectorField{3, S}, ϕ::S) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     # assign aliases
-    dudy    = cache.spec_cache[1]
-    dvdy    = cache.spec_cache[2]
-    dwdy    = cache.spec_cache[3]
-    dudz    = cache.spec_cache[4]
-    dvdz    = cache.spec_cache[5]
-    dwdz    = cache.spec_cache[6]
-    drxdt   = cache.spec_cache[7]
-    drydt   = cache.spec_cache[8]
-    drzdt   = cache.spec_cache[9]
-    drxdy   = cache.spec_cache[10]
-    drydy   = cache.spec_cache[11]
-    drzdy   = cache.spec_cache[12]
-    drxdz   = cache.spec_cache[13]
-    drydz   = cache.spec_cache[14]
-    drzdz   = cache.spec_cache[15]
-    d2rxdy2 = cache.spec_cache[16]
-    d2rydy2 = cache.spec_cache[17]
-    d2rzdy2 = cache.spec_cache[18]
-    d2rxdz2 = cache.spec_cache[19]
-    d2rydz2 = cache.spec_cache[20]
-    d2rzdz2 = cache.spec_cache[21]
-    vdrxdy  = cache.spec_cache[22]
-    wdrxdz  = cache.spec_cache[23]
-    vdrydy  = cache.spec_cache[24]
-    wdrydz  = cache.spec_cache[25]
-    vdrzdy  = cache.spec_cache[26]
-    wdrzdz  = cache.spec_cache[27]
-    rxdudy  = cache.spec_cache[28]
-    rydvdy  = cache.spec_cache[29]
-    rzdwdy  = cache.spec_cache[30]
-    rxdudz  = cache.spec_cache[31]
-    rydvdz  = cache.spec_cache[32]
-    rzdwdz  = cache.spec_cache[33]
-    dϕdy    = cache.spec_cache[34]
-    dϕdz    = cache.spec_cache[35]
-    tmp1    = cache.spec_cache[36]
-    tmp2    = cache.spec_cache[37]
-    tmp3    = cache.spec_cache[38]
-    tmp4    = cache.spec_cache[39]
-    tmp5    = cache.spec_cache[40]
-    tmp6    = cache.spec_cache[41]
-    tmp7    = cache.spec_cache[42]
-    tmp8    = cache.spec_cache[43]
-    tmp9    = cache.spec_cache[44]
-    tmp10   = cache.spec_cache[45]
-    tmp11   = cache.spec_cache[46]
-    tmp12   = cache.spec_cache[47]
-    tmp13   = cache.spec_cache[48]
-    tmp14   = cache.spec_cache[49]
-    tmp15   = cache.spec_cache[50]
-    tmp16   = cache.spec_cache[51]
-    tmp17   = cache.spec_cache[52]
-    v_p     = cache.phys_cache[1]
-    w_p     = cache.phys_cache[2]
-    dudy_p  = cache.phys_cache[3]
-    dvdy_p  = cache.phys_cache[4]
-    dwdy_p  = cache.phys_cache[5]
-    dudz_p  = cache.phys_cache[6]
-    dvdz_p  = cache.phys_cache[7]
-    dwdz_p  = cache.phys_cache[8]
-    rx_p    = cache.phys_cache[9]
-    ry_p    = cache.phys_cache[10]
-    rz_p    = cache.phys_cache[11]
-    drxdy_p    = cache.phys_cache[12]
-    drydy_p    = cache.phys_cache[13]
-    drzdy_p    = cache.phys_cache[14]
-    drxdz_p    = cache.phys_cache[15]
-    drydz_p    = cache.phys_cache[16]
-    drzdz_p    = cache.phys_cache[17]
-    FFT!    = cache.fft
-    IFFT!   = cache.ifft
+    dudy     = cache.spec_cache[1]
+    dvdy     = cache.spec_cache[2]
+    dwdy     = cache.spec_cache[3]
+    dudz     = cache.spec_cache[4]
+    dvdz     = cache.spec_cache[5]
+    dwdz     = cache.spec_cache[6]
+    drxdt    = cache.spec_cache[7]
+    drydt    = cache.spec_cache[8]
+    drzdt    = cache.spec_cache[9]
+    drxdy    = cache.spec_cache[10]
+    drydy    = cache.spec_cache[11]
+    drzdy    = cache.spec_cache[12]
+    drxdz    = cache.spec_cache[13]
+    drydz    = cache.spec_cache[14]
+    drzdz    = cache.spec_cache[15]
+    d2rxdy2  = cache.spec_cache[16]
+    d2rydy2  = cache.spec_cache[17]
+    d2rzdy2  = cache.spec_cache[18]
+    d2rxdz2  = cache.spec_cache[19]
+    d2rydz2  = cache.spec_cache[20]
+    d2rzdz2  = cache.spec_cache[21]
+    vdrxdy   = cache.spec_cache[22]
+    wdrxdz   = cache.spec_cache[23]
+    vdrydy   = cache.spec_cache[24]
+    wdrydz   = cache.spec_cache[25]
+    vdrzdy   = cache.spec_cache[26]
+    wdrzdz   = cache.spec_cache[27]
+    rxdudy   = cache.spec_cache[28]
+    rydvdy   = cache.spec_cache[29]
+    rzdwdy   = cache.spec_cache[30]
+    rxdudz   = cache.spec_cache[31]
+    rydvdz   = cache.spec_cache[32]
+    rzdwdz   = cache.spec_cache[33]
+    dϕdy     = cache.spec_cache[34]
+    dϕdz     = cache.spec_cache[35]
+    tmp1     = cache.spec_cache[36]
+    tmp2     = cache.spec_cache[37]
+    tmp3     = cache.spec_cache[38]
+    tmp4     = cache.spec_cache[39]
+    tmp5     = cache.spec_cache[40]
+    tmp6     = cache.spec_cache[41]
+    tmp7     = cache.spec_cache[42]
+    tmp8     = cache.spec_cache[43]
+    tmp9     = cache.spec_cache[44]
+    tmp10    = cache.spec_cache[45]
+    tmp11    = cache.spec_cache[46]
+    tmp12    = cache.spec_cache[47]
+    tmp13    = cache.spec_cache[48]
+    tmp14    = cache.spec_cache[49]
+    tmp15    = cache.spec_cache[50]
+    tmp16    = cache.spec_cache[51]
+    tmp17    = cache.spec_cache[52]
+    v_p      = cache.phys_cache[1]
+    w_p      = cache.phys_cache[2]
+    dudy_p   = cache.phys_cache[3]
+    dvdy_p   = cache.phys_cache[4]
+    dwdy_p   = cache.phys_cache[5]
+    dudz_p   = cache.phys_cache[6]
+    dvdz_p   = cache.phys_cache[7]
+    dwdz_p   = cache.phys_cache[8]
+    rx_p     = cache.phys_cache[9]
+    ry_p     = cache.phys_cache[10]
+    rz_p     = cache.phys_cache[11]
+    drxdy_p  = cache.phys_cache[12]
+    drydy_p  = cache.phys_cache[13]
+    drzdy_p  = cache.phys_cache[14]
+    drxdz_p  = cache.phys_cache[15]
+    drydz_p  = cache.phys_cache[16]
+    drzdz_p  = cache.phys_cache[17]
+    vdrxdy_p = cache.phys_cache[18]
+    wdrxdz_p = cache.phys_cache[19]
+    vdrydy_p = cache.phys_cache[20]
+    wdrydz_p = cache.phys_cache[21]
+    vdrzdy_p = cache.phys_cache[22]
+    wdrzdz_p = cache.phys_cache[23]
+    rxdudy_p = cache.phys_cache[24]
+    rydvdy_p = cache.phys_cache[25]
+    rzdwdy_p = cache.phys_cache[26]
+    rxdudz_p = cache.phys_cache[27]
+    rydvdz_p = cache.phys_cache[28]
+    rzdwdz_p = cache.phys_cache[29]
+    FFT!     = cache.fft
+    IFFT!    = cache.ifft
 
     # compute derivatives
     @sync begin
@@ -252,31 +263,30 @@ end
 # =============================================================================
 # DAE constraints
 # =============================================================================
-struct Constraint{Ny, Nz, Nt, G, T, A, PLAN, IPLAN}
-    spec_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, A}}
-    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, G, T, A}}
+struct Constraint{Ny, Nz, Nt, G, T, PLAN, IPLAN}
+    spec_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
+    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, G, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
-    ifft::IFFTPlan!{Ny, Nz, Nt, PLAN}
+    ifft::IFFTPlan!{Ny, Nz, Nt, IPLAN}
     Re_recip::T
     Ro::T
 
     function Constraint(grid::Grid{S}, Re::Real, Ro::Real) where {S}
-        # convert parameters to floats
-        Re = convert(Float64, Re)
-        Ro = convert(Float64, Ro)
-
         # create field caches
         spec_cache = [SpectralField(grid) for _ in 1:34]
-        phys_cache = [PhysicalField(grid) for _ in 1:8]
+        phys_cache = [PhysicalField(grid) for _ in 1:14]
 
         # create transform plans
         FFT! = FFTPlan!(grid)
         IFFT! = IFFTPlan!(grid)
 
+        # convert parameters to compatible type
+        Re = convert(eltype(phys_cache[1]), Re)
+        Ro = convert(eltype(phys_cache[1]), Ro)
+
         new{S...,
             typeof(grid),
             eltype(phys_cache[1]),
-            typeof(parent(spec_cache[1])),
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(spec_cache,
                                 phys_cache,
@@ -294,30 +304,30 @@ function (f::Constraint{Ny, Nz, Nt})(out::VectorField{5, S}, q::VectorField{8, S
     p  = q[7]
 
     # update fields for current state
-    _update_constraint_cache!(f, [u, v, w], [rx, ry, rz], p)
+    _update_constraint_cache!(f, VectorField(u, v, w), VectorField(rx, ry, rz), p)
 
     # assign aliases
-    dudt   = cache.spec_cache[1]
-    dvdt   = cache.spec_cache[2]
-    dwdt   = cache.spec_cache[3]
-    dvdy   = cache.spec_cache[5]
-    dwdz   = cache.spec_cache[9]
-    d2udy2 = cache.spec_cache[10]
-    d2vdy2 = cache.spec_cache[11]
-    d2wdy2 = cache.spec_cache[12]
-    d2udz2 = cache.spec_cache[13]
-    d2vdz2 = cache.spec_cache[14]
-    d2wdz2 = cache.spec_cache[15]
-    vdudy  = cache.spec_cache[16]
-    wdudz  = cache.spec_cache[17]
-    vdvdy  = cache.spec_cache[18]
-    wdvdz  = cache.spec_cache[19]
-    vdwdy  = cache.spec_cache[20]
-    wdwdz  = cache.spec_cache[21]
-    dpdy   = cache.spec_cache[22]
-    dpdz   = cache.spec_cache[23]
-    drydy  = cache.spec_cache[25]
-    drzdz  = cache.spec_cache[26]
+    dudt   = f.spec_cache[1]
+    dvdt   = f.spec_cache[2]
+    dwdt   = f.spec_cache[3]
+    dvdy   = f.spec_cache[5]
+    dwdz   = f.spec_cache[9]
+    d2udy2 = f.spec_cache[10]
+    d2vdy2 = f.spec_cache[11]
+    d2wdy2 = f.spec_cache[12]
+    d2udz2 = f.spec_cache[13]
+    d2vdz2 = f.spec_cache[14]
+    d2wdz2 = f.spec_cache[15]
+    vdudy  = f.spec_cache[16]
+    wdudz  = f.spec_cache[17]
+    vdvdy  = f.spec_cache[18]
+    wdvdz  = f.spec_cache[19]
+    vdwdy  = f.spec_cache[20]
+    wdwdz  = f.spec_cache[21]
+    dpdy   = f.spec_cache[22]
+    dpdz   = f.spec_cache[23]
+    drydy  = f.spec_cache[25]
+    drzdz  = f.spec_cache[26]
 
     # compute output
     @. out[1] = dudt  + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*v - rx
@@ -328,61 +338,67 @@ function (f::Constraint{Ny, Nz, Nt})(out::VectorField{5, S}, q::VectorField{8, S
 
     # remove residual component from boundaries to enforce natural boundary conditions
     # TODO: check if this assigns memory
-    @views @. out[1][1, :, :] += rx[1, :, :]
-    @. out[1][end, :, :]      += @view(rx[end, :, :])
-    @views @. out[2][1, :, :] += ry[1, :, :]
-    @. out[2][end, :, :]      += @view(ry[end, :, :])
-    @views @. out[3][1, :, :] += rz[1, :, :]
-    @. out[3][end, :, :]      += @view(rz[end, :, :])
+    @views @. out[1][1, :, :]   += rx[1, :, :]
+    @.        out[1][end, :, :] += @view(rx[end, :, :])
+    @views @. out[2][1, :, :]   += ry[1, :, :]
+    @.        out[2][end, :, :] += @view(ry[end, :, :])
+    @views @. out[3][1, :, :]   += rz[1, :, :]
+    @.        out[3][end, :, :] += @view(rz[end, :, :])
 
     return out
 end
 
 function _update_constraint_cache!(cache::Constraint{Ny, Nz, Nt}, u::VectorField{3, S}, r::VectorField{3, S}, p::S) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     # assign aliases
-    dudt   = cache.spec_cache[1]
-    dvdt   = cache.spec_cache[2]
-    dwdt   = cache.spec_cache[3]
-    dudy   = cache.spec_cache[4]
-    dvdy   = cache.spec_cache[5]
-    dwdy   = cache.spec_cache[6]
-    dudz   = cache.spec_cache[7]
-    dvdz   = cache.spec_cache[8]
-    dwdz   = cache.spec_cache[9]
-    d2udy2 = cache.spec_cache[10]
-    d2vdy2 = cache.spec_cache[11]
-    d2wdy2 = cache.spec_cache[12]
-    d2udz2 = cache.spec_cache[13]
-    d2vdz2 = cache.spec_cache[14]
-    d2wdz2 = cache.spec_cache[15]
-    vdudy  = cache.spec_cache[16]
-    wdudz  = cache.spec_cache[17]
-    vdvdy  = cache.spec_cache[18]
-    wdvdz  = cache.spec_cache[19]
-    vdwdy  = cache.spec_cache[20]
-    wdwdz  = cache.spec_cache[21]
-    dpdy   = cache.spec_cache[22]
-    dpdz   = cache.spec_cache[23]
-    drydy  = cache.spec_cache[25]
-    drzdz  = cache.spec_cache[26]
-    tmp1   = cache.spec_cache[27]
-    tmp2   = cache.spec_cache[28]
-    tmp3   = cache.spec_cache[29]
-    tmp4   = cache.spec_cache[30]
-    tmp5   = cache.spec_cache[31]
-    tmp6   = cache.spec_cache[32]
-    tmp7   = cache.spec_cache[33]
-    tmp8   = cache.spec_cache[34]
-    v_p    = cache.phys_cache[1]
-    w_p    = cache.phys_cache[2]
-    dudy_p = cache.phys_cache[3]
-    dvdy_p = cache.phys_cache[4]
-    dwdy_p = cache.phys_cache[5]
-    dudz_p = cache.phys_cache[6]
-    dvdz_p = cache.phys_cache[7]
-    dwdz_p = cache.phys_cache[8]
-    FFT! = cache.fft
-    IFFT! = cache.ifft
+    dudt    = cache.spec_cache[1]
+    dvdt    = cache.spec_cache[2]
+    dwdt    = cache.spec_cache[3]
+    dudy    = cache.spec_cache[4]
+    dvdy    = cache.spec_cache[5]
+    dwdy    = cache.spec_cache[6]
+    dudz    = cache.spec_cache[7]
+    dvdz    = cache.spec_cache[8]
+    dwdz    = cache.spec_cache[9]
+    d2udy2  = cache.spec_cache[10]
+    d2vdy2  = cache.spec_cache[11]
+    d2wdy2  = cache.spec_cache[12]
+    d2udz2  = cache.spec_cache[13]
+    d2vdz2  = cache.spec_cache[14]
+    d2wdz2  = cache.spec_cache[15]
+    vdudy   = cache.spec_cache[16]
+    wdudz   = cache.spec_cache[17]
+    vdvdy   = cache.spec_cache[18]
+    wdvdz   = cache.spec_cache[19]
+    vdwdy   = cache.spec_cache[20]
+    wdwdz   = cache.spec_cache[21]
+    dpdy    = cache.spec_cache[22]
+    dpdz    = cache.spec_cache[23]
+    drydy   = cache.spec_cache[25]
+    drzdz   = cache.spec_cache[26]
+    tmp1    = cache.spec_cache[27]
+    tmp2    = cache.spec_cache[28]
+    tmp3    = cache.spec_cache[29]
+    tmp4    = cache.spec_cache[30]
+    tmp5    = cache.spec_cache[31]
+    tmp6    = cache.spec_cache[32]
+    tmp7    = cache.spec_cache[33]
+    tmp8    = cache.spec_cache[34]
+    v_p     = cache.phys_cache[1]
+    w_p     = cache.phys_cache[2]
+    dudy_p  = cache.phys_cache[3]
+    dvdy_p  = cache.phys_cache[4]
+    dwdy_p  = cache.phys_cache[5]
+    dudz_p  = cache.phys_cache[6]
+    dvdz_p  = cache.phys_cache[7]
+    dwdz_p  = cache.phys_cache[8]
+    vdudy_p = cache.phys_cache[9]
+    wdudz_p = cache.phys_cache[10]
+    vdvdy_p = cache.phys_cache[11]
+    wdvdz_p = cache.phys_cache[12]
+    vdwdy_p = cache.phys_cache[13]
+    wdwdz_p = cache.phys_cache[14]
+    FFT!    = cache.fft
+    IFFT!   = cache.ifft
 
     # compute derivatives
     @sync begin
