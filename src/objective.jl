@@ -83,13 +83,12 @@ function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}
     @. out[3] = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)           + dϕdz
 
     # impose boundary invariance for no-slip
-    # TODO: make sure this doesn't assign memory
-    @view(out[1][1, :, :]).= 0
-    @view(out[1][end, :, :]).= 0
-    @view(out[2][1, :, :]).= 0
-    @view(out[2][end, :, :]).= 0
-    @view(out[3][1, :, :]).= 0
-    @view(out[3][end, :, :]).= 0
+    @view(out[1][1, :, :]) .= 0
+    @view(out[1][end, :, :]) .= 0
+    @view(out[2][1, :, :]) .= 0
+    @view(out[2][end, :, :]) .= 0
+    @view(out[3][1, :, :]) .= 0
+    @view(out[3][end, :, :]) .= 0
 
     return out
 end
@@ -204,7 +203,7 @@ function _update_evolution_cache!(cache::Evolution{Ny, Nz, Nt}, u::VectorField{3
         Base.Threads.@spawn d2dz2!(r[2], d2rydz2)
         Base.Threads.@spawn d2dz2!(r[3], d2rzdz2)
         Base.Threads.@spawn ddy!(ϕ, dϕdy)
-        Base.Threads.@spawn ddy!(ϕ, dϕdz)
+        Base.Threads.@spawn ddz!(ϕ, dϕdz)
     end
 
     # compute nonlinear components
@@ -217,9 +216,9 @@ function _update_evolution_cache!(cache::Evolution{Ny, Nz, Nt}, u::VectorField{3
         Base.Threads.@spawn IFFT!(dudz_p, dudz, tmp6)
         Base.Threads.@spawn IFFT!(dvdz_p, dvdz, tmp7)
         Base.Threads.@spawn IFFT!(dwdz_p, dwdz, tmp8)
-        Base.Threads.@spawn IFFT!(rx_p, rx, tmp9)
-        Base.Threads.@spawn IFFT!(ry_p, ry, tmp10)
-        Base.Threads.@spawn IFFT!(rz_p, rz, tmp11)
+        Base.Threads.@spawn IFFT!(rx_p, r[1], tmp9)
+        Base.Threads.@spawn IFFT!(ry_p, r[2], tmp10)
+        Base.Threads.@spawn IFFT!(rz_p, r[3], tmp11)
         Base.Threads.@spawn IFFT!(drxdy_p, drxdy, tmp12)
         Base.Threads.@spawn IFFT!(drydy_p, drydy, tmp13)
         Base.Threads.@spawn IFFT!(drzdy_p, drzdy, tmp14)
