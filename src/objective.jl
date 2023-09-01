@@ -10,6 +10,7 @@
 # DAE evolution
 # =============================================================================
 struct Evolution{Ny, Nz, Nt, G, T, PLAN, IPLAN}
+    out::VectorField{3, SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
     spec_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
     phys_cache::Vector{PhysicalField{Ny, Nz, Nt, G, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
@@ -18,6 +19,9 @@ struct Evolution{Ny, Nz, Nt, G, T, PLAN, IPLAN}
     Ro::T
 
     function Evolution(grid::Grid{S}, Re::Real, Ro::Real) where {S}
+        # initialise output vector field
+        out = VectorField(grid, N=3)
+
         # create field caches
         spec_cache = [SpectralField(grid) for _ in 1:52]
         phys_cache = [PhysicalField(grid) for _ in 1:29]
@@ -34,7 +38,8 @@ struct Evolution{Ny, Nz, Nt, G, T, PLAN, IPLAN}
             typeof(grid),
             eltype(phys_cache[1]),
             typeof(FFT!.plan),
-            typeof(IFFT!.plan)}(spec_cache,
+            typeof(IFFT!.plan)}(out,
+                                spec_cache,
                                 phys_cache,
                                 FFT!,
                                 IFFT!,
@@ -43,7 +48,7 @@ struct Evolution{Ny, Nz, Nt, G, T, PLAN, IPLAN}
     end
 end
 
-function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function (f::Evolution{Ny, Nz, Nt})(q::VectorField{8, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     # unpack input
     u  = q[1]; v  = q[2]; w  = q[3]
     rx = q[4]; ry = q[5]; rz = q[6]
@@ -78,19 +83,19 @@ function (f::Evolution{Ny, Nz, Nt})(out::VectorField{3, S}, q::VectorField{8, S}
     dϕdz    = f.spec_cache[35]
 
     # compute output
-    @. out[1] = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
-    @. out[2] = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx + dϕdy
-    @. out[3] = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)           + dϕdz
+    @. f.out[1] = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
+    @. f.out[2] = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx + dϕdy
+    @. f.out[3] = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)           + dϕdz
 
     # impose boundary invariance for no-slip
-    @view(out[1][1, :, :]) .= 0
-    @view(out[1][end, :, :]) .= 0
-    @view(out[2][1, :, :]) .= 0
-    @view(out[2][end, :, :]) .= 0
-    @view(out[3][1, :, :]) .= 0
-    @view(out[3][end, :, :]) .= 0
+    @view(f.out[1][1, :, :]) .= 0
+    @view(f.out[1][end, :, :]) .= 0
+    @view(f.out[2][1, :, :]) .= 0
+    @view(f.out[2][end, :, :]) .= 0
+    @view(f.out[3][1, :, :]) .= 0
+    @view(f.out[3][end, :, :]) .= 0
 
-    return out
+    return f.out
 end
 
 function _update_evolution_cache!(cache::Evolution{Ny, Nz, Nt}, u::VectorField{3, S}, r::VectorField{3, S}, ϕ::S) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
@@ -265,6 +270,7 @@ end
 # DAE constraints
 # =============================================================================
 struct Constraint{Ny, Nz, Nt, G, T, PLAN, IPLAN}
+    out::VectorField{5, SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
     spec_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
     phys_cache::Vector{PhysicalField{Ny, Nz, Nt, G, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
@@ -273,6 +279,9 @@ struct Constraint{Ny, Nz, Nt, G, T, PLAN, IPLAN}
     Ro::T
 
     function Constraint(grid::Grid{S}, Re::Real, Ro::Real) where {S}
+        # initialise output vector field
+        out = VectorField(grid, N=5)
+
         # create field caches
         spec_cache = [SpectralField(grid) for _ in 1:34]
         phys_cache = [PhysicalField(grid) for _ in 1:14]
@@ -289,7 +298,8 @@ struct Constraint{Ny, Nz, Nt, G, T, PLAN, IPLAN}
             typeof(grid),
             eltype(phys_cache[1]),
             typeof(FFT!.plan),
-            typeof(IFFT!.plan)}(spec_cache,
+            typeof(IFFT!.plan)}(out,
+                                spec_cache,
                                 phys_cache,
                                 FFT!,
                                 IFFT!,
@@ -298,7 +308,7 @@ struct Constraint{Ny, Nz, Nt, G, T, PLAN, IPLAN}
     end
 end
 
-function (f::Constraint{Ny, Nz, Nt})(out::VectorField{5, S}, q::VectorField{8, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function (f::Constraint{Ny, Nz, Nt})(q::VectorField{8, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     # unpack input
     u  = q[1]; v  = q[2]; w  = q[3]
     rx = q[4]; ry = q[5]; rz = q[6]
@@ -331,21 +341,21 @@ function (f::Constraint{Ny, Nz, Nt})(out::VectorField{5, S}, q::VectorField{8, S
     drzdz  = f.spec_cache[26]
 
     # compute output
-    @. out[1] = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*v - rx
-    @. out[2] = dvdt + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u - ry + dpdy
-    @. out[3] = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)          - rz + dpdz
-    @. out[4] = dvdy + dwdz
-    @. out[5] = drydy + drzdz
+    @. f.out[1] = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*v - rx
+    @. f.out[2] = dvdt + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u - ry + dpdy
+    @. f.out[3] = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)          - rz + dpdz
+    @. f.out[4] = dvdy + dwdz
+    @. f.out[5] = drydy + drzdz
 
     # remove residual component from boundaries to enforce natural boundary conditions
-    @views @. out[1][1, :, :]   += rx[1, :, :]
-    @. @view(out[1][end, :, :]) += @view(rx[end, :, :])
-    @views @. out[2][1, :, :]   += ry[1, :, :]
-    @. @view(out[2][end, :, :]) += @view(ry[end, :, :])
-    @views @. out[3][1, :, :]   += rz[1, :, :]
-    @. @view(out[3][end, :, :]) += @view(rz[end, :, :])
+    @views @. f.out[1][1, :, :]   += rx[1, :, :]
+    @. @view(f.out[1][end, :, :]) += @view(rx[end, :, :])
+    @views @. f.out[2][1, :, :]   += ry[1, :, :]
+    @. @view(f.out[2][end, :, :]) += @view(ry[end, :, :])
+    @views @. f.out[3][1, :, :]   += rz[1, :, :]
+    @. @view(f.out[3][end, :, :]) += @view(rz[end, :, :])
 
-    return out
+    return f.out
 end
 
 function _update_constraint_cache!(cache::Constraint{Ny, Nz, Nt}, u::VectorField{3, S}, r::VectorField{3, S}, p::S) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}

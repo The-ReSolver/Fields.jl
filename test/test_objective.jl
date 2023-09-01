@@ -83,7 +83,7 @@ dϕdz_fun(y, z, t)    = (1 - y^2)*sin(z)*cos(cos(z))*cos(t)
 
     # compute objective constraints
     G! = Constraint(grid, Re, Ro)
-    out = G!(VectorField(grid, N=5), q)
+    out = G!(q)
 
     @test out ≈ g
 end
@@ -115,7 +115,7 @@ end
 
     # compute objective evolution
     F! = Evolution(grid, Re, Ro)
-    out = F!(VectorField(grid), q)
+    out = F!(q)
 
     @test out ≈ f
 end
