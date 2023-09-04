@@ -29,9 +29,11 @@
     @test VectorField(grid, fun1) isa VectorField{1, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}}
     @test VectorField(grid, fun1, fun2, fun3) isa VectorField{3, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}}
 
-    # test copy method
+    # test copy  and similar methods
     a = VectorField(grid)
     @test copy(a) == a
+    @test similar(a) isa VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{ComplexF64, 3}}}
+    @test similar(a, 5) isa VectorField{5, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{ComplexF64, 3}}}
 
     # # catch errors on constructors
     @test_throws MethodError VectorField(u2, v1)

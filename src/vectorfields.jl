@@ -42,6 +42,7 @@ Base.length(::VectorField{N}) where {N} = N
 
 # construct a new object from an existing one
 Base.similar(q::VectorField) = VectorField(similar.(q.elements)...)
+Base.similar(q::VectorField, L::Int, ::Type{S}=SpectralField) where {S} = VectorField([S(get_grid(q)) for _ in 1:L]...)
 Base.copy(q::VectorField) = copy.(q)
 
 # inner-product and norm
