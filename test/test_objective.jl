@@ -16,7 +16,8 @@ ry_fun(y, z, t) = (y^2)*cos(z)*sin(t)
 rz_fun(y, z, t) = exp(cos(y))*sin(z)*sin(t)
 p_fun(y, z, t)  = (sin(π*y)^2)*cos(sin(z))*sin(t)
 ϕ_fun(y, z, t)  = (y^2 - 1)*sin(cos(z))*cos(t)
-q = FFT!(VectorField(grid, N=8), VectorField(grid, u_fun, v_fun, w_fun, rx_fun, ry_fun, rz_fun, p_fun, ϕ_fun))
+q1 = FFT!(VectorField(grid, N = 3), VectorField(grid, u_fun, v_fun, w_fun))
+q2 = FFT!(VectorField(grid, N = 5), VectorField(grid, rx_fun, ry_fun, rz_fun, p_fun, ϕ_fun))
 
 # define derivative functions
 dudt_fun(y, z, t)    = (y^3)*exp(cos(z))*cos(t)
@@ -83,7 +84,7 @@ dϕdz_fun(y, z, t)    = (1 - y^2)*sin(z)*cos(cos(z))*cos(t)
 
     # compute objective constraints
     G! = Constraint(grid, Re, Ro)
-    out = G!(q)
+    out = G!(q1, q2)
 
     @test out ≈ g
 end
@@ -115,7 +116,7 @@ end
 
     # compute objective evolution
     F! = Evolution(grid, Re, Ro)
-    out = F!(q)
+    out = F!(q1, q2)
 
     @test out ≈ f
 end
