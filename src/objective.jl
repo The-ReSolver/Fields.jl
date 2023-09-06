@@ -48,11 +48,11 @@ struct Evolution{Ny, Nz, Nt, G, T, PLAN, IPLAN}
     end
 end
 
-function (f::Evolution{Ny, Nz, Nt})(q::VectorField{8, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function (f::Evolution{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     # unpack input
-    u  = q[1]; v  = q[2]; w  = q[3]
-    rx = q[4]; ry = q[5]; rz = q[6]
-    ϕ  = q[8]
+    u  = q1[1]; v  = q1[2]; w  = q1[3]
+    rx = q2[1]; ry = q2[2]; rz = q2[3]
+    ϕ  = q2[5]
 
     # update fields for current state
     _update_evolution_cache!(f, VectorField(u, v, w), VectorField(rx, ry, rz), ϕ)
@@ -308,11 +308,11 @@ struct Constraint{Ny, Nz, Nt, G, T, PLAN, IPLAN}
     end
 end
 
-function (f::Constraint{Ny, Nz, Nt})(q::VectorField{8, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function (f::Constraint{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     # unpack input
-    u  = q[1]; v  = q[2]; w  = q[3]
-    rx = q[4]; ry = q[5]; rz = q[6]
-    p  = q[7]
+    u  = q1[1]; v  = q1[2]; w  = q1[3]
+    rx = q2[1]; ry = q2[2]; rz = q2[3]
+    p  = q2[4]
 
     # update fields for current state
     _update_constraint_cache!(f, VectorField(u, v, w), VectorField(rx, ry, rz), p)

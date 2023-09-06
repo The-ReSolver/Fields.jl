@@ -23,6 +23,10 @@ Base.parent(U::SpectralField) = U.data
 Base.similar(U::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt, G, T, S} = SpectralField(U.grid, S)
 Base.copy(U::SpectralField) = (V = similar(U); V .= U; V)
 
+# methods to allow interface with other packages
+Base.zero(U::SpectralField) = zero.(U)
+Base.abs(U::SpectralField) = (A = zeros(size(U)); A .= abs.(U); return A)
+
 # method to extract grid
 get_grid(U::SpectralField) = U.grid
 

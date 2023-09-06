@@ -2,6 +2,8 @@ module Fields
 
 using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase
 
+# using DAESolve
+
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!, divergence!, laplacian!
 export FFTPlan!, IFFTPlan!
 export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
@@ -12,6 +14,7 @@ export VectorField
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 export project, project!
 export Evolution, Constraint
+# export optimise
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 
@@ -25,6 +28,7 @@ include("derivatives.jl")
 include("dns2field.jl")
 include("plot_vectorfield.jl")
 include("objective.jl")
+include("solver.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 

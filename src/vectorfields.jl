@@ -45,6 +45,10 @@ Base.similar(q::VectorField) = VectorField(similar.(q.elements)...)
 Base.similar(q::VectorField, L::Int, ::Type{S}=SpectralField) where {S} = VectorField([S(get_grid(q)) for _ in 1:L]...)
 Base.copy(q::VectorField) = copy.(q)
 
+# methods to allow interface with other packages
+Base.zero(q::VectorField) = zero.(q)
+Base.vcat(q::VectorField, p::VectorField) = VectorField(q..., p...)
+
 # inner-product and norm
 LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} =  sum(LinearAlgebra.dot(q[i], p[i]) for i = 1:N)
 LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
