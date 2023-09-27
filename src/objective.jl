@@ -83,9 +83,9 @@ function (f::Evolution{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S}
     dϕdz    = f.spec_cache[35]
 
     # compute output
-    @. f.out[1] = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
-    @. f.out[2] = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx + dϕdy
-    @. f.out[3] = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)           + dϕdz
+    @. f.out[1] = drxdt + vdrxdy + wdrxdz                            + f.Re_recip*(d2rxdy2 + d2rxdz2) - f.Ro*ry
+    @. f.out[2] = drydt + vdrydy + wdrydz - rxdudy - rydvdy - rzdwdy + f.Re_recip*(d2rydy2 + d2rydz2) + f.Ro*rx - dϕdy
+    @. f.out[3] = drzdt + vdrzdy + wdrzdz - rxdudz - rydvdz - rzdwdz + f.Re_recip*(d2rzdy2 + d2rzdz2)           - dϕdz
 
     # impose boundary invariance for no-slip
     @view(f.out[1][1, :, :]) .= 0
@@ -344,8 +344,11 @@ function (f::Constraint{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S
     @. f.out[1] = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*v - rx
     @. f.out[2] = dvdt + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u - ry + dpdy
     @. f.out[3] = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)          - rz + dpdz
-    @. f.out[4] = dvdy + dwdz
-    @. f.out[5] = drydy + drzdz
+    # FIXME: incompresibility constraints are the issue!!!
+    # @. f.out[4] = dvdy + dwdz
+    # @. f.out[5] = drydy + drzdz
+    @. f.out[4] = 0.0
+    @. f.out[5] = 0.0
 
     # remove residual component from boundaries to enforce natural boundary conditions
     @views @. f.out[1][1, :, :]   += rx[1, :, :]
