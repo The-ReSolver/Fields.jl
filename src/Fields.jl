@@ -12,7 +12,7 @@ export PhysicalField
 export SpectralField, norm
 export VectorField
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
-export project, project!
+export project, project!, reverse_project!
 export Evolution, Constraint
 export myoptimise
 
@@ -29,6 +29,7 @@ include("dns2field.jl")
 include("plot_vectorfield.jl")
 include("objective.jl")
 include("optimise.jl")
+include("varroc.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 

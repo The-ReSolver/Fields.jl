@@ -42,3 +42,26 @@ end
 
     @test project(u, ws, Ψ) ≈ a
 end
+
+@testset "Reverse Projection of a Field " begin
+    # construct the field of modes
+    Ny = 16; Nz = 16; Nt = 16
+    M = rand(1:12)
+    ws = ones(Ny)
+    Ψ = zeros(ComplexF64, Ny, M, Nz, Nt)
+    for nt in 1:Nt, nz in 1:Nz
+        Ψ[:, :, nz, nt] .= @view(qr(rand(ComplexF64, Ny, M)).Q[:, 1:M])
+    end
+
+    # construct field as a combination of the modes
+    a = rand(ComplexF64, M, Nz, Nt)
+    u = zeros(ComplexF64, Ny, Nz, Nt)
+    for nt in 1:Nt, nz in 1:Nz
+        u[:, nz, nt] .= Ψ[:, :, nz, nt]*a[:, nz, nt]
+    end
+
+    # project and reverse to get the original field
+    v = reverse_project!(similar(u), project(u, ws, Ψ), Ψ)
+
+    @test v ≈ u
+end

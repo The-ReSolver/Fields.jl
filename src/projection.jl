@@ -32,3 +32,11 @@ function project!(a::AbstractArray{<:Number, 3}, u::AbstractArray{<:Number, 3}, 
     return a
 end
 project(u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::AbstractArray{T, 4}) where {T<:Number} = project!(zeros(T, size(modes, 2), size(selectdim(u, 1, 1))...), u, w, modes)
+
+function reverse_project!(u::AbstractArray{<:Number, 3}, a::AbstractArray{<:Number, 3}, modes::AbstractArray{<:Number, 4})
+    for I in CartesianIndices(eachslice(u, dims=1)[1])
+        u[:, I] .= @view(modes[:, :, I])*@view(a[:, I])
+    end
+
+    return u
+end
