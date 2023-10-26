@@ -6,10 +6,10 @@
 # TODO: figure out what is going on at the mean mode with the new fields
 
 struct ResGrad{Ny, Nz, Nt, M, G, T, PLAN, IPLAN}
-    out::VectorField{3, SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
+    out::VectorField{3, SpectralField{M, Nz, Nt, G, T, Array{Complex{T}, 3}}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
-    proj_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
+    proj_cache::Vector{SpectralField{M, Nz, Nt, G, T, Array{Complex{T}, 3}}}
     spec_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
     phys_cache::Vector{PhysicalField{Ny, Nz, Nt, G, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
@@ -58,74 +58,125 @@ end
 # TODO: do the modes need to be split into component parts?
 function (f::ResGrad{Ny, Nz, Nt, M})(a::VectorField{3, S}) where {Ny, Nz, Nt, M, S<:SpectralField{M, Nz, Nt}}
     # assign aliases
+    u        = f.spec_cache[1]
+    v        = f.spec_cache[2]
+    w        = f.spec_cache[3]
+    dudt     = f.spec_cache[4]
+    dvdt     = f.spec_cache[5]
+    dwdt     = f.spec_cache[6]
+    d2udy2   = f.spec_cache[13]
+    d2vdy2   = f.spec_cache[14]
+    d2wdy2   = f.spec_cache[15]
+    d2udz2   = f.spec_cache[16]
+    d2vdz2   = f.spec_cache[17]
+    d2wdz2   = f.spec_cache[18]
+    vdudy    = f.spec_cache[19]
+    wdudz    = f.spec_cache[20]
+    vdvdy    = f.spec_cache[21]
+    wdvdz    = f.spec_cache[22]
+    vdwdy    = f.spec_cache[23]
+    wdwdz    = f.spec_cache[24]
+    nsx      = f.spec_cache[25]
+    nsy      = f.spec_cache[26]
+    nsz      = f.spec_cache[27]
+    rx       = f.spec_cache[28]
+    ry       = f.spec_cache[29]
+    rz       = f.spec_cache[30]
+    drxdt    = cache.spec_cache[31]
+    drydt    = cache.spec_cache[32]
+    drzdt    = cache.spec_cache[33]
+    d2rxdy2  = cache.spec_cache[40]
+    d2rydy2  = cache.spec_cache[41]
+    d2rzdy2  = cache.spec_cache[42]
+    d2rxdz2  = cache.spec_cache[43]
+    d2rydz2  = cache.spec_cache[44]
+    d2rzdz2  = cache.spec_cache[45]
+    vdrxdy   = cache.spec_cache[46]
+    wdrxdz   = cache.spec_cache[47]
+    vdrydy   = cache.spec_cache[48]
+    wdrydz   = cache.spec_cache[49]
+    vdrzdy   = cache.spec_cache[50]
+    wdrzdz   = cache.spec_cache[51]
+    rxdudy   = cache.spec_cache[52]
+    rydvdy   = cache.spec_cache[53]
+    rzdwdy   = cache.spec_cache[54]
+    rxdudz   = cache.spec_cache[55]
+    rydvdz   = cache.spec_cache[56]
+    rzdwdz   = cache.spec_cache[57]
+    sx       = proj_cache[1]
+    sy       = proj_cache[2]
+    sz       = proj_cache[3]
     ws       = f.ws
-    u        = VectorField(f.spec_cache[1], f.spec_cache[2], f.spec_cache[3])
-    dudτ     = f.spec_cache[4]
-    dvdτ     = f.spec_cache[5]
-    dwdτ     = f.spec_cache[6]
-    dudt     = f.spec_cache[7]
-    dvdt     = f.spec_cache[8]
-    dwdt     = f.spec_cache[9]
-    dudy     = f.spec_cache[10]
-    dvdy     = f.spec_cache[11]
-    dwdy     = f.spec_cache[12]
-    dudz     = f.spec_cache[13]
-    dvdz     = f.spec_cache[14]
-    dwdz     = f.spec_cache[15]
-    d2udy2   = f.spec_cache[16]
-    d2vdy2   = f.spec_cache[17]
-    d2wdy2   = f.spec_cache[18]
-    d2udz2   = f.spec_cache[19]
-    d2vdz2   = f.spec_cache[20]
-    d2wdz2   = f.spec_cache[21]
-    vdudy    = f.spec_cache[22]
-    wdudz    = f.spec_cache[23]
-    vdvdy    = f.spec_cache[24]
-    wdvdz    = f.spec_cache[25]
-    vdwdy    = f.spec_cache[26]
-    wdwdz    = f.spec_cache[27]
-    nsx      = f.spec_cache[28]
-    nsy      = f.spec_cache[29]
-    nsz      = f.spec_cache[30]
-    rx       = f.spec_cache[31]
-    ry       = f.spec_cache[32]
-    rz       = f.spec_cache[33]
-    drxdt    = cache.spec_cache[34]
-    drydt    = cache.spec_cache[35]
-    drzdt    = cache.spec_cache[36]
-    drxdy    = cache.spec_cache[37]
-    drydy    = cache.spec_cache[38]
-    drzdy    = cache.spec_cache[39]
-    drxdz    = cache.spec_cache[40]
-    drydz    = cache.spec_cache[41]
-    drzdz    = cache.spec_cache[42]
-    d2rxdy2  = cache.spec_cache[43]
-    d2rydy2  = cache.spec_cache[44]
-    d2rzdy2  = cache.spec_cache[45]
-    d2rxdz2  = cache.spec_cache[46]
-    d2rydz2  = cache.spec_cache[47]
-    d2rzdz2  = cache.spec_cache[48]
-    vdrxdy   = cache.spec_cache[49]
-    wdrxdz   = cache.spec_cache[50]
-    vdrydy   = cache.spec_cache[51]
-    wdrydz   = cache.spec_cache[52]
-    vdrzdy   = cache.spec_cache[53]
-    wdrzdz   = cache.spec_cache[54]
-    rxdudy   = cache.spec_cache[55]
-    rydvdy   = cache.spec_cache[56]
-    rzdwdy   = cache.spec_cache[57]
-    rxdudz   = cache.spec_cache[58]
-    rydvdz   = cache.spec_cache[59]
-    rzdwdz   = cache.spec_cache[60]
-    tmp1     = cache.spec_cache[61]
-    tmp2     = cache.spec_cache[62]
-    tmp3     = cache.spec_cache[63]
-    tmp4     = cache.spec_cache[64]
-    tmp5     = cache.spec_cache[65]
-    tmp6     = cache.spec_cache[66]
-    tmp7     = cache.spec_cache[67]
-    tmp8     = cache.spec_cache[68]
-    tmp9     = cache.spec_cache[69]
+    ψs       = f.modes
+
+    # convert velocity coefficients to full-space
+    reverse_project!(u, a[1], ψs)
+    reverse_project!(v, a[2], ψs)
+    reverse_project!(w, a[3], ψs)
+
+    # compute all the terms with only velocity
+    _update_vel_cache!(f)
+
+    # compute the navier-stokes
+    @. nsx = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*v
+    @. nsy = dvdt + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u
+    @. nsz = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)
+
+    # convert to residual in terms of modal basis
+    reverse_project!(rx, project!(sx, nsx, ws, ψs), ψs)
+    reverse_project!(ry, project!(sy, nsy, ws, ψs), ψs)
+    reverse_project!(rz, project!(sz, nsz, ws, ψs), ψs)
+
+    # compute all the terms for the variational evolution
+    _update_res_cache(f)
+
+    # compute the RHS of the evolution equation
+    @. dudτ = drxdt + vdrxdy + wdrxdz                            + f.Re_recip*(d2rxdy2 + d2rxdz2) - f.Ro*ry
+    @. dvdτ = drydt + vdrydy + wdrydz - rxdudy - rydvdy - rzdwdy + f.Re_recip*(d2rydy2 + d2rydz2) + f.Ro*rx
+    @. dwdτ = drzdt + vdrzdy + wdrzdz - rxdudz - rydvdz - rzdwdz + f.Re_recip*(d2rzdy2 + d2rzdz2)
+
+    # project to get velocity coefficient evolution
+    project!(f.out[1], dudτ, ws, ψs)
+    project!(f.out[2], dvdτ, ws, ψs)
+    project!(f.out[3], dwdτ, ws, ψs)
+
+    return f.out
+end
+
+function _update_vel_cache!(cache::ResGrad{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    # assign aliases
+    u        = cache.spec_cache[1]
+    v        = cache.spec_cache[2]
+    w        = cache.spec_cache[3]
+    dudt     = cache.spec_cache[4]
+    dvdt     = cache.spec_cache[5]
+    dwdt     = cache.spec_cache[6]
+    dudy     = cache.spec_cache[7]
+    dvdy     = cache.spec_cache[8]
+    dwdy     = cache.spec_cache[9]
+    dudz     = cache.spec_cache[10]
+    dvdz     = cache.spec_cache[11]
+    dwdz     = cache.spec_cache[12]
+    d2udy2   = cache.spec_cache[13]
+    d2vdy2   = cache.spec_cache[14]
+    d2wdy2   = cache.spec_cache[15]
+    d2udz2   = cache.spec_cache[16]
+    d2vdz2   = cache.spec_cache[17]
+    d2wdz2   = cache.spec_cache[18]
+    vdudy    = cache.spec_cache[19]
+    wdudz    = cache.spec_cache[20]
+    vdvdy    = cache.spec_cache[21]
+    wdvdz    = cache.spec_cache[22]
+    vdwdy    = cache.spec_cache[23]
+    wdwdz    = cache.spec_cache[24]
+    tmp1     = cache.spec_cache[58]
+    tmp2     = cache.spec_cache[59]
+    tmp3     = cache.spec_cache[60]
+    tmp4     = cache.spec_cache[61]
+    tmp5     = cache.spec_cache[62]
+    tmp6     = cache.spec_cache[63]
+    tmp7     = cache.spec_cache[64]
+    tmp8     = cache.spec_cache[65]
     v_p      = cache.phys_cache[1]
     w_p      = cache.phys_cache[2]
     dudy_p   = cache.phys_cache[3]
@@ -140,65 +191,32 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::VectorField{3, S}) where {Ny, Nz, Nt, M,
     wdvdz_p  = cache.phys_cache[12]
     vdwdy_p  = cache.phys_cache[13]
     wdwdz_p  = cache.phys_cache[14]
-    rx_p     = cache.phys_cache[15]
-    ry_p     = cache.phys_cache[16]
-    rz_p     = cache.phys_cache[17]
-    drxdy_p  = cache.phys_cache[18]
-    drydy_p  = cache.phys_cache[19]
-    drzdy_p  = cache.phys_cache[20]
-    drxdz_p  = cache.phys_cache[21]
-    drydz_p  = cache.phys_cache[22]
-    drzdz_p  = cache.phys_cache[23]
-    vdrxdy_p = cache.phys_cache[24]
-    wdrxdz_p = cache.phys_cache[25]
-    vdrydy_p = cache.phys_cache[26]
-    wdrydz_p = cache.phys_cache[27]
-    vdrzdy_p = cache.phys_cache[28]
-    wdrzdz_p = cache.phys_cache[29]
-    rxdudy_p = cache.phys_cache[30]
-    rydvdy_p = cache.phys_cache[31]
-    rzdwdy_p = cache.phys_cache[32]
-    rxdudz_p = cache.phys_cache[33]
-    rydvdz_p = cache.phys_cache[34]
-    rzdwdz_p = cache.phys_cache[35]
-    sx       = proj_cache[1]
-    sy       = proj_cache[2]
-    sz       = proj_cache[3]
     FFT!     = cache.fft
     IFFT!    = cache.ifft
 
-    # convert velocity coefficients to full-space
-    reverse_project!(u[1], a[1], f.modes)
-    reverse_project!(u[2], a[2], f.modes)
-    reverse_project!(u[3], a[3], f.modes)
-
     # compute all the derivatives of the field
     @sync begin
-        Base.Threads.@spawn ddt!(u[1], dudt)
-        Base.Threads.@spawn ddt!(u[2], dvdt)
-        Base.Threads.@spawn ddt!(u[3], dwdt)
-        Base.Threads.@spawn ddy!(u[1], dudy)
-        Base.Threads.@spawn ddy!(u[2], dvdy)
-        Base.Threads.@spawn ddy!(u[3], dwdy)
-        Base.Threads.@spawn ddz!(u[1], dudz)
-        Base.Threads.@spawn ddz!(u[2], dvdz)
-        Base.Threads.@spawn ddz!(u[3], dwdz)
-        Base.Threads.@spawn d2dy2!(u[1], d2udy2)
-        Base.Threads.@spawn d2dy2!(u[2], d2vdy2)
-        Base.Threads.@spawn d2dy2!(u[3], d2wdy2)
-        Base.Threads.@spawn d2dz2!(u[1], d2udz2)
-        Base.Threads.@spawn d2dz2!(u[2], d2vdz2)
-        Base.Threads.@spawn d2dz2!(u[3], d2wdz2)
-        Base.Threads.@spawn ddy!(p, dpdy)
-        Base.Threads.@spawn ddz!(p, dpdz)
-        Base.Threads.@spawn ddy!(r[2], drydy)
-        Base.Threads.@spawn ddz!(r[3], drzdz)
+        Base.Threads.@spawn ddt!(u, dudt)
+        Base.Threads.@spawn ddt!(v, dvdt)
+        Base.Threads.@spawn ddt!(w, dwdt)
+        Base.Threads.@spawn ddy!(u, dudy)
+        Base.Threads.@spawn ddy!(v, dvdy)
+        Base.Threads.@spawn ddy!(w, dwdy)
+        Base.Threads.@spawn ddz!(u, dudz)
+        Base.Threads.@spawn ddz!(v, dvdz)
+        Base.Threads.@spawn ddz!(w, dwdz)
+        Base.Threads.@spawn d2dy2!(u, d2udy2)
+        Base.Threads.@spawn d2dy2!(v, d2vdy2)
+        Base.Threads.@spawn d2dy2!(w, d2wdy2)
+        Base.Threads.@spawn d2dz2!(u, d2udz2)
+        Base.Threads.@spawn d2dz2!(v, d2vdz2)
+        Base.Threads.@spawn d2dz2!(w, d2wdz2)
     end
 
     # compute the nonlinear terms
     @sync begin
-        Base.Threads.@spawn IFFT!(v_p, u[2], tmp1)
-        Base.Threads.@spawn IFFT!(w_p, u[3], tmp2)
+        Base.Threads.@spawn IFFT!(v_p, v, tmp1)
+        Base.Threads.@spawn IFFT!(w_p, w, tmp2)
         Base.Threads.@spawn IFFT!(dudy_p, dudy, tmp3)
         Base.Threads.@spawn IFFT!(dvdy_p, dvdy, tmp4)
         Base.Threads.@spawn IFFT!(dwdy_p, dwdy, tmp5)
@@ -223,20 +241,81 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::VectorField{3, S}) where {Ny, Nz, Nt, M,
         Base.Threads.@spawn FFT!(wdwdz, wdwdz_p)
     end
 
-    # compute the navier-stokes
-    @. nsx = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) - f.Ro*u[2]
-    @. nsy = dvdt + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u[1]
-    @. nsz = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)
+    return cache
+end
 
-    # project navier-stokes to get residual coefficients
-    project!(sx, nsx, ws, modes)
-    project!(sy, nsy, ws, modes)
-    project!(sz, nsz, ws, modes)
-
-    # convert the residual coefficients to full-space
-    reverse_project!(rx, sx, f.modes)
-    reverse_project!(ry, sy, f.modes)
-    reverse_project!(rz, sz, f.modes)
+function _update_res_cache!(cache::ResGrad{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    # assign aliases
+    rx       = f.spec_cache[28]
+    ry       = f.spec_cache[29]
+    rz       = f.spec_cache[30]
+    drxdt    = cache.spec_cache[31]
+    drydt    = cache.spec_cache[32]
+    drzdt    = cache.spec_cache[33]
+    drxdy    = cache.spec_cache[34]
+    drydy    = cache.spec_cache[35]
+    drzdy    = cache.spec_cache[36]
+    drxdz    = cache.spec_cache[37]
+    drydz    = cache.spec_cache[38]
+    drzdz    = cache.spec_cache[39]
+    d2rxdy2  = cache.spec_cache[40]
+    d2rydy2  = cache.spec_cache[41]
+    d2rzdy2  = cache.spec_cache[42]
+    d2rxdz2  = cache.spec_cache[43]
+    d2rydz2  = cache.spec_cache[44]
+    d2rzdz2  = cache.spec_cache[45]
+    vdrxdy   = cache.spec_cache[46]
+    wdrxdz   = cache.spec_cache[47]
+    vdrydy   = cache.spec_cache[48]
+    wdrydz   = cache.spec_cache[49]
+    vdrzdy   = cache.spec_cache[50]
+    wdrzdz   = cache.spec_cache[51]
+    rxdudy   = cache.spec_cache[52]
+    rydvdy   = cache.spec_cache[53]
+    rzdwdy   = cache.spec_cache[54]
+    rxdudz   = cache.spec_cache[55]
+    rydvdz   = cache.spec_cache[56]
+    rzdwdz   = cache.spec_cache[57]
+    tmp1     = cache.spec_cache[58]
+    tmp2     = cache.spec_cache[59]
+    tmp3     = cache.spec_cache[60]
+    tmp4     = cache.spec_cache[61]
+    tmp5     = cache.spec_cache[62]
+    tmp6     = cache.spec_cache[63]
+    tmp7     = cache.spec_cache[64]
+    tmp8     = cache.spec_cache[65]
+    tmp9     = cache.spec_cache[66]
+    v_p      = cache.phys_cache[1]
+    w_p      = cache.phys_cache[2]
+    dudy_p   = cache.phys_cache[3]
+    dvdy_p   = cache.phys_cache[4]
+    dwdy_p   = cache.phys_cache[5]
+    dudz_p   = cache.phys_cache[6]
+    dvdz_p   = cache.phys_cache[7]
+    dwdz_p   = cache.phys_cache[8]
+    rx_p     = cache.phys_cache[15]
+    ry_p     = cache.phys_cache[16]
+    rz_p     = cache.phys_cache[17]
+    drxdy_p  = cache.phys_cache[18]
+    drydy_p  = cache.phys_cache[19]
+    drzdy_p  = cache.phys_cache[20]
+    drxdz_p  = cache.phys_cache[21]
+    drydz_p  = cache.phys_cache[22]
+    drzdz_p  = cache.phys_cache[23]
+    vdrxdy_p = cache.phys_cache[24]
+    wdrxdz_p = cache.phys_cache[25]
+    vdrydy_p = cache.phys_cache[26]
+    wdrydz_p = cache.phys_cache[27]
+    vdrzdy_p = cache.phys_cache[28]
+    wdrzdz_p = cache.phys_cache[29]
+    rxdudy_p = cache.phys_cache[30]
+    rydvdy_p = cache.phys_cache[31]
+    rzdwdy_p = cache.phys_cache[32]
+    rxdudz_p = cache.phys_cache[33]
+    rydvdz_p = cache.phys_cache[34]
+    rzdwdz_p = cache.phys_cache[35]
+    FFT!     = cache.fft
+    IFFT!    = cache.ifft
 
     # compute the derivatives of the residual
     @sync begin
@@ -297,16 +376,4 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::VectorField{3, S}) where {Ny, Nz, Nt, M,
         Base.Threads.@spawn FFT!(rydvdz, rydvdz_p)
         Base.Threads.@spawn FFT!(rzdwdz, rzdwdz_p)
     end
-
-    # compute the RHS of the evolution equation
-    @. dudτ = drxdt + vdrxdy + wdrxdz                            + f.Re_recip*(d2rxdy2 + d2rxdz2) - f.Ro*ry
-    @. dvdτ = drydt + vdrydy + wdrydz - rxdudy - rydvdy - rzdwdy + f.Re_recip*(d2rydy2 + d2rydz2) + f.Ro*rx
-    @. dwdτ = drzdt + vdrzdy + wdrzdz - rxdudz - rydvdz - rzdwdz + f.Re_recip*(d2rzdy2 + d2rzdz2)
-
-    # project to get velocity coefficient evolution
-    project!(f.out[1], dudτ, ws, modes)
-    project!(f.out[2], dvdτ, ws, modes)
-    project!(f.out[3], dwdτ, ws, modes)
-
-    return f.out
 end
