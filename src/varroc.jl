@@ -249,9 +249,9 @@ end
 
 function _update_res_cache!(cache::ResGrad{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     # assign aliases
-    rx       = f.spec_cache[28]
-    ry       = f.spec_cache[29]
-    rz       = f.spec_cache[30]
+    rx       = cache.spec_cache[28]
+    ry       = cache.spec_cache[29]
+    rz       = cache.spec_cache[30]
     drxdt    = cache.spec_cache[31]
     drydt    = cache.spec_cache[32]
     drzdt    = cache.spec_cache[33]
