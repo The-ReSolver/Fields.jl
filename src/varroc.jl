@@ -5,29 +5,30 @@
 # TODO: functor for Evolution
 # TODO: figure out what is going on at the mean mode with the new fields
 
-struct ResGrad{Ny, Nz, Nt, M, G, T, PLAN, IPLAN}
-    out::VectorField{3, SpectralField{M, Nz, Nt, G, T, Array{Complex{T}, 3}}}
+# TODO: super messy type signature
+struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
+    out::VectorField{3, SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
-    proj_cache::Vector{SpectralField{M, Nz, Nt, G, T, Array{Complex{T}, 3}}}
-    spec_cache::Vector{SpectralField{Ny, Nz, Nt, G, T, Array{Complex{T}, 3}}}
-    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, G, T, Array{T, 3}}}
+    proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}}
+    spec_cache::Vector{SpectralField{Ny, Nz, Nt, Grid{S2, T, D}, T, Array{Complex{T}, 3}}}
+    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S2, T, D}, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, IPLAN}
     Re_recip::T
     Ro::T
 
-    function Evolution(grid::Grid{S}, Ψs::Array{ComplexF64, 4}, Re::Real, Ro::Real) where {S}
-        # initialise output vector field
-        out = VectorField(grid, N=3)
-
+    function ResGrad(grid::Grid{S}, Ψs::Array{ComplexF64, 4}, Re::Real, Ro::Real) where {S}
         # generate grid for projected fields
-        proj_grid = Grid(ones(size(modes, 2)), S[2], S[3], grid.Dy, grid.Dy2, grid.ws, grid.ω, grid.β)
+        proj_grid = Grid(ones(size(Ψs, 2)), S[2], S[3], grid.Dy..., grid.ws, grid.dom[2], grid.dom[1])
+
+        # initialise output vector field
+        out = VectorField(proj_grid, N=3)
 
         # create field cache
-        proj_cache = [SpectralField(proj_grid) for _ in 1:1]
-        spec_cache = [SpectralField(grid)      for _ in 1:1]
-        phys_cache = [PhysicalField(grid)      for _ in 1:1]
+        proj_cache = [SpectralField(proj_grid) for _ in 1:3]
+        spec_cache = [SpectralField(grid)      for _ in 1:66]
+        phys_cache = [PhysicalField(grid)      for _ in 1:35]
 
         # create transform plans
         FFT! = FFTPlan!(grid)
@@ -38,8 +39,10 @@ struct ResGrad{Ny, Nz, Nt, M, G, T, PLAN, IPLAN}
         Ro = convert(eltype(phys_cache[1]), Ro)
 
         new{S...,
-            size(modes, 2),
-            typeof(grid),
+            size(Ψs, 2),
+            (size(Ψs, 2), S[2], S[2]),
+            (S[1], S[2], S[3]),
+            typeof(grid.Dy[1]),
             eltype(phys_cache[1]),
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(out,
