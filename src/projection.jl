@@ -35,7 +35,7 @@ project(u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::Abstr
 
 function reverse_project!(u::AbstractArray{<:Number, 3}, a::AbstractArray{<:Number, 3}, modes::AbstractArray{<:Number, 4})
     for I in CartesianIndices(eachslice(u, dims=1)[1])
-        u[:, I] .= @view(modes[:, :, I])*@view(a[:, I])
+        mul!(@view(u[:, I]), @view(modes[:, :, I]), @view(a[:, I]))
     end
 
     return u
