@@ -123,6 +123,9 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     reverse_project!(v, a[2], @view(ψs[:, (Ny + 1):2*Ny, :, :]))
     reverse_project!(w, a[3], @view(ψs[:, (2*Ny + 1):3*Ny, :, :]))
 
+    # set velocity field mean
+    u[:, 1, 1] .= cache.umean
+
     # compute all the terms with only velocity
     _update_vel_cache!(f)
 
