@@ -119,6 +119,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     end
 
     # convert velocity coefficients to full-space
+    # TODO: slicing not in column-major way, should fix
     reverse_project!(u, a[1], @view(ψs[:, 1:Ny, :, :]))
     reverse_project!(v, a[2], @view(ψs[:, (Ny + 1):2*Ny, :, :]))
     reverse_project!(w, a[3], @view(ψs[:, (2*Ny + 1):3*Ny, :, :]))
@@ -143,9 +144,9 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     _update_res_cache(f)
 
     # compute the RHS of the evolution equation
-    @. dudτ = drxdt + vdrxdy + wdrxdz                            + f.Re_recip*(d2rxdy2 + d2rxdz2) - f.Ro*ry
-    @. dvdτ = drydt + vdrydy + wdrydz - rxdudy - rydvdy - rzdwdy + f.Re_recip*(d2rydy2 + d2rydz2) + f.Ro*rx
-    @. dwdτ = drzdt + vdrzdy + wdrzdz - rxdudz - rydvdz - rzdwdz + f.Re_recip*(d2rzdy2 + d2rzdz2)
+    @. dudτ = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
+    @. dvdτ = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx
+    @. dwdτ = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)
 
     # project to get velocity coefficient evolution
     project!(f.out[1], dudτ, ws, @view(ψs[:, 1:Ny, :, :]))
