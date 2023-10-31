@@ -58,7 +58,6 @@ struct ResGrad{Ny, Nz, Nt, M, FIXMEAN, S1, S2, D, T, PLAN, IPLAN}
     end
 end
 
-# TODO: do the modes need to be split into component parts?
 function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, Nz, Nt, M, FIXMEAN, S<:SpectralField{M, Nz, Nt}}
     # assign aliases
     u        = f.spec_cache[1]
@@ -120,9 +119,9 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     end
 
     # convert velocity coefficients to full-space
-    reverse_project!(u, a[1], ψs)
-    reverse_project!(v, a[2], ψs)
-    reverse_project!(w, a[3], ψs)
+    reverse_project!(u, a[1], @view(ψs[:, 1:Ny, :, :]))
+    reverse_project!(v, a[2], @view(ψs[:, (Ny + 1):2*Ny, :, :]))
+    reverse_project!(w, a[3], @view(ψs[:, (2*Ny + 1):3*Ny, :, :]))
 
     # compute all the terms with only velocity
     _update_vel_cache!(f)
@@ -133,9 +132,9 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     @. nsz = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)
 
     # convert to residual in terms of modal basis
-    reverse_project!(rx, project!(sx, nsx, ws, ψs), ψs)
-    reverse_project!(ry, project!(sy, nsy, ws, ψs), ψs)
-    reverse_project!(rz, project!(sz, nsz, ws, ψs), ψs)
+    reverse_project!(rx, project!(sx, nsx, ws, @view(ψs[:, 1:Ny, :, :])), @view(ψs[:, 1:Ny, :, :]))
+    reverse_project!(ry, project!(sy, nsy, ws, @view(ψs[:, (Ny + 1):2*Ny, :, :])), @view(ψs[:, (Ny + 1):2*Ny, :, :]))
+    reverse_project!(rz, project!(sz, nsz, ws, @view(ψs[:, (2*Ny + 1):3*Ny, :, :])), @view(ψs[:, (2*Ny + 1):3*Ny, :, :]))
 
     # compute all the terms for the variational evolution
     _update_res_cache(f)
@@ -146,9 +145,9 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     @. dwdτ = drzdt + vdrzdy + wdrzdz - rxdudz - rydvdz - rzdwdz + f.Re_recip*(d2rzdy2 + d2rzdz2)
 
     # project to get velocity coefficient evolution
-    project!(f.out[1], dudτ, ws, ψs)
-    project!(f.out[2], dvdτ, ws, ψs)
-    project!(f.out[3], dwdτ, ws, ψs)
+    project!(f.out[1], dudτ, ws, @view(ψs[:, 1:Ny, :, :]))
+    project!(f.out[2], dvdτ, ws, @view(ψs[:, (Ny + 1):2*Ny, :, :]))
+    project!(f.out[3], dwdτ, ws, @view(ψs[:, (2*Ny + 1):3*Ny, :, :]))
 
     # trea the mean component
     if FIXMEAN
