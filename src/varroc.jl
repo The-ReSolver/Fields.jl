@@ -2,11 +2,8 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-# TODO: functor for Evolution
-# TODO: figure out what is going on at the mean mode with the new fields
-
 # TODO: super messy type signature
-struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
+struct ResGrad{Ny, Nz, Nt, M, FIXMEAN, S1, S2, D, T, PLAN, IPLAN}
     out::VectorField{3, SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
@@ -15,12 +12,13 @@ struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
     phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S2, T, D}, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, IPLAN}
+    umean::Vector{Float64}
     Re_recip::T
     Ro::T
 
-    function ResGrad(grid::Grid{S}, Ψs::Array{ComplexF64, 4}, Re::Real, Ro::Real) where {S}
+    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, ū::Vector{Float64}, Re::Real, Ro::Real; fix_mean::Bool=true) where {S}
         # generate grid for projected fields
-        proj_grid = Grid(ones(size(Ψs, 2)), S[2], S[3], grid.Dy..., grid.ws, grid.dom[2], grid.dom[1])
+        proj_grid = Grid(ones(size(ψs, 2)), S[2], S[3], grid.Dy..., grid.ws, grid.dom[2], grid.dom[1])
 
         # initialise output vector field
         out = VectorField(proj_grid, N=3)
@@ -39,27 +37,29 @@ struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
         Ro = convert(eltype(phys_cache[1]), Ro)
 
         new{S...,
-            size(Ψs, 2),
-            (size(Ψs, 2), S[2], S[2]),
+            size(ψs, 2),
+            fix_mean,
+            (size(ψs, 2), S[2], S[2]),
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
             eltype(phys_cache[1]),
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(out,
-                                Ψs,
+                                ψs,
                                 repeat(grid.ws, 3),
                                 proj_cache,
                                 spec_cache,
                                 phys_cache,
                                 FFT!,
                                 IFFT!,
+                                ū,
                                 1/Re,
                                 Ro)
     end
 end
 
 # TODO: do the modes need to be split into component parts?
-function (f::ResGrad{Ny, Nz, Nt, M})(a::VectorField{3, S}) where {Ny, Nz, Nt, M, S<:SpectralField{M, Nz, Nt}}
+function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, Nz, Nt, M, FIXMEAN, S<:SpectralField{M, Nz, Nt}}
     # assign aliases
     u        = f.spec_cache[1]
     v        = f.spec_cache[2]
@@ -112,6 +112,13 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::VectorField{3, S}) where {Ny, Nz, Nt, M,
     ws       = f.ws
     ψs       = f.modes
 
+    # treat the mean component
+    if FIXMEAN
+        a[1][:, 1, 1] .= 0
+        a[2][:, 1, 1] .= 0
+        a[3][:, 1, 1] .= 0
+    end
+
     # convert velocity coefficients to full-space
     reverse_project!(u, a[1], ψs)
     reverse_project!(v, a[2], ψs)
@@ -143,10 +150,17 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::VectorField{3, S}) where {Ny, Nz, Nt, M,
     project!(f.out[2], dvdτ, ws, ψs)
     project!(f.out[3], dwdτ, ws, ψs)
 
+    # trea the mean component
+    if FIXMEAN
+        f.out[1][:, 1, 1] .= 0
+        f.out[2][:, 1, 1] .= 0
+        f.out[3][:, 1, 1] .= 0
+    end
+
     return f.out
 end
 
-function _update_vel_cache!(cache::ResGrad{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function _update_vel_cache!(cache::ResGrad) 
     # assign aliases
     u        = cache.spec_cache[1]
     v        = cache.spec_cache[2]
@@ -247,7 +261,7 @@ function _update_vel_cache!(cache::ResGrad{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     return cache
 end
 
-function _update_res_cache!(cache::ResGrad{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function _update_res_cache!(cache::ResGrad) 
     # assign aliases
     rx       = cache.spec_cache[28]
     ry       = cache.spec_cache[29]
