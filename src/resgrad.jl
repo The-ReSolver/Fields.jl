@@ -46,7 +46,7 @@ struct ResGrad{Ny, Nz, Nt, M, FIXMEAN, S1, S2, D, T, PLAN, IPLAN}
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(out,
                                 ψs,
-                                repeat(grid.ws, 3),
+                                grid.ws,
                                 proj_cache,
                                 spec_cache,
                                 phys_cache,
