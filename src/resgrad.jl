@@ -397,3 +397,5 @@ function _update_res_cache!(cache::ResGrad)
         Base.Threads.@spawn FFT!(rzdwdz, rzdwdz_p)
     end
 end
+
+gr(cache::ResGrad) = sqrt(norm(cache.spec_cache[28])^2 + norm(cache.spec_cache[29])^2 + norm(cache.spec_cache[30])^2)
