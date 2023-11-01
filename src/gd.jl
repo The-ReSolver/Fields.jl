@@ -11,14 +11,14 @@ function gd(u₀::VectorField{3, SpectralField}, modes::Array{ComplexF64, 4}, Re
     project!(a[2], u₀[2], u₀.grid.ws, @view(modes[:, (Ny + 1):2*Ny, :, :]))
     project!(a[3], u₀[3], u₀.grid.ws, @view(modes[:, (2*Ny + 1):3*Ny, :, :]))
 
-    # check if converged before starting
-    norm(dR!(a)) < eps ? (println("Converged!"); return u₀) : nothing
-
     # loop to step in descent direction
-    i = 1
-    while (i < maxiter && norm(dR!(a)) < eps)
+    i = 0
+    while i < maxiter
         # compute the change in velocity coefficients
         Δa = dR!(a)
+
+        # check if converges
+        norm(Δa) < eps ? println("Converged!") : nothing
 
         # update the velocity
         a[1] .-= α.*Δa[1]
@@ -41,8 +41,6 @@ function gd(u₀::VectorField{3, SpectralField}, modes::Array{ComplexF64, 4}, Re
     # final print statements
     if i == maxiter
         println("Could not converge (maximum iterations reached)!")
-    else
-        println("Converged!")
     end
 
     return u
