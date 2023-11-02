@@ -31,6 +31,7 @@ include("plot_vectorfield.jl")
 include("objective.jl")
 include("optimise.jl")
 include("resgrad.jl")
+include("gd.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 
