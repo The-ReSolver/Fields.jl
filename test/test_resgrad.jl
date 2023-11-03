@@ -1,6 +1,6 @@
 # initialise field grid
 Ny = 32; Nz = 32; Nt = 32
-Re = 100; Ro = 0.5
+Re = 100.0; Ro = 0.5
 y = chebpts(Ny)
 Dy = chebdiff(Ny)
 Dy2 = chebddiff(Ny)
@@ -73,7 +73,7 @@ rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
 
 @testset "Residual Gradient Velocity    " begin
     # initialise residual gradient cache
-    cache = ResGrad(grid, Ψ, Re, Ro)
+    cache = ResGrad(grid, Ψ, rand(Float64, Ny), Re, Ro)
 
     # assign velocity field
     cache.spec_cache[1] .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun))
@@ -109,7 +109,7 @@ end
 
 @testset "Residual Gradient Residual    " begin
     # initialise residual gradient cache
-    cache = ResGrad(grid, Ψ, Re, Ro)
+    cache = ResGrad(grid, Ψ, rand(Float64, Ny), Re, Ro)
 
     # assign velocity and residual fields
     cache.spec_cache[1]  .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun))
