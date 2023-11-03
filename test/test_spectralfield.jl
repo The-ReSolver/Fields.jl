@@ -56,7 +56,7 @@ end
         @test e == vec.*a == a.*vec
 end
 
-@testset "Spectral Field Norm           " begin
+@testset "Spectral Field Dot and Norm   " begin
         # initialise grid variables
         Ny = 64; Nz = 64; Nt = 64
         y = chebpts(Ny)
@@ -70,14 +70,19 @@ end
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, typeof(ω)(β))
 
         # initialise function
-        func(y, z, t) = (1 - y^2)*exp(cos(β*z))*cos(sin(ω*t))
+        func1(y, z, t) = (1 - y^2)*exp(cos(β*z))*cos(sin(ω*t))
+        func2(y, z, t) = cos(π*y)*(1 - y^2)*exp(sin(β*z))*(cos(ω*t)^2)
 
         # initialise fields
-        phys_norm = PhysicalField(grid, func)
-        spec_norm = SpectralField(grid)
-        FFT = FFTPlan!(phys_norm; flags=ESTIMATE)
-        FFT(spec_norm, phys_norm)
+        phys1 = PhysicalField(grid, func1)
+        phys2 = PhysicalField(grid, func2)
+        spec1 = SpectralField(grid)
+        spec2 = SpectralField(grid)
+        FFT! = FFTPlan!(grid; flags=ESTIMATE)
+        FFT!(spec1, phys1)
+        FFT!(spec2, phys2)
 
         # test norm
-        @test norm(spec_norm)^2 ≈ 58.74334913/(β*ω) rtol=1e-5
+        @test dot(spec1, spec2)*β*ω ≈ 13.4066 rtol=1e-6
+        @test norm(spec1)^2*β*ω ≈ 58.74334913 rtol=1e-5
 end

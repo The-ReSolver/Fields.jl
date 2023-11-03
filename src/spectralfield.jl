@@ -32,21 +32,22 @@ get_grid(U::SpectralField) = U.grid
 
 # inner-product and norm
 function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    # initialise sum variable
     sum = 0.0
 
     # loop over top half plane exclusive of mean spanwise mode
     for nt in 1:Nt, nz in 2:((Nz >> 1) + 1), ny in 1:Ny
-        sum += p.grid.ws[ny]*real(p[ny, nz, nt]*conj(q[ny, nz, nt]))
+        sum += p.grid.ws[ny]*real(dot(p[ny, nz, nt], q[ny, nz, nt]))
     end
 
     # loop over positive temporal modes for mean spanwise mode
     for nt in 2:((Nt >> 1) + 1), ny in 1:Ny
-        sum += p.grid.ws[ny]*real(p[ny, 1, nt]*conj(q[ny, 1, nt]))
+        sum += p.grid.ws[ny]*real(dot(p[ny, 1, nt], q[ny, 1, nt]))
     end
 
     # evaluate mean component contribution
     for ny in 1:Ny
-        sum += 0.5*p.grid.ws[ny]*real(p[ny, 1, 1]*q[ny, 1, 1])
+        sum += 0.5*p.grid.ws[ny]*real(dot(p[ny, 1, 1], q[ny, 1, 1]))
     end
 
     # extract domain data for scaling
