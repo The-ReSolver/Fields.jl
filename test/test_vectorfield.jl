@@ -89,7 +89,7 @@ end
 end
 
 @testset "Vector Field Norm             " begin
-    # initialise grid variables
+    # initialise grid
     Ny = 64; Nz = 64; Nt = 64
     y = chebpts(Ny)
     Dy = chebdiff(Ny)
@@ -97,8 +97,6 @@ end
     ws = chebws(Ny)
     ω = 1.0
     β = 1.0
-
-    # initialise grid
     grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 
     # definition of fields as functions

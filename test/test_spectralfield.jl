@@ -86,3 +86,32 @@ end
         @test dot(spec1, spec2)*β*ω ≈ 13.4066 rtol=1e-6
         @test norm(spec1)^2*β*ω ≈ 58.74334913 rtol=1e-5
 end
+
+@testset "Projected Field Norm          " begin
+        # initialise grid
+        Ny = 16; Nz = 16; Nt = 16
+        y = chebpts(Ny)
+        Dy = rand(Ny, Ny)
+        Dy2 = rand(Ny, Ny)
+        ws = ones(Ny)
+        ω = 1.0
+        β = 1.0
+        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+
+        # construct modes
+        M = rand(1:12)
+        Ψ = zeros(ComplexF64, 3*Ny, M, Nz, Nt)
+        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
+                Ψ[:, :, nz, nt] .= @view(qr(rand(ComplexF64, 3*Ny, M)).Q[:, 1:M])
+        end
+
+        # construct vector field from modes
+        u = VectorField(grid)
+        a = SpectralField(Grid(ones(M), Nz, Nt, Dy, Dy2, ones(Ny), ω, β))
+        a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
+        reverse_project!(u[1], a, Ψ[1:Ny, :, :, :])
+        reverse_project!(u[2], a, Ψ[Ny+1:2*Ny, :, :, :])
+        reverse_project!(u[3], a, Ψ[2*Ny+1:3*Ny, :, :, :])
+
+        @test norm(u) ≈ norm(a)
+end
