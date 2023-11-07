@@ -21,8 +21,7 @@ end
 project(u::AbstractVector{<:Number}, w::AbstractVector{<:Number}, modes::AbstractMatrix{T}) where {T<:Number} = project!(zeros(T, size(modes, 2)), u, w, modes)
 
 """
-    Project a spectral field onto a set of modes, returning the projected
-    profile
+    Project a spectral field onto a set of modes, returning the projected field
 """
 function project!(a::AbstractArray{<:Number, 3}, u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::AbstractArray{<:Number, 4})
     for I in CartesianIndices(eachslice(a, dims=1)[1])
@@ -32,6 +31,20 @@ function project!(a::AbstractArray{<:Number, 3}, u::AbstractArray{<:Number, 3}, 
     return a
 end
 project(u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::AbstractArray{T, 4}) where {T<:Number} = project!(zeros(T, size(modes, 2), size(selectdim(u, 1, 1))...), u, w, modes)
+
+# TODO: this only works if the profile projection method adds to the current sum. Need to rework this to take a whole profile at once not just each component
+"""
+    Project a vector field onto a set of modes, returning the projected field
+"""
+function project!(a::AbstractArray{<:Number, 3}, u::Vector{<:AbstractArray{<:Number, 3}}, w::AbstractVector{<:Number}, modes::AbstractArray{<:Number, 4})
+    N = Int(size(modes, 1)/3)
+    for i in eachindex(u)
+        project!(a, u[i], w, @view(modes[(N*(i - 1) + 1):N*i,:, :, :]))
+    end
+
+    return a
+end
+project(u::Vector{<:AbstractArray{<:Number, 3}}, w::AbstractVector{<:Number}, modes::AbstractArray{T, 4}) where {T<:Number} = project!(zeros(T, size(modes, 2), size(selectdim(u[1], 1, 1))...), u, w, modes)
 
 function reverse_project!(u::AbstractArray{<:Number, 3}, a::AbstractArray{<:Number, 3}, modes::AbstractArray{<:Number, 4})
     for I in CartesianIndices(eachslice(u, dims=1)[1])
