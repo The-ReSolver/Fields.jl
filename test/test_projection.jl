@@ -62,7 +62,7 @@ end
         u[3][:, nz, nt] .= Ψ[2*Ny+1:3*Ny, :, nz, nt]*a[:, nz, nt]
     end
 
-    @test_broken project(u, ws, Ψ) ≈ a
+    @test project(u, ws, Ψ) ≈ a
 end
 
 @testset "Reverse Projection of a Field " begin

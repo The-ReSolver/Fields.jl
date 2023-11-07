@@ -36,10 +36,11 @@ project(u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::Abstr
 """
     Project a vector field onto a set of modes, returning the projected field
 """
+# NOTE: for this to work properly `a` has to be input as a zero vector
 function project!(a::AbstractArray{<:Number, 3}, u::Vector{<:AbstractArray{<:Number, 3}}, w::AbstractVector{<:Number}, modes::AbstractArray{<:Number, 4})
-    N = Int(size(modes, 1)/3)
-    for i in eachindex(u)
-        project!(a, u[i], w, @view(modes[(N*(i - 1) + 1):N*i,:, :, :]))
+    N = Int(size(modes, 1)/length(u))
+    for i in eachindex(u), k in CartesianIndices(eachslice(a, dims=1)[1]), n in axes(modes, 2)
+        a[n, k] += channel_int(@view(modes[(N*(i - 1) + 1):N*i, n, k]), w, @view(u[i][:, k]))
     end
 
     return a
