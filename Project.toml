@@ -1,7 +1,7 @@
 name = "Fields"
 uuid = "54c0c897-3bff-4ba2-acae-d4c1acf2c14a"
 authors = ["Thomas Burton <tburton5572@gmail.com>"]
-version = "0.10.1"
+version = "0.10.2"
 
 [deps]
 DAESolve = "e97b5281-e633-4c46-86d2-72ea63110c3f"
