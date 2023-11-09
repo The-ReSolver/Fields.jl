@@ -72,7 +72,7 @@ end
 function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}) where
             {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
     for i in 1:N
-        f(u[i], û[i], similar(û))
+        f(u[i], û[i], similar(û[i]))
     end
 
     return u
