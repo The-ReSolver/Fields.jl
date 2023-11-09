@@ -12,7 +12,7 @@ export PhysicalField
 export SpectralField, norm
 export VectorField
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
-export project, project!, reverse_project!
+export project, project!, reverse_project!, expand!
 export Evolution, Constraint
 export ResGrad
 export myoptimise
