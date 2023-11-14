@@ -3,8 +3,8 @@
 # projection.
 
 # TODO: super messy type signature
-struct ResGrad{Ny, Nz, Nt, M, FIXMEAN, S1, S2, D, T, PLAN, IPLAN}
-    out::VectorField{3, SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}}
+struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
+    out::SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
     proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}}
@@ -16,16 +16,16 @@ struct ResGrad{Ny, Nz, Nt, M, FIXMEAN, S1, S2, D, T, PLAN, IPLAN}
     Re_recip::T
     Ro::T
 
-    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, ū::Vector{Float64}, Re::Real, Ro::Real; fix_mean::Bool=true) where {S}
+    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, mean_prof::Vector{Float64}, Re::Real, Ro::Real) where {S}
         # generate grid for projected fields
-        proj_grid = Grid(ones(size(ψs, 2)), S[2], S[3], grid.Dy..., grid.ws, grid.dom[2], grid.dom[1])
+        proj_grid = Grid(Vector{Float64}(undef, size(ψs, 2)), S[2], S[3], grid.Dy..., ones(size(ψs, 2)), grid.dom[2], grid.dom[1])
 
         # initialise output vector field
-        out = VectorField(proj_grid, N=3)
+        out = SpectralField(proj_grid)
 
         # create field cache
-        proj_cache = [SpectralField(proj_grid) for _ in 1:3]
-        spec_cache = [SpectralField(grid)      for _ in 1:66]
+        proj_cache = [SpectralField(proj_grid) for _ in 1:1]
+        spec_cache = [SpectralField(grid)      for _ in 1:69]
         phys_cache = [PhysicalField(grid)      for _ in 1:35]
 
         # create transform plans
@@ -38,8 +38,7 @@ struct ResGrad{Ny, Nz, Nt, M, FIXMEAN, S1, S2, D, T, PLAN, IPLAN}
 
         new{S...,
             size(ψs, 2),
-            fix_mean,
-            (size(ψs, 2), S[2], S[2]),
+            (size(ψs, 2), S[2], S[3]),
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
             eltype(phys_cache[1]),
@@ -52,13 +51,13 @@ struct ResGrad{Ny, Nz, Nt, M, FIXMEAN, S1, S2, D, T, PLAN, IPLAN}
                                 phys_cache,
                                 FFT!,
                                 IFFT!,
-                                ū,
+                                mean_prof,
                                 1/Re,
                                 Ro)
     end
 end
 
-function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, Nz, Nt, M, FIXMEAN, S<:SpectralField{M, Nz, Nt}}
+function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}) where {Ny, Nz, Nt, M}
     # assign aliases
     u        = f.spec_cache[1]
     v        = f.spec_cache[2]
@@ -84,48 +83,41 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     rx       = f.spec_cache[28]
     ry       = f.spec_cache[29]
     rz       = f.spec_cache[30]
-    drxdt    = cache.spec_cache[31]
-    drydt    = cache.spec_cache[32]
-    drzdt    = cache.spec_cache[33]
-    d2rxdy2  = cache.spec_cache[40]
-    d2rydy2  = cache.spec_cache[41]
-    d2rzdy2  = cache.spec_cache[42]
-    d2rxdz2  = cache.spec_cache[43]
-    d2rydz2  = cache.spec_cache[44]
-    d2rzdz2  = cache.spec_cache[45]
-    vdrxdy   = cache.spec_cache[46]
-    wdrxdz   = cache.spec_cache[47]
-    vdrydy   = cache.spec_cache[48]
-    wdrydz   = cache.spec_cache[49]
-    vdrzdy   = cache.spec_cache[50]
-    wdrzdz   = cache.spec_cache[51]
-    rxdudy   = cache.spec_cache[52]
-    rydvdy   = cache.spec_cache[53]
-    rzdwdy   = cache.spec_cache[54]
-    rxdudz   = cache.spec_cache[55]
-    rydvdz   = cache.spec_cache[56]
-    rzdwdz   = cache.spec_cache[57]
-    sx       = proj_cache[1]
-    sy       = proj_cache[2]
-    sz       = proj_cache[3]
+    drxdt    = f.spec_cache[31]
+    drydt    = f.spec_cache[32]
+    drzdt    = f.spec_cache[33]
+    d2rxdy2  = f.spec_cache[40]
+    d2rydy2  = f.spec_cache[41]
+    d2rzdy2  = f.spec_cache[42]
+    d2rxdz2  = f.spec_cache[43]
+    d2rydz2  = f.spec_cache[44]
+    d2rzdz2  = f.spec_cache[45]
+    vdrxdy   = f.spec_cache[46]
+    wdrxdz   = f.spec_cache[47]
+    vdrydy   = f.spec_cache[48]
+    wdrydz   = f.spec_cache[49]
+    vdrzdy   = f.spec_cache[50]
+    wdrzdz   = f.spec_cache[51]
+    rxdudy   = f.spec_cache[52]
+    rydvdy   = f.spec_cache[53]
+    rzdwdy   = f.spec_cache[54]
+    rxdudz   = f.spec_cache[55]
+    rydvdz   = f.spec_cache[56]
+    rzdwdz   = f.spec_cache[57]
+    dwdτ     = f.spec_cache[58]
+    dudτ     = f.spec_cache[59]
+    dvdτ     = f.spec_cache[60]
+    s        = f.proj_cache[1]
     ws       = f.ws
     ψs       = f.modes
 
-    # treat the mean component
-    if FIXMEAN
-        a[1][:, 1, 1] .= 0
-        a[2][:, 1, 1] .= 0
-        a[3][:, 1, 1] .= 0
-    end
-
     # convert velocity coefficients to full-space
-    # TODO: slicing not in column-major way, should fix
-    reverse_project!(u, a[1], @view(ψs[:, 1:Ny, :, :]))
-    reverse_project!(v, a[2], @view(ψs[:, (Ny + 1):2*Ny, :, :]))
-    reverse_project!(w, a[3], @view(ψs[:, (2*Ny + 1):3*Ny, :, :]))
+    expand!([u, v, w], a, ψs)
+
+    @show norm(u[:, 3, 1])
 
     # set velocity field mean
-    u[:, 1, 1] .= cache.umean
+    u[:, 1, 1] .= f.umean
 
     # compute all the terms with only velocity
     _update_vel_cache!(f)
@@ -136,12 +128,11 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     @. nsz = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)
 
     # convert to residual in terms of modal basis
-    reverse_project!(rx, project!(sx, nsx, ws, @view(ψs[:, 1:Ny, :, :])), @view(ψs[:, 1:Ny, :, :]))
-    reverse_project!(ry, project!(sy, nsy, ws, @view(ψs[:, (Ny + 1):2*Ny, :, :])), @view(ψs[:, (Ny + 1):2*Ny, :, :]))
-    reverse_project!(rz, project!(sz, nsz, ws, @view(ψs[:, (2*Ny + 1):3*Ny, :, :])), @view(ψs[:, (2*Ny + 1):3*Ny, :, :]))
+    project!(s, [nsx, nsy, nsz], ws, ψs)
+    expand!([rx, ry, rz], s, ψs)
 
     # compute all the terms for the variational evolution
-    _update_res_cache(f)
+    _update_res_cache!(f)
 
     # compute the RHS of the evolution equation
     @. dudτ = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
@@ -149,18 +140,13 @@ function (f::ResGrad{Ny, Nz, Nt, M, FIXMEAN})(a::VectorField{3, S}) where {Ny, N
     @. dwdτ = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)
 
     # project to get velocity coefficient evolution
-    project!(f.out[1], dudτ, ws, @view(ψs[:, 1:Ny, :, :]))
-    project!(f.out[2], dvdτ, ws, @view(ψs[:, (Ny + 1):2*Ny, :, :]))
-    project!(f.out[3], dwdτ, ws, @view(ψs[:, (2*Ny + 1):3*Ny, :, :]))
+    project!(f.out, [dudτ, dvdτ, dwdτ], ws, ψs)
 
-    # trea the mean component
-    if FIXMEAN
-        f.out[1][:, 1, 1] .= 0
-        f.out[2][:, 1, 1] .= 0
-        f.out[3][:, 1, 1] .= 0
-    end
+    # treat the mean component
+    f.out[:, 1, 1] .= 0
 
-    return f.out
+    # TODO: half of me?
+    return f.out, gr(f)
 end
 
 function _update_vel_cache!(cache::ResGrad) 
@@ -296,15 +282,15 @@ function _update_res_cache!(cache::ResGrad)
     rxdudz   = cache.spec_cache[55]
     rydvdz   = cache.spec_cache[56]
     rzdwdz   = cache.spec_cache[57]
-    tmp1     = cache.spec_cache[58]
-    tmp2     = cache.spec_cache[59]
-    tmp3     = cache.spec_cache[60]
-    tmp4     = cache.spec_cache[61]
-    tmp5     = cache.spec_cache[62]
-    tmp6     = cache.spec_cache[63]
-    tmp7     = cache.spec_cache[64]
-    tmp8     = cache.spec_cache[65]
-    tmp9     = cache.spec_cache[66]
+    tmp1     = cache.spec_cache[61]
+    tmp2     = cache.spec_cache[62]
+    tmp3     = cache.spec_cache[63]
+    tmp4     = cache.spec_cache[64]
+    tmp5     = cache.spec_cache[65]
+    tmp6     = cache.spec_cache[66]
+    tmp7     = cache.spec_cache[67]
+    tmp8     = cache.spec_cache[68]
+    tmp9     = cache.spec_cache[69]
     v_p      = cache.phys_cache[1]
     w_p      = cache.phys_cache[2]
     dudy_p   = cache.phys_cache[3]

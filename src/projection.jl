@@ -39,13 +39,13 @@ project(u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::Abstr
 # NOTE: for this to work properly `a` has to be input as a zero vector
 function project!(a::AbstractArray{<:Number, 3}, u::AbstractVector{<:AbstractArray{<:Number, 3}}, w::AbstractVector{<:Number}, modes::AbstractArray{<:Number, 4})
     N = Int(size(modes, 1)/length(u))
-    for i in eachindex(u), k in CartesianIndices(eachslice(a, dims=1)[1]), n in axes(modes, 2)
-        a[n, k] += channel_int(@view(modes[(N*(i - 1) + 1):N*i, n, k]), w, @view(u[i][:, k]))
+    for i in eachindex(u), K in CartesianIndices(eachslice(a, dims=1)[1]), n in axes(modes, 2)
+        a[n, K] += channel_int(@view(modes[(N*(i - 1) + 1):N*i, n, K]), w, @view(u[i][:, K]))
     end
 
     return a
 end
-project(u::Vector{<:AbstractArray{<:Number, 3}}, w::AbstractVector{<:Number}, modes::AbstractArray{T, 4}) where {T<:Number} = project!(zeros(T, size(modes, 2), size(selectdim(u[1], 1, 1))...), u, w, modes)
+project(u::AbstractVector{<:AbstractArray{<:Number, 3}}, w::AbstractVector{<:Number}, modes::AbstractArray{T, 4}) where {T<:Number} = project!(zeros(T, size(modes, 2), size(selectdim(u[1], 1, 1))...), u, w, modes)
 
 function reverse_project!(u::AbstractArray{<:Number, 3}, a::AbstractArray{<:Number, 3}, modes::AbstractArray{<:Number, 4})
     for I in CartesianIndices(eachslice(u, dims=1)[1])
@@ -57,7 +57,7 @@ end
 
 function expand!(u::AbstractVector{<:AbstractArray{<:Number, 3}}, a::AbstractArray{<:Number, 3}, modes::AbstractArray{<:Number, 4})
     N = Int(size(modes, 1)/length(u))
-    for i in eachindex(u), I in CartesianIndices(eachslice(u, dims=1)[1])
-        mul!(@view(u[i][:, I]), @view(modes[(N*(i - 1) + 1):N*i, :, I]), @view(a[:, I]))
+    for i in eachindex(u), K in CartesianIndices(eachslice(a, dims=1)[1])
+        mul!(@view(u[i][:, K]), @view(modes[(N*(i - 1) + 1):N*i, :, K]), @view(a[:, K]))
     end
 end
