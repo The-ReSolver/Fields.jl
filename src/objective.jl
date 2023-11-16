@@ -345,18 +345,20 @@ function (f::Constraint{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S
     @. f.out[2] = dvdt + vdvdy + wdvdz - f.Re_recip*(d2vdy2 + d2vdz2) + f.Ro*u - ry + dpdy
     @. f.out[3] = dwdt + vdwdy + wdwdz - f.Re_recip*(d2wdy2 + d2wdz2)          - rz + dpdz
     # FIXME: incompresibility constraints are the issue!!!
-    # @. f.out[4] = dvdy + dwdz
-    # @. f.out[5] = drydy + drzdz
-    @. f.out[4] = 0.0
-    @. f.out[5] = 0.0
+    @. f.out[4] = dvdy + dwdz
+    @. f.out[5] = drydy + drzdz
+    f.out[4][2:end-1, 1:5, 1] .= 0.0
+    f.out[5][2:end-1, 1:5, 1] .= 0.0
+    # @. f.out[4] = 0.0
+    # @. f.out[5] = 0.0
 
-    # remove residual component from boundaries to enforce natural boundary conditions
-    @views @. f.out[1][1, :, :]   += rx[1, :, :]
-    @. @view(f.out[1][end, :, :]) += @view(rx[end, :, :])
-    @views @. f.out[2][1, :, :]   += ry[1, :, :]
-    @. @view(f.out[2][end, :, :]) += @view(ry[end, :, :])
-    @views @. f.out[3][1, :, :]   += rz[1, :, :]
-    @. @view(f.out[3][end, :, :]) += @view(rz[end, :, :])
+    # apply residual boundary condition
+    @. f.out[1][1, :, :]   = f.Re_recip*@view(d2udy2[1, :, :])                      
+    @. f.out[1][end, :, :] = f.Re_recip*@view(d2udy2[end, :, :])                
+    @. f.out[2][1, :, :]   = f.Re_recip*@view(d2vdy2[1, :, :])   - @view(dpdy[1, :, :])  
+    @. f.out[2][end, :, :] = f.Re_recip*@view(d2vdy2[end, :, :]) - @view(dpdy[end, :, :])
+    @. f.out[3][1, :, :]   = f.Re_recip*@view(d2wdy2[1, :, :])   - @view(dpdz[1, :, :])  
+    @. f.out[3][end, :, :] = f.Re_recip*@view(d2wdy2[end, :, :]) - @view(dpdz[end, :, :])
 
     return f.out
 end
