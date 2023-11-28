@@ -347,8 +347,8 @@ function (f::Constraint{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S
     # FIXME: incompresibility constraints are the issue!!!
     @. f.out[4] = dvdy + dwdz
     @. f.out[5] = drydy + drzdz
-    f.out[4][2:end-1, 1:5, 1] .= 0.0
-    f.out[5][2:end-1, 1:5, 1] .= 0.0
+    f.out[4][2:end-1, :, 1] .= 0.0
+    f.out[5][2:end-1, :, 1] .= 0.0
     # @. f.out[4] = 0.0
     # @. f.out[5] = 0.0
 

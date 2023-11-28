@@ -114,8 +114,6 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}) where {Ny, Nz,
     # convert velocity coefficients to full-space
     expand!([u, v, w], a, ψs)
 
-    @show norm(u[:, 3, 1])
-
     # set velocity field mean
     u[:, 1, 1] .= f.umean
 
@@ -145,7 +143,6 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}) where {Ny, Nz,
     # treat the mean component
     f.out[:, 1, 1] .= 0
 
-    # TODO: half of me?
     return f.out, gr(f)
 end
 
@@ -384,4 +381,4 @@ function _update_res_cache!(cache::ResGrad)
     end
 end
 
-gr(cache::ResGrad) = sqrt(norm(cache.spec_cache[28])^2 + norm(cache.spec_cache[29])^2 + norm(cache.spec_cache[30])^2)
+gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1])^2)

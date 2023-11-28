@@ -1,6 +1,6 @@
 module Fields
 
-using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase
+using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf
 
 using DAESolve
 
@@ -16,6 +16,7 @@ export project, project!, reverse_project!, expand!
 export Evolution, Constraint
 export ResGrad
 export myoptimise
+export gd!
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 
@@ -31,7 +32,9 @@ include("plot_vectorfield.jl")
 include("objective.jl")
 include("optimise.jl")
 include("resgrad.jl")
+include("gd_options.jl")
 include("gd.jl")
+include("gf_optimise.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 

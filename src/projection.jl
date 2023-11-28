@@ -32,15 +32,16 @@ function project!(a::AbstractArray{<:Number, 3}, u::AbstractArray{<:Number, 3}, 
 end
 project(u::AbstractArray{<:Number, 3}, w::AbstractVector{<:Number}, modes::AbstractArray{T, 4}) where {T<:Number} = project!(zeros(T, size(modes, 2), size(selectdim(u, 1, 1))...), u, w, modes)
 
-# TODO: this only works if the profile projection method adds to the current sum. Need to rework this to take a whole profile at once not just each component
 """
     Project a vector field onto a set of modes, returning the projected field
 """
-# NOTE: for this to work properly `a` has to be input as a zero vector
-function project!(a::AbstractArray{<:Number, 3}, u::AbstractVector{<:AbstractArray{<:Number, 3}}, w::AbstractVector{<:Number}, modes::AbstractArray{<:Number, 4})
+function project!(a::AbstractArray{T, 3}, u::AbstractVector{<:AbstractArray{<:Number, 3}}, w::AbstractVector{<:Number}, modes::AbstractArray{<:Number, 4}) where {T}
     N = Int(size(modes, 1)/length(u))
-    for i in eachindex(u), K in CartesianIndices(eachslice(a, dims=1)[1]), n in axes(modes, 2)
-        a[n, K] += channel_int(@view(modes[(N*(i - 1) + 1):N*i, n, K]), w, @view(u[i][:, K]))
+    for K in CartesianIndices(eachslice(a, dims=1)[1]), n in axes(modes, 2)
+        a[n, K] = zero(T)
+        for i in eachindex(u)
+            a[n, K] += channel_int(@view(modes[(N*(i - 1) + 1):N*i, n, K]), w, @view(u[i][:, K]))
+        end
     end
 
     return a
@@ -55,9 +56,11 @@ function reverse_project!(u::AbstractArray{<:Number, 3}, a::AbstractArray{<:Numb
     return u
 end
 
-function expand!(u::AbstractVector{<:AbstractArray{<:Number, 3}}, a::AbstractArray{<:Number, 3}, modes::AbstractArray{<:Number, 4})
+function expand!(u::AbstractVector{<:AbstractArray{T, 3}}, a::AbstractArray{<:Number, 3}, modes::AbstractArray{<:Number, 4}) where {T}
     N = Int(size(modes, 1)/length(u))
     for i in eachindex(u), K in CartesianIndices(eachslice(a, dims=1)[1])
         mul!(@view(u[i][:, K]), @view(modes[(N*(i - 1) + 1):N*i, :, K]), @view(a[:, K]))
     end
+
+    return u
 end
