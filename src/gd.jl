@@ -39,10 +39,14 @@ function gd!(u::VectorField{3, <:SpectralField{Ny, Nz, Nt}}, modes::Array{Comple
 
     # loop to step in descent direction
     i = 0
+    dRda_norm_prev = 1e6
     while i <= opts.maxiter
         # compute the residual values
         Δa, R = dR!(a)
         dRda_norm = norm(Δa)
+
+        # modify step size if gradient increases
+        dRda_norm - dRda_norm_prev > 0 ? (opts.α *= 0.5) : nothing
 
         # print current state
         opts.verbose && (i % opts.n_it_print == 0 ? _print_state(opts.print_io, i, i*opts.α, R, dRda_norm) : nothing)
@@ -60,7 +64,8 @@ function gd!(u::VectorField{3, <:SpectralField{Ny, Nz, Nt}}, modes::Array{Comple
         append!(opts.res_trace, R)
         !isempty(opts.sim_dir) ? write(f_res, R) : nothing
 
-        # update iterator
+        # update for next iteration
+        dRda_norm_prev = dRda_norm
         i += 1
     end
 
@@ -72,12 +77,11 @@ function gd!(u::VectorField{3, <:SpectralField{Ny, Nz, Nt}}, modes::Array{Comple
     dR!.spec_cache[1][:, 1, 1] .= 0
 
     # convert final result back to full-space
-    # u[1] .= dR!.spec_cache[1]
-    # u[2] .= dR!.spec_cache[2]
-    # u[3] .= dR!.spec_cache[3]
+    u[1] .= dR!.spec_cache[1]
+    u[2] .= dR!.spec_cache[2]
+    u[3] .= dR!.spec_cache[3]
 
-    # TODO: what exactly should I be returning here
-    return VectorField(dR!.spec_cache[1], dR!.spec_cache[2], dR!.spec_cache[3]), opts.res_trace, dR!
+    return opts.res_trace, dR!
 end
 
 
