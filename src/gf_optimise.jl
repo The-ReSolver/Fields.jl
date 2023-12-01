@@ -36,7 +36,7 @@ function vec2flow!(u::SpectralField{Ny, Nz, Nt, <:Any, T}, v::Vector{T}) where {
     Nz_spec = (Nz >> 1) + 1
 
     # loop over the elements of the vector field and assign from state vector
-    for i in eachindex(u), nt in 1:Nt, nz in 1:Nz_spec, ny in 1:Ny
+    for nt in 1:Nt, nz in 1:Nz_spec, ny in 1:Ny
         u[ny, nz, nt] =  Complex{T}(v[2*(ny + (nz - 1)*Ny + (nt - 1)*Ny*Nz_spec) - 1],
                                     v[2*(ny + (nz - 1)*Ny + (nt - 1)*Ny*Nz_spec)])
     end
