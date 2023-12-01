@@ -45,14 +45,24 @@ function gd!(u::VectorField{3, <:SpectralField{Ny, Nz, Nt}}, modes::Array{Comple
         Δa, R = dR!(a)
         dRda_norm = norm(Δa)
 
+        # update traces
+        if size(opts.res_trace) == (0,)
+            append!(opts.res_trace, R)
+            append!(opts.tau_trace, 0.0)
+        end
+        if i != 0
+            append!(opts.res_trace, R)
+            append!(opts.tau_trace, opts.tau_trace[end] + opts.α)
+        end
+
         # modify step size if gradient increases
-        dRda_norm - dRda_norm_prev > 0 ? (opts.α *= 0.5) : nothing
+        dRda_norm - dRda_norm_prev > 0 ? opts.α *= 0.5 : nothing
 
         # print current state
-        opts.verbose && (i % opts.n_it_print == 0 ? _print_state(opts.print_io, i, i*opts.α, R, dRda_norm) : nothing)
+        opts.verbose && (i % opts.n_it_print == 0 ? _print_state(opts.print_io, i, opts.α, opts.tau_trace[end], R, dRda_norm) : nothing)
 
         # write current state
-        !isempty(opts.sim_dir) ? (i % opts.n_it_write == 0 ? _write_data(opts.sim_dir, a, round(i*opts.α, digits=5), R, dRda_norm) : nothing) : nothing
+        !isempty(opts.sim_dir) ? (i % opts.n_it_write == 0 ? _write_data(opts.sim_dir, a, round(opts.tau_trace[end], digits=5), R, dRda_norm) : nothing) : nothing
 
         # check if converges
         dRda_norm < opts.ϵ ? (println("Converged!"); break) : nothing
@@ -60,8 +70,7 @@ function gd!(u::VectorField{3, <:SpectralField{Ny, Nz, Nt}}, modes::Array{Comple
         # update the velocity
         a .-= opts.α.*Δa
 
-        # update trace
-        append!(opts.res_trace, R)
+        # update traces
         !isempty(opts.sim_dir) ? write(f_res, R) : nothing
 
         # update for next iteration
@@ -81,21 +90,21 @@ function gd!(u::VectorField{3, <:SpectralField{Ny, Nz, Nt}}, modes::Array{Comple
     u[2] .= dR!.spec_cache[2]
     u[3] .= dR!.spec_cache[3]
 
-    return opts.res_trace, dR!
+    return u, dR!, opts
 end
 
 
 
 function _print_header(print_io)
-    println(print_io, "---------------------------------------------------------------")
-    println(print_io, "|  Iteration  |       τ       |  Residual     |  Gradient     |")
-    println(print_io, "---------------------------------------------------------------")
+    println(print_io, "-----------------------------------------------------------------------------")
+    println(print_io, "|  Iteration  |  Step Size  |       τ       |  Residual     |  Gradient     |")
+    println(print_io, "-----------------------------------------------------------------------------")
     flush(print_io)
     return nothing
 end
 
-function _print_state(print_io, i, τ, R, dRda_norm)
-    str = @sprintf("|%10d   |  %5.5e  |  %5.5e  |  %5.5e  |", i, τ, R, dRda_norm)
+function _print_state(print_io, i, α, τ, R, dRda_norm)
+    str = @sprintf("|%10d   |   %5.2e  |  %5.5e  |  %5.5e  |  %5.5e  |", i, α, τ, R, dRda_norm)
     println(print_io, str)
     flush(print_io)
     return nothing

@@ -5,7 +5,6 @@ using Parameters
 
 export GDOptions
 
-# FIXME: maybe don't pass trace so this doesn't have to be mutable
 @with_kw mutable struct GDOptions
     # simulation options
     α::Float64 = 1e-3
@@ -21,5 +20,6 @@ export GDOptions
     # writing options
     sim_dir::String = ""
     res_trace::Vector{Float64} = Float64[]
+    tau_trace::Vector{Float64} = Float64[]
     n_it_write::Int = 1
 end
