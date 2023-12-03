@@ -1,6 +1,6 @@
 module Fields
 
-using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf
+using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf, Optim
 
 using DAESolve
 
@@ -33,7 +33,7 @@ include("optimisedae.jl")
 include("resgrad.jl")
 include("gd_options.jl")
 include("gd.jl")
-include("vec2flow.jl")
+include("vec2field.jl")
 include("optimise.jl")
 include("gf_optimise.jl")
 
