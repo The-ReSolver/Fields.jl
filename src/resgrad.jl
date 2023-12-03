@@ -57,7 +57,7 @@ struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
     end
 end
 
-function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}) where {Ny, Nz, Nt, M}
+function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}, compute_grad::Bool=true) where {Ny, Nz, Nt, M}
     # assign aliases
     u        = f.spec_cache[1]
     v        = f.spec_cache[2]
@@ -129,19 +129,21 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}) where {Ny, Nz,
     project!(s, [nsx, nsy, nsz], ws, ψs)
     expand!([rx, ry, rz], s, ψs)
 
-    # compute all the terms for the variational evolution
-    _update_res_cache!(f)
+    if compute_grad
+        # compute all the terms for the variational evolution
+        _update_res_cache!(f)
 
-    # compute the RHS of the evolution equation
-    @. dudτ = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
-    @. dvdτ = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx
-    @. dwdτ = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)
+        # compute the RHS of the evolution equation
+        @. dudτ = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
+        @. dvdτ = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx
+        @. dwdτ = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)
 
-    # project to get velocity coefficient evolution
-    project!(f.out, [dudτ, dvdτ, dwdτ], ws, ψs)
+        # project to get velocity coefficient evolution
+        project!(f.out, [dudτ, dvdτ, dwdτ], ws, ψs)
 
-    # treat the mean component
-    f.out[:, 1, 1] .= 0
+        # treat the mean component
+        f.out[:, 1, 1] .= 0
+    end
 
     return f.out, gr(f)
 end
