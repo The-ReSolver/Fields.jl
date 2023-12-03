@@ -1,8 +1,6 @@
 # This file contains the function definitions required to optimise a flow field
 # using gradient free methods.
 
-using Optim
-
 export gf_optimise
 
 function gf_optimise(u::VectorField{3, <:SpectralField{<:Any, Nz, Nt}}, modes::Array{ComplexF64, 4}, mean::Vector{Float64}, Re::Real, Ro::Real; maxiter::Int=1000, verbose::Bool=false, show_every::Int=1) where {Nz, Nt}

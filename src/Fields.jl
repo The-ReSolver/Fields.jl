@@ -15,7 +15,7 @@ export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 export project, project!, reverse_project!, expand!
 export Evolution, Constraint
 export ResGrad
-export gd!
+export gd!, optimise
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 

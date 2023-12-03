@@ -4,7 +4,9 @@
 using Parameters
 
 export GDOptions
+export OptOptions
 
+# TODO: unify these options for both optimisers
 @with_kw mutable struct GDOptions
     # simulation options
     α::Float64 = 1e-3
@@ -21,5 +23,31 @@ export GDOptions
     sim_dir::String = ""
     res_trace::Vector{Float64} = Float64[]
     tau_trace::Vector{Float64} = Float64[]
+    n_it_write::Int = 1
+end
+
+function _default_callback()
+
+end
+
+# TODO: make struct immutable somehow
+@with_kw mutable struct OptOptions
+    # simulation options
+    maxiter::Int = 1000
+    g_tol::Float64 = 1e-6
+    allow_f_increases::Bool = false
+    callback = x->false
+    alg::Optim.FirstOrderOptimizer = LBFGS()
+    time_limit::Float64 = NaN
+
+    # printing options
+    verbose::Bool = true
+    show_trace::Bool = false
+    extended_trace::Bool = false
+    print_io::IO = stdout
+    n_it_print::Int = 1
+
+    # writing options
+    sim_dir::String = ""
     n_it_write::Int = 1
 end
