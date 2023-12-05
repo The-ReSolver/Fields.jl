@@ -35,7 +35,6 @@ include("gd_options.jl")
 include("gd.jl")
 include("vec2field.jl")
 include("optimise.jl")
-include("gf_optimise.jl")
 
 # TODO: type parameter of fields could just be grid since that already contains all the needed information
 
