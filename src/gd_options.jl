@@ -39,6 +39,7 @@ end
     callback = x->false
     alg::Optim.FirstOrderOptimizer = LBFGS()
     time_limit::Float64 = NaN
+    store_trace::Bool = true
 
     # printing options
     verbose::Bool = true
