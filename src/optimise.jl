@@ -9,7 +9,7 @@ const AcceleratedGradientDescent = Optim.AcceleratedGradientDescent
 
 # TODO: allow optional free mean
 # TODO: restart method
-# TODO: check if transformation is required
+# TODO: expose linesearch interface so I don't have to import it
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid, modes::Array{ComplexF64, 4}, mean::Vector{Float64}, Re, Ro; opts::OptOptions=OptOptions()) where {M, Nz, Nt, T}
     # initialise cache functor
@@ -18,19 +18,18 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid, modes::Array{
     # set the mean components to zero
     a[:, 1, 1] .= zero(Complex{T})
 
-    # initialise state vector for input
-    a_vec = Vector{T}(undef, 2*M*((Nz >> 1) + 1)*Nt)
-    field2vec!(a_vec, a)
-
     # define objective function for optimiser
     function fg!(F, G, x)
-        G === nothing ? R = dR!(vec2field!(a, x), false)[2] : (R = dR!(vec2field!(a, x), true)[2]; field2vec!(G, dR!.out))
+        G === nothing ? R = dR!(x, false)[2] : (R = dR!(x, true)[2]; G .= dR!.out)
 
         return R
     end
 
     # perform optimisation
-    sol = optimize(Optim.only_fg!(fg!), a_vec, opts.alg, _gen_optim_opts(opts))
+    sol = optimize(Optim.only_fg!(fg!), a, opts.alg, _gen_optim_opts(opts))
+
+    # update input
+    a .= Optim.minimizer(sol)
 
     return sol
 end
