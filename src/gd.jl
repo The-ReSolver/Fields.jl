@@ -1,11 +1,6 @@
 # This file contains the methods needed to perform a basic gradient descent
 # optimisation of a field.
 
-# TODO:
-#   - alternative method that uses simulation directory to initialise
-#   - GF optimisation testing
-#   - any other way to test the residual?
-
 function gd!(u::VectorField{3, <:SpectralField{Ny, Nz, Nt}}, modes::Array{ComplexF64, 4}, mean::Vector{Float64}, Re::Real, Ro::Real; opts::GDOptions=GDOptions()) where {Ny, Nz, Nt}
     # set the mean of the velocity to zero
     u[1][:, 1, 1] .= 0.0

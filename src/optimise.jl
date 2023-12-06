@@ -7,9 +7,15 @@ const GradientDescent = Optim.GradientDescent
 const MomentumGradientDescent = Optim.MomentumGradientDescent
 const AcceleratedGradientDescent = Optim.AcceleratedGradientDescent
 
-function optimise(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid, modes::Array{ComplexF64, 4}, mean::Vector{Float64}, Re, Ro; opts::OptOptions=OptOptions()) where {M, Nz, Nt, T}
+# TODO: allow optional free mean
+# TODO: restart method
+
+function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid, modes::Array{ComplexF64, 4}, mean::Vector{Float64}, Re, Ro; opts::OptOptions=OptOptions()) where {M, Nz, Nt, T}
     # initialise cache functor
     dR! = ResGrad(g, modes, mean, Re, Ro)
+
+    # set the mean components to zero
+    a[:, 1, 1] .= zero(Complex{T})
 
     # initialise state vector for input
     a_vec = Vector{T}(undef, 2*M*((Nz >> 1) + 1)*Nt)
@@ -17,11 +23,7 @@ function optimise(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid, modes::Array{C
 
     # define objective function for optimiser
     function fg!(F, G, x)
-        # convert vector to field
-        vec2field!(a, x)
-
-        # compute objective and gradients
-        G === nothing ? R = dR!(a, false)[2] : (R = dR!(a, true)[2]; field2vec!(G, dR!.out))
+        G === nothing ? R = dR!(vec2field!(a, x), false)[2] : (R = dR!(vec2field!(a, x), true)[2]; field2vec!(G, dR!.out))
 
         return R
     end
@@ -29,7 +31,7 @@ function optimise(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid, modes::Array{C
     # perform optimisation
     sol = optimize(Optim.only_fg!(fg!), a_vec, opts.alg, _gen_optim_opts(opts))
 
-    return _unpack_sol!(sol, a)
+    return sol
 end
 
 _gen_optim_opts(opts) = Optim.Options(; g_tol=opts.g_tol,
@@ -41,29 +43,3 @@ _gen_optim_opts(opts) = Optim.Options(; g_tol=opts.g_tol,
                                         callback=opts.callback,
                                         time_limit=opts.time_limit,
                                         store_trace=opts.store_trace)
-
-function _unpack_sol!(sol, a)
-    a_min = vec2field!(copy(a), Optim.minimizer(sol))
-    
-    Results(Optim.summary(sol),
-            Optim.minimum(sol),
-            a_min,
-            Optim.f_calls(sol),
-            Optim.f_trace(sol),
-            Optim.converged(sol),
-            Optim.iterations(sol),
-            Optim.g_norm_trace(sol),
-            Optim.g_calls(sol))
-end
-
-struct Results
-    alg::String
-    min::Float64
-    argmin::SpectralField
-    R_calls::Int
-    R_trace::Vector{Float64}
-    converged::Bool
-    iterations::Int
-    dR_norm_trace::Vector{Float64}
-    dR_calls::Int
-end

@@ -6,7 +6,6 @@ using Parameters
 export GDOptions
 export OptOptions
 
-# TODO: unify these options for both optimisers
 @with_kw mutable struct GDOptions
     # simulation options
     α::Float64 = 1e-3
@@ -26,17 +25,17 @@ export OptOptions
     n_it_write::Int = 1
 end
 
-function _default_callback()
-
+struct CallbackCache end
+function (f::CallbackCache)(x)
+    return false
 end
 
-# TODO: make struct immutable somehow
 @with_kw mutable struct OptOptions
     # simulation options
     maxiter::Int = 1000
     g_tol::Float64 = 1e-6
     allow_f_increases::Bool = false
-    callback = x->false
+    callback = CallbackCache()
     alg::Optim.FirstOrderOptimizer = LBFGS()
     time_limit::Float64 = NaN
     store_trace::Bool = true
