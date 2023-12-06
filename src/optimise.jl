@@ -9,6 +9,7 @@ const AcceleratedGradientDescent = Optim.AcceleratedGradientDescent
 
 # TODO: allow optional free mean
 # TODO: restart method
+# TODO: check if transformation is required
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid, modes::Array{ComplexF64, 4}, mean::Vector{Float64}, Re, Ro; opts::OptOptions=OptOptions()) where {M, Nz, Nt, T}
     # initialise cache functor

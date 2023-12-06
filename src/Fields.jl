@@ -30,7 +30,6 @@ include("dns2field.jl")
 include("plot_vectorfield.jl")
 include("resgrad.jl")
 include("gd_options.jl")
-include("gd.jl")
 include("vec2field.jl")
 include("optimise.jl")
 
