@@ -2,10 +2,6 @@
 # constraints governing the variational evolution of flow field to minimise its
 # residual.
 
-# TODO: come up with a way for the arrays to shared
-# TODO: find out where the goddamn allocations are coming from (mainly the update methods)
-# TODO: figure out whether the multithreading is worth it
-
 # =============================================================================
 # DAE evolution
 # =============================================================================
@@ -308,7 +304,7 @@ struct Constraint{Ny, Nz, Nt, G, T, PLAN, IPLAN}
     end
 end
 
-function (f::Constraint{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function (f::Constraint{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S}, incomp::Bool=true) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     # unpack input
     u  = q1[1]; v  = q1[2]; w  = q1[3]
     rx = q2[1]; ry = q2[2]; rz = q2[3]
@@ -347,10 +343,10 @@ function (f::Constraint{Ny, Nz, Nt})(q1::AbstractVector{S}, q2::AbstractVector{S
     # FIXME: incompresibility constraints are the issue!!!
     @. f.out[4] = dvdy + dwdz
     @. f.out[5] = drydy + drzdz
-    f.out[4][2:end-1, :, 1] .= 0.0
-    f.out[5][2:end-1, :, 1] .= 0.0
-    # @. f.out[4] = 0.0
-    # @. f.out[5] = 0.0
+    if !incomp
+        f.out[4][2:end-1, :, 1] .= 0.0
+        f.out[5][2:end-1, :, 1] .= 0.0
+    end
 
     # apply residual boundary condition
     @. f.out[1][1, :, :]   = f.Re_recip*@view(d2udy2[1, :, :])                      

@@ -28,14 +28,10 @@ include("fft.jl")
 include("derivatives.jl")
 include("dns2field.jl")
 include("plot_vectorfield.jl")
-include("objective.jl")
-include("optimisedae.jl")
 include("resgrad.jl")
 include("gd_options.jl")
 include("gd.jl")
 include("vec2field.jl")
 include("optimise.jl")
-
-# TODO: type parameter of fields could just be grid since that already contains all the needed information
 
 end
