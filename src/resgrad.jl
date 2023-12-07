@@ -138,15 +138,13 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
         @. dvdτ = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx
         @. dwdτ = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)
 
-        # take off the base flow
-        if !FREEMEAN
-            dudτ[:, 1, 1] .= 0
-            dvdτ[:, 1, 1] .= 0
-            dwdτ[:, 1, 1] .= 0
-        end
-
         # project to get velocity coefficient evolution
         project!(f.out, [dudτ, dvdτ, dwdτ], ws, ψs)
+
+        # take off the mean profile
+        if !FREEMEAN
+            f.out[:, 1, 1] .= 0
+        end
     end
 
     return f.out, gr(f)
