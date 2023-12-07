@@ -4,6 +4,7 @@
 # This will allow the outputs of the DNS to be directly loaded into Julia for
 # manipulation with the rest of the code.
 
+# TODO: this stuff needs re-testing and a clean-up
 
 # -----------------------------------------------------------------------------
 # Custom error for indexing at incorrect times
@@ -189,7 +190,7 @@ dns2field(loc::AbstractString; fft_flag::UInt32=ESTIMATE, times::Union{Nothing, 
 
 function dns2field(data::DNSData{Ny, Nz, Nt}; fft_flag::UInt32=ESTIMATE) where {Ny, Nz, Nt}
     # initialise grid, fields, and, and FFT plan
-    grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), 2π/(data.dt*skip_step*Nt), data.β)
+    grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), 2π/((data.snaps[2] - data.snaps[1])*Nt), data.β)
     u = VectorField(grid; field_type=:physical)
     U = VectorField(grid)
     FFT! = FFTPlan!(grid, flags=fft_flag)
