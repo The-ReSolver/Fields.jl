@@ -2,8 +2,7 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-# TODO: super messy type signature
-struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S1, S2, D, T, PLAN, IPLAN}
     out::SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
@@ -12,11 +11,11 @@ struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
     phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S2, T, D}, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, IPLAN}
-    umean::Vector{Float64}
+    base::Vector{Float64}
     Re_recip::T
     Ro::T
 
-    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, mean_prof::Vector{Float64}, Re::Real, Ro::Real) where {S}
+    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real, free_mean::Bool=false) where {S}
         # generate grid for projected fields
         proj_grid = Grid(Vector{Float64}(undef, size(ψs, 2)), S[2], S[3], grid.Dy..., ones(size(ψs, 2)), grid.dom[2], grid.dom[1])
 
@@ -38,6 +37,7 @@ struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
 
         new{S...,
             size(ψs, 2),
+            free_mean,
             (size(ψs, 2), S[2], S[3]),
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
@@ -51,13 +51,13 @@ struct ResGrad{Ny, Nz, Nt, M, S1, S2, D, T, PLAN, IPLAN}
                                 phys_cache,
                                 FFT!,
                                 IFFT!,
-                                mean_prof,
+                                base_prof,
                                 1/Re,
                                 Ro)
     end
 end
 
-function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}, compute_grad::Bool=true) where {Ny, Nz, Nt, M}
+function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, compute_grad::Bool=true) where {Ny, Nz, Nt, M, FREEMEAN}
     # assign aliases
     u        = f.spec_cache[1]
     v        = f.spec_cache[2]
@@ -115,7 +115,7 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}, compute_grad::
     expand!([u, v, w], a, ψs)
 
     # set velocity field mean
-    u[:, 1, 1] .= f.umean
+    u[:, 1, 1] .+= f.base
 
     # compute all the terms with only velocity
     _update_vel_cache!(f)
@@ -138,11 +138,15 @@ function (f::ResGrad{Ny, Nz, Nt, M})(a::SpectralField{M, Nz, Nt}, compute_grad::
         @. dvdτ = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx
         @. dwdτ = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)
 
+        # take off the base flow
+        if !FREEMEAN
+            dudτ[:, 1, 1] .= 0
+            dvdτ[:, 1, 1] .= 0
+            dwdτ[:, 1, 1] .= 0
+        end
+
         # project to get velocity coefficient evolution
         project!(f.out, [dudτ, dvdτ, dwdτ], ws, ψs)
-
-        # treat the mean component
-        f.out[:, 1, 1] .= 0
     end
 
     return f.out, gr(f)

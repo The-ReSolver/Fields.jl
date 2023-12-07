@@ -7,16 +7,26 @@ const GradientDescent = Optim.GradientDescent
 const MomentumGradientDescent = Optim.MomentumGradientDescent
 const AcceleratedGradientDescent = Optim.AcceleratedGradientDescent
 
-# TODO: allow optional free mean
 # TODO: restart method
 # TODO: expose linesearch interface so I don't have to import it
 
-function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid, modes::Array{ComplexF64, 4}, mean::Vector{Float64}, Re, Ro; opts::OptOptions=OptOptions()) where {M, Nz, Nt, T}
-    # initialise cache functor
-    dR! = ResGrad(g, modes, mean, Re, Ro)
+function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
+    # check if mean profile is provided
+    if length(mean) == 0
+        base = points(g)[1]
+        free_mean = true
+    else
+        base = mean
+        free_mean = false
+    end
 
-    # set the mean components to zero
-    a[:, 1, 1] .= zero(Complex{T})
+    # initialise cache functor
+    dR! = ResGrad(g, modes, base, Re, Ro, free_mean)
+
+    # remove the mean profile if desired
+    if !free_mean
+        a[:, 1, 1] .= zero(Complex{T})
+    end
 
     # define objective function for optimiser
     function fg!(F, G, x)
