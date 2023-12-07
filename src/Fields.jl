@@ -29,7 +29,7 @@ include("derivatives.jl")
 include("dns2field.jl")
 include("plot_vectorfield.jl")
 include("resgrad.jl")
-include("gd_options.jl")
+include("optoptions.jl")
 include("optimise.jl")
 
 end

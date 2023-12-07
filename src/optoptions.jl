@@ -6,7 +6,7 @@ function (f::CallbackCache)(x)
     return false
 end
 
-@with_kw mutable struct OptOptions
+@with_kw struct OptOptions
     # simulation options
     maxiter::Int = 1000
     g_tol::Float64 = 1e-6
