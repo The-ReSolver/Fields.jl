@@ -7,8 +7,20 @@ const GradientDescent = Optim.GradientDescent
 const MomentumGradientDescent = Optim.MomentumGradientDescent
 const AcceleratedGradientDescent = Optim.AcceleratedGradientDescent
 
+const HagerZhang = LineSearches.HagerZhang
+const MoreThuente = LineSearches.MoreThuente
+const BackTracking = LineSearches.BackTracking
+const StrongWolfe = LineSearches.StrongWolfe
+const Static = LineSearches.Static
+
+const InitialPrevious = LineSearches.InitialPrevious
+const InitialStatic = LineSearches.InitialStatic
+const InitialHagerZhang = LineSearches.InitialHagerZhang
+const InitialQuadratic = LineSearches.InitialQuadratic
+const InitialConstantChange = LineSearches.InitialConstantChange
+
 # TODO: restart method
-# TODO: expose linesearch interface so I don't have to import it
+# TODO: data writing is done with extended trace (and store trace false to avoid the memory usage), I will need my own trace storing method
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
