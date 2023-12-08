@@ -33,7 +33,7 @@ export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 export project, project!, reverse_project!, expand!
 export Evolution, Constraint
 export ResGrad
-export gd!, optimise!, OptOptions
+export gd!, optimise!, OptOptions, Callback
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 
@@ -47,6 +47,7 @@ include("derivatives.jl")
 include("dns2field.jl")
 include("plot_vectorfield.jl")
 include("resgrad.jl")
+include("optcallback.jl")
 include("optoptions.jl")
 include("optimise.jl")
 
