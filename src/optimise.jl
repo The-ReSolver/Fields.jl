@@ -1,24 +1,6 @@
 # This file contains the definitions required to solve the variational problem
 # using Optim.jl.
 
-const LBFGS = Optim.LBFGS
-const ConjugateGradient = Optim.ConjugateGradient
-const GradientDescent = Optim.GradientDescent
-const MomentumGradientDescent = Optim.MomentumGradientDescent
-const AcceleratedGradientDescent = Optim.AcceleratedGradientDescent
-
-const HagerZhang = LineSearches.HagerZhang
-const MoreThuente = LineSearches.MoreThuente
-const BackTracking = LineSearches.BackTracking
-const StrongWolfe = LineSearches.StrongWolfe
-const Static = LineSearches.Static
-
-const InitialPrevious = LineSearches.InitialPrevious
-const InitialStatic = LineSearches.InitialStatic
-const InitialHagerZhang = LineSearches.InitialHagerZhang
-const InitialQuadratic = LineSearches.InitialQuadratic
-const InitialConstantChange = LineSearches.InitialConstantChange
-
 # TODO: restart method
 # TODO: data writing is done with extended trace (and store trace false to avoid the memory usage), I will need my own trace storing method
 

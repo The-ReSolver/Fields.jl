@@ -4,6 +4,24 @@ using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf, Optim, Parameters
 
 using DAESolve
 
+const LBFGS = Optim.LBFGS
+const ConjugateGradient = Optim.ConjugateGradient
+const GradientDescent = Optim.GradientDescent
+const MomentumGradientDescent = Optim.MomentumGradientDescent
+const AcceleratedGradientDescent = Optim.AcceleratedGradientDescent
+
+const HagerZhang = LineSearches.HagerZhang
+const MoreThuente = LineSearches.MoreThuente
+const BackTracking = LineSearches.BackTracking
+const StrongWolfe = LineSearches.StrongWolfe
+const Static = LineSearches.Static
+
+const InitialPrevious = LineSearches.InitialPrevious
+const InitialStatic = LineSearches.InitialStatic
+const InitialHagerZhang = LineSearches.InitialHagerZhang
+const InitialQuadratic = LineSearches.InitialQuadratic
+const InitialConstantChange = LineSearches.InitialConstantChange
+
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!, divergence!, laplacian!
 export FFTPlan!, IFFTPlan!
 export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
