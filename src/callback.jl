@@ -12,14 +12,15 @@ struct Callback{WRITE}
     g_norm::Vector{Float64}
     iter::Vector{Int}
     time::Vector{Float64}
+    step_size::Vector{Float64}
 
-    function Callback(value, g_norm, iter, time; write=false)
-        length(value) == length(g_norm) == length(iter) == length(time) || throw(ArgumentError("Trace vectors must be the same length!"))
+    function Callback(value, g_norm, iter, time, step_size; write=false)
+        length(value) == length(g_norm) == length(iter) == length(time) == length(step_size) || throw(ArgumentError("Trace vectors must be the same length!"))
 
-        new{write}(value, g_norm, iter, time)
+        new{write}(value, g_norm, iter, time, step_size)
     end
 end
-Callback(; write::Bool=false) = Callback(Float64[], Float64[], Int[], Float64[], write=write)
+Callback(; write::Bool=false) = Callback(Float64[], Float64[], Int[], Float64[], Float64[], write=write)
 
 function (f::Callback)(x)
     # write current state to trace
@@ -27,20 +28,21 @@ function (f::Callback)(x)
     push!(f.g_norm, x.g_norm)
     push!(f.iter, x.iteration)
     push!(f.time, x.metadata["time"])
+    haskey(x.metadata, "Current step size") ? push!(f.step_size, x.metadata["Current step size"]) : nothing
 
     # write data to disk
-    _write_data(f)
+    _write_data(x.iteration, x.metadata["x"], f)
 
     return false
 end
 
-_write_data(::Callback{false}) = nothing
-function _write_data(::Callback{true})
+_write_data(::Any, ::Any, ::Callback{false}) = nothing
+function _write_data(iter, a, ::Callback{true})
     # create directory if it doesn't already exist
-    isdir(loc*string(τ)) ? nothing : mkdir(loc*string(τ))
+    isdir(loc*string(iter)) ? nothing : mkdir(loc*string(iter))
 
     # write velocity coefficients to file
-    open(loc*string(τ)*"/"*"a", "w") do f
+    open(loc*string(iter)*"/"*"a", "w") do f
         write(f, a)
     end
 
