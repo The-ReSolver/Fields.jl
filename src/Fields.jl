@@ -47,7 +47,7 @@ include("derivatives.jl")
 include("dns2field.jl")
 include("plot_vectorfield.jl")
 include("resgrad.jl")
-include("optcallback.jl")
+include("callback.jl")
 include("optoptions.jl")
 include("optimise.jl")
 
