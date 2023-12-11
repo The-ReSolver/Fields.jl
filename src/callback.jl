@@ -32,17 +32,22 @@ end
 struct Callback
     trace::Trace
     write::Bool
+    write_loc::String
 
-    Callback(trace::Trace; write::Bool=false) = new(trace, write)
+    function Callback(trace; write=false, write_loc="./")
+        write_loc[end] != '/' ? write_loc = write_loc*'/' : nothing
+
+        new(trace, write, write_loc)
+    end
 end
-Callback(; write::Bool=false) = Callback(Trace(Float64[], Float64[], Int[], Float64[], Float64[]), write=write)
+Callback(; write=false, write_loc="./") = Callback(Trace(Float64[], Float64[], Int[], Float64[], Float64[]), write=write, write_loc=write_loc)
 
 function (f::Callback)(x)
     # write current state to trace
     _update_trace!(f.trace, x)
 
     # write data to disk
-    _write_data(x.iteration, x.metadata["x"], f.write)
+    _write_data(f.write_loc, x.iteration, x.metadata["x"], f.write)
 
     return false
 end

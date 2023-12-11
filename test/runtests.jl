@@ -1,6 +1,7 @@
 using Test
 using Random
 using LinearAlgebra
+using IniFile
 
 using Fields
 using ChebUtils
@@ -14,6 +15,6 @@ include("test_vectorfield.jl")
 include("test_fft.jl")
 include("test_derivatives.jl")
 include("test_resgrad.jl")
+include("test_output.jl")
 include("test_callback.jl")
-include("test_optoptions.jl")
 include("test_optimiser.jl")
