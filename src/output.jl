@@ -37,14 +37,14 @@ function _init_opt_dir(opts, grid, modes, base_prof, Re, Ro, free_mean)
         write(f, modes)
     end
 
-    # create residual trace
-    open(opts.callback.write_loc*"trace", "w") do f
-        write(f, opts.callback.trace.value)
-        write(f, opts.callback.trace.g_norm)
-        write(f, opts.callback.trace.iter)
-        write(f, opts.callback.trace.time)
-        write(f, opts.callback.trace.step_size)
-    end
+    # # create residual trace
+    # open(opts.callback.write_loc*"trace", "w") do f
+    #     write(f, opts.callback.trace.value)
+    #     write(f, opts.callback.trace.g_norm)
+    #     write(f, opts.callback.trace.iter)
+    #     write(f, opts.callback.trace.time)
+    #     write(f, opts.callback.trace.step_size)
+    # end
 
     return nothing
 end
@@ -93,14 +93,14 @@ function _load_opt_dir(path, diff_method, diff2_method, quad_method, i=0)
     end
 
     # extract traces
-    trace = open(path*"trace", "r") do f
-        tr_size = filesize(f)÷(4*sizeof(Float64) + sizeof(Int))
-        return Trace(read!(f, Vector{Float64}(undef, tr_size)),
-                    read!(f, Vector{Float64}(undef, tr_size)),
-                    read!(f, Vector{Int}(undef, tr_size)),
-                    read!(f, Vector{Float64}(undef, tr_size)),
-                    read!(f, Vector{Float64}(undef, tr_size)))
-    end
+    # trace = open(path*"trace", "r") do f
+    #     tr_size = filesize(f)÷(4*sizeof(Float64) + sizeof(Int))
+    #     return Trace(read!(f, Vector{Float64}(undef, tr_size)),
+    #                 read!(f, Vector{Float64}(undef, tr_size)),
+    #                 read!(f, Vector{Int}(undef, tr_size)),
+    #                 read!(f, Vector{Float64}(undef, tr_size)),
+    #                 read!(f, Vector{Float64}(undef, tr_size)))
+    # end
 
     return a, grid, modes, base_prof, Re, Ro, free_mean, trace
 end
