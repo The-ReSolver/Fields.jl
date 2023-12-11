@@ -49,6 +49,7 @@ include("plot_vectorfield.jl")
 include("resgrad.jl")
 include("callback.jl")
 include("optoptions.jl")
+include("output.jl")
 include("optimise.jl")
 
 end

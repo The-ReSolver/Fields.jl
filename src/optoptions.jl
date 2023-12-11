@@ -7,15 +7,13 @@
     g_tol::Float64 = 1e-6
     allow_f_increases::Bool = false
     write_loc::String = "./"; @assert write_loc[end] == '/'
-    callback = Callback()
+    callback::Callback = Callback()
     alg::Optim.FirstOrderOptimizer = LBFGS()
     time_limit::Float64 = NaN
-    store_trace::Bool = false
 
     # printing options
     verbose::Bool = true
     show_trace::Bool = false
-    extended_trace::Bool = true
     print_io::IO = stdout
     n_it_print::Int = 1
 

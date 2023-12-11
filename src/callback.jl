@@ -29,10 +29,11 @@ function _update_trace!(trace::Trace, state)
     push!(trace.step_size, state.metadata["Current step size"])
 end
 
-struct Callback{WRITE}
+struct Callback
     trace::Trace
+    write::Bool
 
-    Callback(trace::Trace; write::Bool=false) = new{write}(trace)
+    Callback(trace::Trace; write::Bool=false) = new(trace, write)
 end
 Callback(; write::Bool=false) = Callback(Trace(Float64[], Float64[], Int[], Float64[], Float64[]), write=write)
 
@@ -41,20 +42,7 @@ function (f::Callback)(x)
     _update_trace!(f.trace, x)
 
     # write data to disk
-    _write_data(x.iteration, x.metadata["x"], f)
+    _write_data(x.iteration, x.metadata["x"], f.write)
 
     return false
-end
-
-_write_data(::Any, ::Any, ::Callback{false}) = nothing
-function _write_data(iter, a, ::Callback{true})
-    # create directory if it doesn't already exist
-    isdir(loc*string(iter)) ? nothing : mkdir(loc*string(iter))
-
-    # write velocity coefficients to file
-    open(loc*string(iter)*"/"*"a", "w") do f
-        write(f, a)
-    end
-
-    return nothing
 end

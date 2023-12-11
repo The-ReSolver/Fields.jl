@@ -7,12 +7,12 @@ end
 
 @testset "Callback function             " begin
     # test construction
-    @test Callback() isa Callback{false}
-    @test Callback(write=true) isa Callback{true}
     @test Callback().trace.value == Vector{Float64}(undef, 0)
     @test Callback().trace.g_norm == Vector{Float64}(undef, 0)
     @test Callback().trace.iter == Vector{Int}(undef, 0)
     @test Callback().trace.time == Vector{Float64}(undef, 0)
+    @test Callback().write == false
+    @test Callback(write=true).write == true
     @test_nowarn Callback(Fields.Trace(rand(5), rand(5), rand(Int, 5), rand(5), rand(5)))
     @test_throws ArgumentError Callback(Fields.Trace(rand(5), rand(3), rand(Int, 5), rand(5), rand(5)))
 
