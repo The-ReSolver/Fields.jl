@@ -28,8 +28,7 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
     end
 
     # define objective function for optimiser
-    # TODO: can F be replace with ::Any???
-    function fg!(F, G, x)
+    function fg!(::Any, G, x)
         G === nothing ? R = dR!(x, false)[2] : (R = dR!(x, true)[2]; G .= dR!.out)
 
         return R
