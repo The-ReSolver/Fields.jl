@@ -5,9 +5,8 @@
 # TODO: add option to allow writing to disk
 # TODO: add option to skip writing to disk
 # TODO: add extension/wrapper interface
-# TODO: add my own fancy printing???
 
-struct Trace
+mutable struct Trace
     value::Vector{Float64}
     g_norm::Vector{Float64}
     iter::Vector{Int}
@@ -21,33 +20,50 @@ struct Trace
     end
 end
 
-function _update_trace!(trace::Trace, state)
-    push!(trace.value, state.value)
-    push!(trace.g_norm, state.g_norm)
-    push!(trace.iter, state.iteration)
-    push!(trace.time, state.metadata["time"])
-    push!(trace.step_size, state.metadata["Current step size"])
+function _update_trace!(trace::Trace, state, start_iter)
+    state.iteration != 0 ? push!(trace.value, state.value) : nothing
+    state.iteration != 0 ? push!(trace.g_norm, state.g_norm) : nothing
+    state.iteration != 0 ? push!(trace.iter, state.iteration + start_iter) : nothing
+    state.iteration != 0 ? push!(trace.time, state.metadata["time"]) : nothing
+    state.iteration != 0 ? push!(trace.step_size, state.metadata["Current step size"]) : nothing
 end
 
 struct Callback
     trace::Trace
     write::Bool
     write_loc::String
+    verbose::Bool
+    print_io::IO
+    n_it_print::Int
+    start_iter::Int
 
-    function Callback(trace; write=false, write_loc="./")
+    function Callback(trace; write=false, write_loc="./", verbose=false, print_io=stdout, n_it_print=1)
         write_loc[end] != '/' ? write_loc = write_loc*'/' : nothing
+        if length(trace.value) == 0
+            push!(trace.iter, 0)
+        end
 
-        new(trace, write, write_loc)
+        new(trace, write, write_loc, verbose, print_io, n_it_print, trace.iter[end])
     end
 end
-Callback(; write=false, write_loc="./") = Callback(Trace(Float64[], Float64[], Int[], Float64[], Float64[]), write=write, write_loc=write_loc)
+Callback(; write=false, write_loc="./", verbose=false, print_io=stdout, n_it_print=1) = Callback(Trace(Float64[], Float64[], Int[], Float64[], Float64[]), write=write, write_loc=write_loc, verbose=verbose, print_io=print_io, n_it_print=n_it_print)
 
 function (f::Callback)(x)
     # write current state to trace
-    _update_trace!(f.trace, x)
+    _update_trace!(f.trace, x, f.start_iter)
 
     # write data to disk
     _write_data(f.write_loc, x.iteration, x.metadata["x"], f.write)
 
+    # print the sate if desired
+    f.verbose && x.iteration % f.n_it_print == 0 ? _print_state(f.print_io, x.iteration, x.metadata["Current step size"], x.value, x.g_norm) : nothing
+
     return false
+end
+
+function _print_state(print_io, i, α, R, dRda_norm)
+    str = @sprintf("|%10d   |   %5.2e  |  %5.5e  |  %5.5e  |", i, α, R, dRda_norm)
+    println(print_io, str)
+    flush(print_io)
+    return nothing
 end
