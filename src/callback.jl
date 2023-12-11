@@ -7,28 +7,38 @@
 # TODO: add extension/wrapper interface
 # TODO: add my own fancy printing???
 
-struct Callback{WRITE}
+struct Trace
     value::Vector{Float64}
     g_norm::Vector{Float64}
     iter::Vector{Int}
     time::Vector{Float64}
     step_size::Vector{Float64}
 
-    function Callback(value, g_norm, iter, time, step_size; write=false)
+    function Trace(value, g_norm, iter, time, step_size)
         length(value) == length(g_norm) == length(iter) == length(time) == length(step_size) || throw(ArgumentError("Trace vectors must be the same length!"))
 
-        new{write}(value, g_norm, iter, time, step_size)
+        new(value, g_norm, iter, time, step_size)
     end
 end
-Callback(; write::Bool=false) = Callback(Float64[], Float64[], Int[], Float64[], Float64[], write=write)
+
+function _update_trace!(trace::Trace, state)
+    push!(trace.value, state.value)
+    push!(trace.g_norm, state.g_norm)
+    push!(trace.iter, state.iteration)
+    push!(trace.time, state.metadata["time"])
+    push!(trace.step_size, state.metadata["Current step size"])
+end
+
+struct Callback{WRITE}
+    trace::Trace
+
+    Callback(trace::Trace; write::Bool=false) = new{write}(trace)
+end
+Callback(; write::Bool=false) = Callback(Trace(Float64[], Float64[], Int[], Float64[], Float64[]), write=write)
 
 function (f::Callback)(x)
     # write current state to trace
-    push!(f.value, x.value)
-    push!(f.g_norm, x.g_norm)
-    push!(f.iter, x.iteration)
-    push!(f.time, x.metadata["time"])
-    haskey(x.metadata, "Current step size") ? push!(f.step_size, x.metadata["Current step size"]) : nothing
+    _update_trace!(f.trace, x)
 
     # write data to disk
     _write_data(x.iteration, x.metadata["x"], f)
@@ -48,6 +58,3 @@ function _write_data(iter, a, ::Callback{true})
 
     return nothing
 end
-
-# TODO: this function returns all the inputs required to start a new optimisation
-function load_opt_dir(loc) end
