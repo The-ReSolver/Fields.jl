@@ -12,7 +12,12 @@
     Re = abs(rand())
     Ro = abs(rand())
     free_mean = rand([true, false])
-    options = OptOptions(maxiter=2, write_loc="./tmp/")
+    options = OptOptions(maxiter=2, callback=Callback(write_loc="./tmp/"))
+    try
+        mkdir("./tmp")
+    catch
+        nothing
+    end
 
     # generate output directory
     Fields._init_opt_dir(options, g, modes, base_prof, Re, Ro, free_mean)
@@ -54,4 +59,5 @@
     rm("./tmp/y")
     rm("./tmp/"*string(i)*"/a")
     rm("./tmp/"*string(i))
+    rm("./tmp")
 end

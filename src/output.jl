@@ -18,27 +18,27 @@ function _init_opt_dir(opts, grid, modes, base_prof, Re, Ro, free_mean)
     set(metadata_ini, "grid_data", "omega", get_ω(grid))
 
     # write out the .ini file
-    open(opts.write_loc*"params", "w") do f
+    open(opts.callback.write_loc*"params", "w") do f
         write(f, metadata_ini)
     end
 
     # write wall-normal grid (in case it is non-uniform)
-    open(opts.write_loc*"y", "w") do f
+    open(opts.callback.write_loc*"y", "w") do f
         write(f, pts[1])
     end
 
     # write base profile to binary file
-    open(opts.write_loc*"base_profile", "w") do f
+    open(opts.callback.write_loc*"base_profile", "w") do f
         write(f, base_prof)
     end
 
     # write modes to binary file
-    open(opts.write_loc*"modes", "w") do f
+    open(opts.callback.write_loc*"modes", "w") do f
         write(f, modes)
     end
 
     # create residual trace
-    open(opts.write_loc*"trace", "w") do f
+    open(opts.callback.write_loc*"trace", "w") do f
         write(f, opts.callback.trace.value)
         write(f, opts.callback.trace.g_norm)
         write(f, opts.callback.trace.iter)
