@@ -2,7 +2,6 @@
 # optimisation
 
 # TODO: add extension/wrapper interface
-# TODO: add option to not log trace
 
 struct Callback
     trace::Trace
@@ -26,7 +25,7 @@ Callback(; opts=OptOptions()) = Callback(Trace(Float64[], Float64[], Int[], Floa
 
 function (f::Callback)(x)
     # write current state to trace
-    _update_trace!(f.trace, x, f.start_iter, f.keep_zero)
+    x.iteration % f.opts.n_it_trace == 0 ? _update_trace!(f.trace, x, f.start_iter, f.keep_zero) : nothing
 
     # write data to disk
     _write_data(f.opts.write_loc, x.iteration, x.metadata["x"], f.opts.write)
