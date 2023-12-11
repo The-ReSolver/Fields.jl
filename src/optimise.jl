@@ -2,7 +2,6 @@
 # using Optim.jl.
 
 # TODO: restart method
-# TODO: data writing is done with extended trace (and store trace false to avoid the memory usage), I will need my own trace storing method
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
@@ -13,6 +12,9 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
         base = mean
         free_mean = false
     end
+
+    # initialise optimisation directory if specified
+    opts.callback.write ? _init_opt_dir(opts, g, modes, base, Re, Ro) : nothing
 
     # initialise cache functor
     dR! = ResGrad(g, modes, base, Re, Ro, free_mean)
@@ -36,15 +38,15 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
     # update input
     a .= Optim.minimizer(sol)
 
-    return sol, opts.callback
+    return sol, opts.callback.trace
 end
 
 _gen_optim_opts(opts) = Optim.Options(; g_tol=opts.g_tol,
                                         allow_f_increases=opts.allow_f_increases,
                                         iterations=opts.maxiter,
                                         show_trace=opts.show_trace,
-                                        extended_trace=opts.extended_trace,
+                                        extended_trace=true,
                                         show_every=opts.n_it_print,
                                         callback=opts.callback,
                                         time_limit=opts.time_limit,
-                                        store_trace=opts.store_trace)
+                                        store_trace=false)
