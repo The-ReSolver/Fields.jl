@@ -2,7 +2,6 @@
 # using Optim.jl.
 
 # TODO: restart method
-# TODO: move callback initialisation out of options
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
@@ -14,8 +13,11 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
         free_mean = false
     end
 
+    # create callback function
+    cb = Callback(opts.trace, opts=opts)
+
     # initialise optimisation directory if specified
-    opts.callback.write ? _init_opt_dir(opts, g, modes, base, Re, Ro) : nothing
+    opts.write ? _init_opt_dir(opts, g, modes, base, Re, Ro) : nothing
 
     # initialise cache functor
     dR! = ResGrad(g, modes, base, Re, Ro, free_mean)
@@ -34,26 +36,26 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
     end
 
     # print header for output
-    opts.callback.verbose ? _print_header(opts.callback.print_io) : nothing
+    opts.verbose ? _print_header(opts.print_io) : nothing
 
     # perform optimisation
-    sol = optimize(Optim.only_fg!(fg!), a, opts.alg, _gen_optim_opts(opts))
+    sol = optimize(Optim.only_fg!(fg!), a, opts.alg, _gen_optim_opts(opts, cb))
 
     # update input
     a .= Optim.minimizer(sol)
 
-    return sol, opts.callback.trace
+    return sol, cb.trace
 end
 
-_gen_optim_opts(opts) = Optim.Options(; g_tol=opts.g_tol,
-                                        allow_f_increases=opts.allow_f_increases,
-                                        iterations=opts.maxiter,
-                                        show_trace=false,
-                                        extended_trace=true,
-                                        show_every=1,
-                                        callback=opts.callback,
-                                        time_limit=opts.time_limit,
-                                        store_trace=false)
+_gen_optim_opts(opts, cb) = Optim.Options(; g_tol=opts.g_tol,
+                                            allow_f_increases=opts.allow_f_increases,
+                                            iterations=opts.maxiter,
+                                            show_trace=false,
+                                            extended_trace=true,
+                                            show_every=1,
+                                            callback=cb,
+                                            time_limit=opts.time_limit,
+                                            store_trace=false)
 
 function _print_header(print_io)
     println(print_io, "-------------------------------------------------------------")

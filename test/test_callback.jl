@@ -11,9 +11,6 @@ end
     @test Callback().trace.g_norm == Vector{Float64}(undef, 0)
     @test Callback().trace.iter == Vector{Int}(undef, 0)
     @test Callback().trace.time == Vector{Float64}(undef, 0)
-    @test Callback().write == false
-    @test Callback(write=true).write == true
-    @test Callback(write_loc="somewhere").write_loc == "somewhere/"
     @test_nowarn Callback(Fields.Trace(rand(5), rand(5), rand(Int, 5), rand(5), rand(5)))
     @test_throws ArgumentError Callback(Fields.Trace(rand(5), rand(3), rand(Int, 5), rand(5), rand(5)))
 
