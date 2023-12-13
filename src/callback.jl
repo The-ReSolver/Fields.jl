@@ -1,8 +1,6 @@
 # This file constains the definitions for the callback function used in the
 # optimisation
 
-# TODO: add extension/wrapper interface
-
 struct Callback
     trace::Trace
     opts::OptOptions
@@ -24,6 +22,9 @@ end
 Callback(; opts=OptOptions()) = Callback(Trace(Float64[], Float64[], Int[], Float64[], Float64[]), opts=opts)
 
 function (f::Callback)(x)
+    # run extra callback method
+    f.opts.callback(x)
+
     # write current state to trace
     x.iteration % f.opts.n_it_trace == 0 ? _update_trace!(f.trace, x, f.start_iter, f.keep_zero) : nothing
 

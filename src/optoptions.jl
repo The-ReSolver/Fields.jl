@@ -1,7 +1,7 @@
 # This file contains the definition of the utility type that will allow easier
 # option passing to the optimisation method.
 
-@with_kw struct OptOptions
+@with_kw struct OptOptions{CB}
     maxiter::Int = 1000
     g_tol::Float64 = 1e-6
     allow_f_increases::Bool = true
@@ -15,4 +15,5 @@
     print_io::IO = stdout
     n_it_print::Int = 1
     n_it_trace::Int = 1
+    callback::CB = x -> nothing; @assert !isempty(methods(callback))
 end

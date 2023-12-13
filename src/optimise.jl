@@ -2,6 +2,18 @@
 # using Optim.jl.
 
 # TODO: restart method
+# TODO: only set extended trace to true if writing data to disk
+
+# I need the following methods to work:
+#   1. starting field with new trace ✓
+#   2. starting field with given trace ✓
+#   3. from directory structure
+
+# The current method works pretty well, I already have a loading function. So this can be used directly using the location of the directory to get all the stuff needed to start the optimisation
+
+# TODO: different default methods?
+# TODO: add option to wipe all data later than starting iteration
+function optimise!(path::String; opts::OptOptions=OptOptions()) end
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
@@ -45,6 +57,9 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
 
     return sol, cb.trace
 end
+
+# TODO: underlying optimisation method that both top level methods use
+function _optimise!() end
 
 _gen_optim_opts(opts, cb) = Optim.Options(; g_tol=opts.g_tol,
                                             allow_f_increases=opts.allow_f_increases,

@@ -12,7 +12,7 @@
     Re = abs(rand())
     Ro = abs(rand())
     free_mean = rand([true, false])
-    options = OptOptions(maxiter=2, callback=Callback(write_loc="./tmp/"))
+    options = OptOptions(maxiter=2, write_loc="./tmp/")
     try
         mkdir("./tmp")
     catch
