@@ -12,7 +12,18 @@
 
 # TODO: different default methods?
 # TODO: add option to wipe all data later than starting iteration
-function optimise!(path::String; opts::OptOptions=OptOptions()) end
+# TODO: need a fallback method that can handle stuff properly
+function optimise!(path::String, Dy, Dy2, ws; opts::OptOptions=OptOptions(), restart::Int=0)
+    # load data from directory
+    a, g, modes, base, Re, Ro, free_mean, _, = _load_opt_dir(path, Dy, Dy2, ws, restart)
+
+    # call other optimisation with provided options
+    if free_mean
+        sol, trace = optimise!(a, g, modes, Re, Ro, opts=opts)
+    else
+        sol, trace = optimise!(a, g, modes, Re, Ro, mean=base, opts=opts)
+    end
+end
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
@@ -25,7 +36,7 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
     end
 
     # create callback function
-    cb = Callback(opts.trace, opts=opts)
+    cb = Callback(opts)
 
     # initialise optimisation directory if specified
     opts.write ? _init_opt_dir(opts, g, modes, base, Re, Ro) : nothing
@@ -54,11 +65,11 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
     # update input
     a .= Optim.minimizer(sol)
 
-    return sol, cb.trace
+    return sol, opts.trace
 end
 
 # TODO: underlying optimisation method that both top level methods use
-function _optimise!() end
+function _optimise!(a, g, modes, Re, Ro, base, free_mean, opts::OptOptions) end
 
 _gen_optim_opts(opts, cb) = Optim.Options(; g_tol=opts.g_tol,
                                             allow_f_increases=opts.allow_f_increases,

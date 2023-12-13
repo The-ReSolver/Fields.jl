@@ -2,31 +2,29 @@
 # optimisation
 
 struct Callback
-    trace::Trace
     opts::OptOptions
     start_iter::Int
     keep_zero::Bool
 
-    function Callback(trace; opts=OptOptions())
-        if length(trace.value) == 0
+    function Callback(opts=OptOptions())
+        if length(opts.trace.value) == 0
             keep_zero = true
             start_iter = 0
         else
             keep_zero = false
-            start_iter = trace.iter[end]
+            start_iter = opts.trace.iter[end]
         end
 
-        new(trace, opts, start_iter, keep_zero)
+        new(opts, start_iter, keep_zero)
     end
 end
-Callback(; opts=OptOptions()) = Callback(Trace(Float64[], Float64[], Int[], Float64[], Float64[]), opts=opts)
 
 function (f::Callback)(x)
     # run extra callback method
     f.opts.callback(x)
 
     # write current state to trace
-    x.iteration % f.opts.n_it_trace == 0 ? _update_trace!(f.trace, x, f.start_iter, f.keep_zero) : nothing
+    x.iteration % f.opts.n_it_trace == 0 ? _update_trace!(f.opts.trace, x, f.start_iter, f.keep_zero) : nothing
 
     # write data to disk
     f.opts.write ? _write_data(f.opts.write_loc, x.iteration, x.metadata["x"]) : nothing
