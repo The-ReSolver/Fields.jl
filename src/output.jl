@@ -105,15 +105,13 @@ function _load_opt_dir(path, diff_method, diff2_method, quad_method, i=0)
     return a, grid, modes, base_prof, Re, Ro, free_mean, trace
 end
 
-function _write_data(path, iter, a, if_write::Bool)
-    if if_write
-        # create directory if it doesn't already exist
-        isdir(path*string(iter)) ? nothing : mkdir(path*string(iter))
+function _write_data(path, iter, a)
+    # create directory if it doesn't already exist
+    isdir(path*string(iter)) ? nothing : mkdir(path*string(iter))
 
-        # write velocity coefficients to file
-        open(path*string(iter)*"/a", "w") do f
-            write(f, a)
-        end
+    # write velocity coefficients to file
+    open(path*string(iter)*"/a", "w") do f
+        write(f, a)
     end
 
     return nothing

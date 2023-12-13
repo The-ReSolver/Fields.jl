@@ -2,7 +2,6 @@
 # using Optim.jl.
 
 # TODO: restart method
-# TODO: only set extended trace to true if writing data to disk
 
 # I need the following methods to work:
 #   1. starting field with new trace ✓

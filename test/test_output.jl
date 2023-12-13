@@ -40,7 +40,7 @@
 
     # write single field instance
     i = rand(1:10)
-    Fields._write_data("./tmp/", i, a, true)
+    Fields._write_data("./tmp/", i, a)
 
     # check file has been successfully written
     @test isfile("./tmp/"*string(i)*"/a")
