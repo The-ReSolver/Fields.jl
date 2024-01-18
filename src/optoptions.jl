@@ -16,6 +16,5 @@
     verbose::Bool = false
     print_io::IO = stdout
     n_it_print::Int = 1
-    n_it_trace::Int = 1
     callback::CB = x -> nothing; @assert !isempty(methods(callback))
 end

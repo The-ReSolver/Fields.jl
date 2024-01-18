@@ -3,9 +3,7 @@
 
 export init_opt, load_opt
 
-# TODO: is custom serialization a good idea for the spectral fields?
-
-function init_opt(a0, opts, grid, modes, base_prof, Re, Ro, free_mean)
+function init_opt(opts, grid, modes, base_prof, Re, Ro, free_mean)
     # write grid data to file
     jldopen(opts.write_loc*"optim.jld2", "w") do f
         f["grid"] = grid
@@ -16,22 +14,10 @@ function init_opt(a0, opts, grid, modes, base_prof, Re, Ro, free_mean)
         f["params/free_mean"] = free_mean
     end
 
-    # write initial condition
-    _write_data(opts.write_loc, 0, a0)
-
-    # # create residual trace
-    # open(opts.callback.write_loc*"trace", "w") do f
-    #     write(f, opts.callback.trace.value)
-    #     write(f, opts.callback.trace.g_norm)
-    #     write(f, opts.callback.trace.iter)
-    #     write(f, opts.callback.trace.time)
-    #     write(f, opts.callback.trace.step_size)
-    # end
-
     return nothing
 end
 
-function load_opt(path, i=0)
+function load_opt(path, i)
     # add backslash to path if needed
     path[end] != '/' ? path = path*'/' : nothing
 
@@ -59,26 +45,36 @@ function load_opt(path, i=0)
     end
 
     # extract traces
-    # trace = open(path*"trace", "r") do f
-    #     tr_size = filesize(f)÷(4*sizeof(Float64) + sizeof(Int))
-    #     return Trace(read!(f, Vector{Float64}(undef, tr_size)),
-    #                 read!(f, Vector{Float64}(undef, tr_size)),
-    #                 read!(f, Vector{Int}(undef, tr_size)),
-    #                 read!(f, Vector{Float64}(undef, tr_size)),
-    #                 read!(f, Vector{Float64}(undef, tr_size)))
-    # end
+    trace = jldopen(path*string(i)*"/trace.jld2", "r") do f
+        return Trace([read(f, "value")], [read(f, "g_norm")], [read(f, "iter")], [read(f, "time")], [read(f, "step_size")])
+    end
 
-    # return a, grid, modes, base_prof, Re, Ro, free_mean, trace
-    return a, grid, modes, base_prof, Re, Ro, free_mean
+    return a, grid, modes, base_prof, Re, Ro, free_mean, trace
 end
 
-function _write_data(path, iter, a)
+function _write_data(path, trace, a)
     # create directory if it doesn't already exist
-    isdir(path*string(iter)) ? nothing : mkdir(path*string(iter))
+    isdir(path*string(trace.iter[end])) ? nothing : mkdir(path*string(trace.iter[end]))
 
     # write velocity coefficients to file
-    open(path*string(iter)*"/a", "w") do f
+    open(path*string(trace.iter[end])*"/a", "w") do f
         write(f, a)
+    end
+
+    # write trace values
+    _write_trace(trace)
+
+    return nothing
+end
+
+function _write_trace(trace)
+    # open jld file and write states
+    jldopen(opts.write_loc*string(trace.iter[end])*"/trace.jld2", "w") do f
+        f["value"] = trace.value[end]
+        f["g_norm"] = trace.g_norm[end]
+        f["iter"] = trace.iter[end]
+        f["time"] = trace.time[end]
+        f["step_size"] = trace.step_size[end]
     end
 
     return nothing
