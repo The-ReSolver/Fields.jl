@@ -1,6 +1,6 @@
 module Fields
 
-using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf, Optim, Parameters, LineSearches
+using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf, Optim, Parameters, LineSearches, JLD2
 
 using DAESolve
 

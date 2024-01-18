@@ -1,10 +1,12 @@
 # This file contains the definition of the utility type that will allow easier
 # option passing to the optimisation method.
 
+# TODO: add option to restart
+
 @with_kw struct OptOptions{CB}
     maxiter::Int = 1000
     g_tol::Float64 = 1e-6
-    allow_f_increases::Bool = true
+    allow_f_increases::Bool = false
     alg::Optim.FirstOrderOptimizer = LBFGS()
     time_limit::Float64 = NaN
     n_it_write::Int = 1

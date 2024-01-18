@@ -1,29 +1,38 @@
 # This file contains the definitions required to solve the variational problem
 # using Optim.jl.
 
-# TODO: restart method
+# Basically, I need two modes:
+#   - one interactive for messing around in the REPL and Jupyter notebooks
+#   - one non-interactive that can do its work independently and allows me to come and go and inspect the results (as it goes ideally)
 
-# I need the following methods to work:
-#   1. starting field with new trace ✓
-#   2. starting field with given trace ✓
-#   3. from directory structure
+# The interactive one works pretty well already, probably would be nice to add an optional wrapper to allow me to pass a velocity field to start.
 
-# The current method works pretty well, I already have a loading function. So this can be used directly using the location of the directory to get all the stuff needed to start the optimisation
+function optimise_interactive!(field, g, modes, Re, Ro, mean::Vector{T}=T[]; opts::OptOptions=OptOptions()) where {T}
+    # check if field is projected or not by comparing size to grid and modes
 
-# TODO: different default methods?
-# TODO: add option to wipe all data later than starting iteration
-# TODO: need a fallback method that can handle stuff properly
-function optimise!(path::String, Dy, Dy2, ws; opts::OptOptions=OptOptions(), restart::Int=0)
-    # load data from directory
-    a, g, modes, base, Re, Ro, free_mean, _, = _load_opt_dir(path, Dy, Dy2, ws, restart)
+    # project if not done so already
 
-    # call other optimisation with provided options
-    if free_mean
-        sol, trace = optimise!(a, g, modes, Re, Ro, opts=opts)
-    else
-        sol, trace = optimise!(a, g, modes, Re, Ro, mean=base, opts=opts)
-    end
+    # call optimsiation
+    _optimise!()
+
+    # expand if that's how the solution was given
+
+    # return results
 end
+
+function optimise_noninteractive!(dir)
+    # load optimisation parameters from directory
+
+    # call optimisation
+    _optimise!()
+
+    # write the data back to the disk
+
+    # return results (success failures etc.)
+end
+
+# TODO: write this method
+function _optimise!(a, g, modes, Re, Ro, mean, opts) end
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
@@ -67,9 +76,6 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
 
     return sol, opts.trace
 end
-
-# TODO: underlying optimisation method that both top level methods use
-function _optimise!(a, g, modes, Re, Ro, base, free_mean, opts::OptOptions) end
 
 _gen_optim_opts(opts, cb) = Optim.Options(; g_tol=opts.g_tol,
                                             allow_f_increases=opts.allow_f_increases,
