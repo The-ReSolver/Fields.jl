@@ -6,7 +6,7 @@
     a = SpectralField(Grid(ones(M), Nz, Nt, Matrix{Float64}(undef, 0, 0), Matrix{Float64}(undef, 0, 0), ones(M), 1.0, 1.0))
     a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
     modes = rand(ComplexF64, 3*Ny, M, (Nz >> 1) + 1, Nt)
-    options = OptOptions(; maxiter=2)
+    options = OptOptions(maxiter=2, verbose=false)
 
     # perform single iteration of optimisation
     _, trace = @test_nowarn optimise!(a, g, modes, 100, 0.5, opts=options)
