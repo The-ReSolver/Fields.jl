@@ -9,19 +9,6 @@
 
 # The interactive one works pretty well already, probably would be nice to add an optional wrapper to allow me to pass a velocity field to start.
 
-function optimise_interactive!(field, g, modes, Re, Ro, mean::Vector{T}=T[]; opts::OptOptions=OptOptions()) where {T}
-    # check if field is projected or not by comparing size to grid and modes
-
-    # project if not done so already
-
-    # call optimsiation
-    _optimise!()
-
-    # expand if that's how the solution was given
-
-    # return results
-end
-
 function optimise_noninteractive!(dir)
     # load optimisation parameters from directory
 
@@ -31,6 +18,31 @@ function optimise_noninteractive!(dir)
     # write the data back to the disk
 
     # return results (success failures etc.)
+end
+
+# TODO: test this method
+function optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {Nz, Nt, T, S<:SpectralField{<:Any, Nz, Nt, <:Any, T}}
+    # project velocity field onto modes
+    a = SpectralField(Grid(Vector{Float64}(undef, size(modes, 2)), Nz, Nt, Matrix{Float64}(undef, 0, 0), Matrix{Float64}(undef, 0, 0), ones(size(modes, 2)), get_ω(u), get_β(u)))
+    project!(a, u, get_ws(u), modes)
+    
+    return optimise!(a, get_grid(u), modes, Re, Ro, mean=mean, opts=opts)
+end
+
+function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
+    # check if mean profile is provided
+    if length(mean) == 0
+        base_prof = points(g)[1]
+        free_mean = true
+    else
+        base_prof = mean
+        free_mean = false
+    end
+
+    # call fallback optimisation method
+    sol, trace = _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
+
+    return sol, trace
 end
 
 function _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
@@ -65,23 +77,6 @@ function _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
     a .= Optim.minimizer(sol)
 
     return sol, opts.trace
-end
-
-# TODO: add check for size of field compared to grid
-function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
-    # check if mean profile is provided
-    if length(mean) == 0
-        base_prof = points(g)[1]
-        free_mean = true
-    else
-        base_prof = mean
-        free_mean = false
-    end
-
-    # call fallback optimisation method
-    sol, trace = _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
-
-    return sol, trace
 end
 
 _gen_optim_opts(opts, cb) = Optim.Options(; g_tol=opts.g_tol,
