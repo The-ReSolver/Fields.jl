@@ -1,6 +1,8 @@
 # This file contains the definitions required to solve the variational problem
 # using Optim.jl.
 
+# TODO: create helper function to generate set of modes for given frequency array
+
 # Basically, I need two modes:
 #   - one interactive for messing around in the REPL and Jupyter notebooks
 #   - one non-interactive that can do its work independently and allows me to come and go and inspect the results (as it goes ideally)
@@ -31,29 +33,17 @@ function optimise_noninteractive!(dir)
     # return results (success failures etc.)
 end
 
-# TODO: write this method
-function _optimise!(a, g, modes, Re, Ro, mean, opts) end
-
-function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
-    # check if mean profile is provided
-    if length(mean) == 0
-        base = points(g)[1]
-        free_mean = true
-    else
-        base = mean
-        free_mean = false
-    end
-
-    # create callback function
+function _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
+    # initialise callback function
     cb = Callback(opts)
 
-    # initialise optimisation directory if specified
-    opts.write ? _init_opt_dir(opts, g, modes, base, Re, Ro) : nothing
+    # initialise directory to write optimisation data
+    opts.write ? _write_opt(opts, g, modes, base_prof, Re, Ro, free_mean) : nothing
 
-    # initialise cache functor
-    dR! = ResGrad(g, modes, base, Re, Ro, free_mean)
+    # initialise cache function
+    dR! = ResGrad(g, modes, base_prof, Re, Ro, free_mean)
 
-    # remove the mean profile if desired
+    # remove mean profile if desired
     if !free_mean
         a[:, 1, 1] .= zero(Complex{T})
     end
@@ -75,6 +65,23 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
     a .= Optim.minimizer(sol)
 
     return sol, opts.trace
+end
+
+# TODO: add check for size of field compared to grid
+function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
+    # check if mean profile is provided
+    if length(mean) == 0
+        base_prof = points(g)[1]
+        free_mean = true
+    else
+        base_prof = mean
+        free_mean = false
+    end
+
+    # call fallback optimisation method
+    sol, trace = _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
+
+    return sol, trace
 end
 
 _gen_optim_opts(opts, cb) = Optim.Options(; g_tol=opts.g_tol,

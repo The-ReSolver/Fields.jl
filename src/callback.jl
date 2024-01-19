@@ -25,7 +25,7 @@ function (f::Callback)(x)
     f.opts.callback(x)
 
     # write current state to trace
-    _update_trace!(f.opts.trace, x, f.start_iter, f.keep_zero) : nothing
+    _update_trace!(f.opts.trace, x, f.start_iter, f.keep_zero)
 
     # write data to disk
     f.opts.write && x.iteration % f.opts.n_it_write == 0 ? _write_data(f.opts.write_loc, f.opts.trace, x.metadata["x"]) : nothing

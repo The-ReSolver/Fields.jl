@@ -1,9 +1,10 @@
 # This file contains the definitions required to create and maintain the
 # directory containing all the optimisation/simulation data.
 
-export init_opt, load_opt
+export write_opt, load_opt
 
-function init_opt(opts, grid, modes, base_prof, Re, Ro, free_mean)
+# TODO: check if directory already exists
+function write_opt(opts, grid, modes, base_prof, Re, Ro, free_mean)
     # write grid data to file
     jldopen(opts.write_loc*"optim.jld2", "w") do f
         f["grid"] = grid
