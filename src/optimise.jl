@@ -20,7 +20,6 @@ function optimise_noninteractive!(dir)
     # return results (success failures etc.)
 end
 
-# TODO: test this method
 function optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {Nz, Nt, T, S<:SpectralField{<:Any, Nz, Nt, <:Any, T}}
     # project velocity field onto modes
     a = SpectralField(Grid(Vector{Float64}(undef, size(modes, 2)), Nz, Nt, Matrix{Float64}(undef, 0, 0), Matrix{Float64}(undef, 0, 0), ones(size(modes, 2)), get_ω(u), get_β(u)))

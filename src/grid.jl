@@ -7,11 +7,11 @@ struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix}
     y::Vector{T}
     Dy::NTuple{2, M}
     ws::Vector{T}
-    dom::NTuple{2, T}
+    dom::Vector{T}
 
     function Grid(y::Vector{<:Real}, Nz::Int, Nt::Int, Dy::AbstractMatrix{<:Real}, Dy2::AbstractMatrix{<:Real}, ws::Vector{<:Real}, ω::Real, β::Real)
         T = eltype(y)
-        new{(size(y)[1], Nz, Nt), T, typeof(T.(Dy))}(y, (T.(Dy), T.(Dy2)), T.(ws), (T(β), T(ω)))
+        new{(size(y)[1], Nz, Nt), T, typeof(T.(Dy))}(y, (T.(Dy), T.(Dy2)), T.(ws), [T(β), T(ω)])
     end
 end
 
