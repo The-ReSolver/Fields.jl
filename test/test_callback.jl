@@ -5,7 +5,7 @@ struct DummyTrace
     metadata::Dict
 end
 
-@testset "Callback function             " begin
+@testset "Callback Function             " begin
     # test construction
     @test Callback().opts.trace.value == Vector{Float64}(undef, 0)
     @test Callback().opts.trace.g_norm == Vector{Float64}(undef, 0)
