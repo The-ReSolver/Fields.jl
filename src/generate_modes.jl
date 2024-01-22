@@ -4,18 +4,21 @@
 # TODO: provide corresponding function in ResolventAnalysis.jl package to give mode_function
 # TODO: test for this method
 
-function generate_modes(grid::Grid{S}, retain, modeFunction) where {S}
+function generateGridOfModes(grid::Grid{S}, retain, modeFunction) where {S}
     # get the size of the grid
-    Nt, Nz, Nt = length.(points(grid))
+    Ny, Nz, Nt = length.(points(grid))
+
+    # get domain size information
+    ω = get_ω(grid)
+    β = get_β(grid)
 
     # generate arrays to hold modes
-    modeWeights = zeros(retain, (Nz >> 1) + 1, Nt)
-    modes = zeros(3*Ny, retain, (Nz >> 1) + 1, Nt)
+    modes = Array{ComplexF64}(undef, 3*Ny, retain, (Nz >> 1) + 1, Nt)
 
     # loop over all frequencies
     for nz in 1:((Nz >> 1) + 1), nt in 1:Nt
-        modes[:, :, nz, nt], modeWeights[:, nz, nt] = modeFunction(nz, nt)
+        modes[:, :, nz, nt] .= modeFunction((nz - 1)*β, (nt - 1)*ω)
     end
 
-    return modes, modeWeights
+    return modes
 end

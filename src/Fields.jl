@@ -34,11 +34,13 @@ export project, project!, reverse_project!, expand!
 export Evolution, Constraint
 export ResGrad
 export gd!, optimise!, OptOptions, Callback
+export generateGridOfModes
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 
 include("projection.jl")
 include("grid.jl")
+include("generate_modes.jl")
 include("physicalfield.jl")
 include("spectralfield.jl")
 include("vectorfields.jl")

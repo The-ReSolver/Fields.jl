@@ -1,8 +1,6 @@
 # This file contains the definitions required to solve the variational problem
 # using Optim.jl.
 
-# TODO: create helper function to generate set of modes for given frequency array
-
 # Basically, I need two modes:
 #   - one interactive for messing around in the REPL and Jupyter notebooks
 #   - one non-interactive that can do its work independently and allows me to come and go and inspect the results (as it goes ideally)
