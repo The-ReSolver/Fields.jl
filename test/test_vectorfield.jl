@@ -23,8 +23,8 @@
     # initialise
     @test VectorField(u1, v1) isa VectorField{2, Array{Float64, 3}}
     @test VectorField(u1, v1, w1) isa VectorField{3, Array{Float64, 3}}
-    @test VectorField(grid) isa VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}}
-    @test VectorField(grid; N=2) isa VectorField{2, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}}
+    @test VectorField(grid) isa VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, false, Array{Complex{Float64}, 3}}}
+    @test VectorField(grid; N=2) isa VectorField{2, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, false, Array{Complex{Float64}, 3}}}
     @test VectorField(grid, N=5, field_type=:physical) isa VectorField{5, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}}
     @test VectorField(grid, fun1) isa VectorField{1, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}}
     @test VectorField(grid, fun1, fun2, fun3) isa VectorField{3, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}}}
@@ -33,8 +33,8 @@
     a = VectorField(grid)
     [a[i] .= rand(ComplexF64, Ny, (Nz >> 1) + 1, Nt) for i in eachindex(a)]
     @test copy(a) == a
-    @test similar(a) isa VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{ComplexF64, 3}}}
-    @test similar(a, 5) isa VectorField{5, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{ComplexF64, 3}}}
+    @test similar(a) isa VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, false, Array{ComplexF64, 3}}}
+    @test similar(a, 5) isa VectorField{5, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, false, Array{ComplexF64, 3}}}
 
     # # catch errors on constructors
     @test_throws MethodError VectorField(u2, v1)

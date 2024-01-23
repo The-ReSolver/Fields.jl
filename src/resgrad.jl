@@ -3,11 +3,11 @@
 # projection.
 
 struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
-    out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, Array{Complex{T}, 3}}
+    out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
-    proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, Array{Complex{T}, 3}}}
-    spec_cache::Vector{SpectralField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{Complex{T}, 3}}}
+    proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}}
+    spec_cache::Vector{SpectralField{Ny, Nz, Nt, Grid{S, T, D}, T, false, Array{Complex{T}, 3}}}
     phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, IPLAN}
@@ -110,7 +110,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
     # convert velocity coefficients to full-space
     expand!([u, v, w], a, ψs)
     # FIXME: shouldn't these be equal? Yes, yes they should!
-    # @show norm(a), norm(VectorField(u, v, w))
+    @show norm(a)
 
     # set velocity field mean
     u[:, 1, 1] .+= f.base
