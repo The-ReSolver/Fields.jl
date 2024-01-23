@@ -4,22 +4,24 @@
 # TODO: add constructor for projected field (include modes as an argument)
 
 struct SpectralField{Ny, Nz, Nt, G, T, A} <: AbstractArray{Complex{T}, 3}
-    data::A
+    field::A
     grid::G
 
-    # construct from grid
-    function SpectralField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real}
-        data = zeros(Complex{T}, S[1], (S[2] >> 1) + 1, S[3])
-        return new{S[1], S[2], S[3], typeof(grid), T, typeof(data)}(data, grid)
-    end
+    SpectralField(field::AbstractArray{Complex{T}, 3}, grid::Grid{S, T}) where {S, T} = new{S[1], S[2], S[3], typeof(grid), T, typeof(field)}(field, grid)
 end
 
+# construct field from grid
+SpectralField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real} = SpectralField(zeros(Complex{T}, S[1], (S[2] >> 1) + 1, S[3]), grid)
+
+# construct projected field from grid and modes
+SpectralField(grid::Grid{S}, modes, ::Type{T}=Float64) where {S, T<:Real} = SpectralField(zeros(Complex{T}, size(modes, 2), (S[2] >> 1) + 1, S[3]), grid)
+
 # define interface
-Base.size(::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, (Nz >> 1) + 1, Nt)
+Base.size(U::SpectralField) = size(parent(U))
 Base.IndexStyle(::Type{<:SpectralField}) = Base.IndexLinear()
 
 # get parent array
-Base.parent(U::SpectralField) = U.data
+Base.parent(U::SpectralField) = U.field
 
 # similar
 Base.similar(U::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt, G, T, S} = SpectralField(U.grid, S)

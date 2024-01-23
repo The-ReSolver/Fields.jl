@@ -1,6 +1,6 @@
 @testset "Spectral Field Constructor    " begin
         # take random variables
-        Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
+        Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50); M = rand(1:Ny)
         y = rand(Float64, Ny)
         Dy = rand(Float64, (Ny, Ny))
         Dy2 = rand(Float64, (Ny, Ny))
@@ -11,11 +11,17 @@
         # initialise gird
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 
+        # construct spectral fields
+        u1 = SpectralField(grid)
+        u2 = SpectralField(grid, rand(ComplexF64, 3*Ny, M, (Nz >> 1) + 1, Nt))
+
         # intialise using different constructors
-        @test typeof(SpectralField(grid)) == SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
+        @test u1 isa SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
+        @test u2 isa SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
 
         # test size method
-        @test size(SpectralField(grid)) == size(parent(SpectralField(grid)))
+        @test size(u1) == (Ny, (Nz >> 1) + 1, Nt)
+        @test size(u2) == (M, (Nz >> 1) + 1, Nt)
 end
 
 @testset "Spectral Field Broadcasting   " begin

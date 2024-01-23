@@ -2,7 +2,6 @@
 # of modes given a grid and the function to generate it.
 
 # TODO: provide corresponding function in ResolventAnalysis.jl package to give mode_function
-# TODO: test for this method
 
 function generateGridOfModes(grid::Grid{S}, retain, modeFunction) where {S}
     # get the size of the grid
