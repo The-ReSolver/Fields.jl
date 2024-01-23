@@ -21,8 +21,8 @@ Base.IndexStyle(::Type{<:SpectralField}) = Base.IndexLinear()
 # get parent array
 Base.parent(U::SpectralField) = U.field
 
-# similar
-Base.similar(U::SpectralField{Ny, Nz, Nt, G, T}, ::Type{S}=T) where {Ny, Nz, Nt, G, T, S} = SpectralField(U.grid, S)
+# similar and copy
+Base.similar(U::SpectralField{<:Any, <:Any, <:Any, <:Any, T}, ::Type{S}=T) where {T, S} = SpectralField(similar(parent(U), Complex{S}), get_grid(U))
 Base.copy(U::SpectralField) = (V = similar(U); V .= U; V)
 
 # methods to allow interface with other packages

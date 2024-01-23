@@ -16,17 +16,10 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
     Ro::T
 
     function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real, free_mean::Bool=false) where {S}
-        # generate grid for projected fields
-        # FIXME: the omega here isn't being shared between the values messing up the projected and expanded representations of the field
-        # This could be fixed by adding an extra method to allow the construction of the projected field USING the original grid (with the modes as an extra argument)
-        # proj_grid = Grid(Vector{Float64}(undef, size(ψs, 2)), S[2], S[3], get_Dy(grid), get_Dy2(grid), ones(size(ψs, 2)), get_ω(grid), get_β(grid))
-
         # initialise output vector field
-        # out = SpectralField(proj_grid)
         out = SpectralField(grid, ψs)
 
         # create field cache
-        # proj_cache = [SpectralField(proj_grid) for _ in 1:1]
         proj_cache = [SpectralField(grid, ψs) for _ in 1:1]
         spec_cache = [SpectralField(grid)     for _ in 1:69]
         phys_cache = [PhysicalField(grid)     for _ in 1:35]
@@ -116,8 +109,8 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
 
     # convert velocity coefficients to full-space
     expand!([u, v, w], a, ψs)
-    # FIXME: changing the domain size fucks with the projection-expansion operations
-    @show norm(a), norm(VectorField(u, v, w))
+    # FIXME: shouldn't these be equal? Yes, yes they should!
+    # @show norm(a), norm(VectorField(u, v, w))
 
     # set velocity field mean
     u[:, 1, 1] .+= f.base
@@ -132,7 +125,6 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
 
     # convert to residual in terms of modal basis
     project!(s, [nsx, nsy, nsz], ws, ψs)
-    # @show norm(VectorField(nsx, nsy, nsz)), norm(s)
     expand!([rx, ry, rz], s, ψs)
 
     if compute_grad
