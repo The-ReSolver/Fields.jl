@@ -31,6 +31,7 @@
 
     # test copy  and similar methods
     a = VectorField(grid)
+    [a[i] .= rand(ComplexF64, Ny, (Nz >> 1) + 1, Nt) for i in eachindex(a)]
     @test copy(a) == a
     @test similar(a) isa VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{ComplexF64, 3}}}
     @test similar(a, 5) isa VectorField{5, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{ComplexF64, 3}}}

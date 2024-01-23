@@ -1,13 +1,11 @@
 # This file contains the custom type to define a scalar field in spectral space
 # for a rotating plane couette flow.
 
-# TODO: add constructor for projected field (include modes as an argument)
-
 struct SpectralField{Ny, Nz, Nt, G, T, A} <: AbstractArray{Complex{T}, 3}
     field::A
     grid::G
 
-    SpectralField(field::AbstractArray{Complex{T}, 3}, grid::Grid{S, T}) where {S, T} = new{S[1], S[2], S[3], typeof(grid), T, typeof(field)}(field, grid)
+    SpectralField(field::AbstractArray{Complex{T}, 3}, grid::Grid{S, T}) where {S, T} = new{size(field, 1), S[2], S[3], typeof(grid), T, typeof(field)}(field, grid)
 end
 
 # construct field from grid

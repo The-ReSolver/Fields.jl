@@ -17,7 +17,7 @@
 
         # intialise using different constructors
         @test u1 isa SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
-        @test u2 isa SpectralField{Ny, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
+        @test u2 isa SpectralField{M, Nz, Nt, typeof(grid), Float64, Array{Complex{Float64}, 3}}
 
         # test size method
         @test size(u1) == (Ny, (Nz >> 1) + 1, Nt)
@@ -100,8 +100,8 @@ end
         Dy = rand(Ny, Ny)
         Dy2 = rand(Ny, Ny)
         ws = ones(Ny)
-        ω = 1.0
-        β = 1.0
+        ω = abs(rand())
+        β = abs(rand())
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 
         # construct modes
@@ -113,11 +113,9 @@ end
 
         # construct vector field from modes
         u = VectorField(grid)
-        a = SpectralField(Grid(ones(M), Nz, Nt, Dy, Dy2, ones(Ny), ω, β))
+        a = SpectralField(grid, Ψ)
         a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
-        reverse_project!(u[1], a, Ψ[1:Ny, :, :, :])
-        reverse_project!(u[2], a, Ψ[Ny+1:2*Ny, :, :, :])
-        reverse_project!(u[3], a, Ψ[2*Ny+1:3*Ny, :, :, :])
+        expand!(u, a, Ψ)
 
         @test norm(u) ≈ norm(a)
 end

@@ -2,13 +2,13 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S1, S2, D, T, PLAN, IPLAN}
-    out::SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
+    out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
-    proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S1, T, D}, T, Array{Complex{T}, 3}}}
-    spec_cache::Vector{SpectralField{Ny, Nz, Nt, Grid{S2, T, D}, T, Array{Complex{T}, 3}}}
-    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S2, T, D}, T, Array{T, 3}}}
+    proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, Array{Complex{T}, 3}}}
+    spec_cache::Vector{SpectralField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{Complex{T}, 3}}}
+    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}}}
     fft::FFTPlan!{Ny, Nz, Nt, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, IPLAN}
     base::Vector{Float64}
@@ -19,15 +19,17 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S1, S2, D, T, PLAN, IPLAN}
         # generate grid for projected fields
         # FIXME: the omega here isn't being shared between the values messing up the projected and expanded representations of the field
         # This could be fixed by adding an extra method to allow the construction of the projected field USING the original grid (with the modes as an extra argument)
-        proj_grid = Grid(Vector{Float64}(undef, size(ψs, 2)), S[2], S[3], get_Dy(grid), get_Dy2(grid), ones(size(ψs, 2)), get_ω(grid), get_β(grid))
+        # proj_grid = Grid(Vector{Float64}(undef, size(ψs, 2)), S[2], S[3], get_Dy(grid), get_Dy2(grid), ones(size(ψs, 2)), get_ω(grid), get_β(grid))
 
         # initialise output vector field
-        out = SpectralField(proj_grid)
+        # out = SpectralField(proj_grid)
+        out = SpectralField(grid, ψs)
 
         # create field cache
-        proj_cache = [SpectralField(proj_grid) for _ in 1:1]
-        spec_cache = [SpectralField(grid)      for _ in 1:69]
-        phys_cache = [PhysicalField(grid)      for _ in 1:35]
+        # proj_cache = [SpectralField(proj_grid) for _ in 1:1]
+        proj_cache = [SpectralField(grid, ψs) for _ in 1:1]
+        spec_cache = [SpectralField(grid)     for _ in 1:69]
+        phys_cache = [PhysicalField(grid)     for _ in 1:35]
 
         # create transform plans
         FFT! = FFTPlan!(grid)
@@ -40,7 +42,6 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S1, S2, D, T, PLAN, IPLAN}
         new{S...,
             size(ψs, 2),
             free_mean,
-            (size(ψs, 2), S[2], S[3]),
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
             eltype(phys_cache[1]),

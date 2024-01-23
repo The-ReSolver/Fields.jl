@@ -1,15 +1,11 @@
 # This file contains the custom type to define a vector field which stores
 # either spectral or physical space fields.
 
-# Just a wrapper around a N-tuple of fields
 struct VectorField{N, S} <: AbstractVector{S}
-    # elements::NTuple{N, S}
     elements::Vector{S}
 
     # construct using scalar fields as arguments
     function VectorField(elements::Vararg{S, N}) where {T<:Number, D, S<:AbstractArray{T, D}, N}
-    # function VectorField(elements::Vararg{<:AbstractArray{T, D}, N}) where {T<:Number, D, N}
-        # new{N, S}(elements)
         new{N, typeof(elements[1])}(collect(elements))
     end
 end
@@ -75,13 +71,13 @@ const VectorFieldStyle = Broadcast.ArrayStyle{VectorField}
 Base.BroadcastStyle(::Type{<:VectorField}) = Broadcast.ArrayStyle{VectorField}()
 
 # for broadcasting to construct new objects
-Base.similar(bc::Base.Broadcast.Broadcasted{VectorFieldStyle}, ::Type{T}) where {T} =
-    VectorField(similar.(find_field(bc).elements)...)
+Base.similar(bc::Base.Broadcast.Broadcasted{VectorFieldStyle}, ::Type{T}) where {T} = VectorField(similar.(find_field(bc).elements)...)
 
 # f = find_field(bc)` returns the first VectorField among the arguments
 find_field(bc::Base.Broadcast.Broadcasted) = find_field(bc.args)
 find_field(args::Tuple) = find_field(find_field(args[1]), Base.tail(args))
 find_field(a::VectorField, rest) = a
+find_field(a::Base.Broadcast.Extruded{<:VectorField}, rest) = a.x
 find_field(a::SpectralField, rest) = a
 find_field(a::PhysicalField, rest) = a
 find_field(::Any, rest) = find_field(rest)
