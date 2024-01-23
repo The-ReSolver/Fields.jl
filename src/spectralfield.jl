@@ -43,6 +43,7 @@ function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Grid{S}, <:Any, PROJEC
     return prod
 end
 LinearAlgebra.norm(p::SpectralField) = sqrt(LinearAlgebra.dot(p, p))
+Base.maximum(::Function, gradient::SpectralField) = norm(gradient) # this method exists just so Optim.jl uses the correct norm in the trace
 
 function _projectedSpaceDot(p::SpectralField{M, Nz, Nt}, q::SpectralField{M, Nz, Nt}) where {M, Nz, Nt}
     # initialise sum variable

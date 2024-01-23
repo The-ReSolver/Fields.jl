@@ -109,8 +109,6 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
 
     # convert velocity coefficients to full-space
     expand!([u, v, w], a, ψs)
-    # FIXME: shouldn't these be equal? Yes, yes they should!
-    @show norm(a)
 
     # set velocity field mean
     u[:, 1, 1] .+= f.base

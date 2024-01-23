@@ -26,6 +26,7 @@ function optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; me
     return optimise!(a, get_grid(u), modes, Re, Ro, mean=mean, opts=opts)
 end
 
+# TODO: get rid of grid in arguments since it is now stored in a
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
     if length(mean) == 0
