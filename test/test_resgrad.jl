@@ -1,21 +1,18 @@
 # initialise field grid
-Ny = 32; Nz = 32; Nt = 32
+Ny = 32; Nz = 32; Nt = 32; M = 5
 Re = 100.0; Ro = 0.5
 y = chebpts(Ny)
 Dy = chebdiff(Ny)
 Dy2 = chebddiff(Ny)
-grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Ny), 1.0, 1.0)
+ω = 1.0
+β = 1.0
+grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Ny), ω, β)
 FFT! = FFTPlan!(grid, flags=ESTIMATE)
 
-# initialise modes
-M = 5
-ws = ones(Ny)
-Ψ = zeros(ComplexF64, Ny, M, Nz, Nt)
-for nt in 1:Nt, nz in 1:Nz
-    Ψ[:, :, nz, nt] .= @view(qr(rand(ComplexF64, Ny, M)).Q[:, 1:M])
-end
+# initialise residual gradient cache
+cache = ResGrad(grid, Array{ComplexF64}(undef, Ny, M, Nz, Nt), rand(Float64, Ny), Re, Ro)
 
-# initialise state fields
+# initialise functions
 u_fun(y, z, t)       = (y^3)*exp(cos(z))*sin(t)
 v_fun(y, z, t)       = (y^2 - 1)*sin(z)*sin(t)
 w_fun(y, z, t)       = cos(2π*y)*exp(sin(z))*sin(t)
@@ -72,9 +69,6 @@ rydvdz_fun(y, z, t)  = ry_fun(y, z, t)*dvdz_fun(y, z, t)
 rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
 
 @testset "Residual Gradient Velocity    " begin
-    # initialise residual gradient cache
-    cache = ResGrad(grid, Ψ, rand(Float64, Ny), Re, Ro)
-
     # assign velocity field
     cache.spec_cache[1] .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun))
     cache.spec_cache[2] .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun))
@@ -108,9 +102,6 @@ rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
 end
 
 @testset "Residual Gradient Residual    " begin
-    # initialise residual gradient cache
-    cache = ResGrad(grid, Ψ, rand(Float64, Ny), Re, Ro)
-
     # assign velocity and residual fields
     cache.spec_cache[1]  .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun))
     cache.spec_cache[2]  .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun))
@@ -151,4 +142,23 @@ end
     @test cache.spec_cache[55] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rxdudz_fun))
     @test cache.spec_cache[56] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rydvdz_fun))
     @test cache.spec_cache[57] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rzdwdz_fun))
+end
+
+@testset "Optimal Frequency             " begin
+    # set velocity profile
+    cache.spec_cache[1] .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun))
+    cache.spec_cache[2] .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun))
+    cache.spec_cache[3] .= FFT!(SpectralField(grid), PhysicalField(grid, w_fun))
+
+    # run the cache update
+    Fields._update_vel_cache!(cache)
+
+    # compute the optimal frequency manually
+    duds = FFT!(VectorField(grid), VectorField(grid, dudt_fun, dvdt_fun, dwdt_fun))./ω
+    nsx_fun(y, z, t) = -vdudy_fun(y, z, t) - wdudz_fun(y, z, t) + (1/Re)*(d2udy2_fun(y, z, t) + d2udz2_fun(y, z, t)) + Ro*v_fun(y, z, t)
+    nsy_fun(y, z, t) = -vdvdy_fun(y, z, t) - wdvdz_fun(y, z, t) + (1/Re)*(d2vdy2_fun(y, z, t) + d2vdz2_fun(y, z, t)) - Ro*u_fun(y, z, t)
+    nsz_fun(y, z, t) = -vdwdy_fun(y, z, t) - wdwdz_fun(y, z, t) + (1/Re)*(d2wdy2_fun(y, z, t) + d2wdz2_fun(y, z, t))
+    navierStokesRHS = FFT!(VectorField(grid), VectorField(grid, nsx_fun, nsy_fun, nsz_fun))
+
+    @test Fields.optimalFrequency(cache) ≈ dot(duds, navierStokesRHS)/(norm(duds)^2) atol=1e-6
 end
