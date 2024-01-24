@@ -14,6 +14,8 @@ mutable struct Trace
     end
 end
 
+Trace() = Trace([], [], [], [], [])
+
 function _update_trace!(trace::Trace, state, start_iter, keep_zero)
     state.iteration != 0 || keep_zero ? push!(trace.value, state.value) : nothing
     state.iteration != 0 || keep_zero ? push!(trace.g_norm, state.g_norm) : nothing
