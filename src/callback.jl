@@ -1,12 +1,13 @@
 # This file constains the definitions for the callback function used in the
 # optimisation
 
-struct Callback
+struct Callback{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
+    cache::ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
     opts::OptOptions
     start_iter::Int
     keep_zero::Bool
 
-    function Callback(opts=OptOptions())
+    function Callback(optimisationCache::ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}, opts::OptOptions=OptOptions()) where {Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
         if length(opts.trace.value) == 0
             keep_zero = true
             start_iter = 0
@@ -15,7 +16,7 @@ struct Callback
             start_iter = opts.trace.iter[end]
         end
 
-        new(opts, start_iter, keep_zero)
+        new{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}(optimisationCache, opts, start_iter, keep_zero)
     end
 end
 
@@ -32,6 +33,10 @@ function (f::Callback)(x)
 
     # print the sate if desired
     f.opts.verbose && x.iteration % f.opts.n_it_print == 0 ? _print_state(f.opts.print_io, x.iteration, x.metadata["Current step size"], x.value, x.g_norm) : nothing
+
+    # update frequency
+    # TODO: add ability to deal with case where optimal frequency is NaN (time derivative is small)
+    Int(x.iteration % f.opts.update_frequency_every) == 0 ? (f.cache.spec_cache[1].grid.dom[2] = optimalFrequency(f.cache)) : nothing
 
     return false
 end

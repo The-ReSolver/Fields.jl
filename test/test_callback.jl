@@ -6,16 +6,19 @@ struct DummyTrace
 end
 
 @testset "Callback Function             " begin
+    # initialise dummy cache
+    optimCache = ResGrad(Grid([0.0], 1, 1, Matrix{Float64}(undef, 0, 0), Matrix{Float64}(undef, 0, 0), [0.0], 1.0, 1.0), Array{ComplexF64}(undef, 0, 0, 0, 0), [0.0], 1.0, 1.0, true)
+
     # test construction
-    @test Callback().opts.trace.value == Vector{Float64}(undef, 0)
-    @test Callback().opts.trace.g_norm == Vector{Float64}(undef, 0)
-    @test Callback().opts.trace.iter == Vector{Int}(undef, 0)
-    @test Callback().opts.trace.time == Vector{Float64}(undef, 0)
-    @test_nowarn Callback(OptOptions(trace=Fields.Trace(rand(5), rand(5), rand(Int, 5), rand(5), rand(5))))
-    @test_throws ArgumentError Callback(OptOptions(trace=Fields.Trace(rand(5), rand(3), rand(Int, 5), rand(5), rand(5))))
+    @test Callback(optimCache).opts.trace.value == Vector{Float64}(undef, 0)
+    @test Callback(optimCache).opts.trace.g_norm == Vector{Float64}(undef, 0)
+    @test Callback(optimCache).opts.trace.iter == Vector{Int}(undef, 0)
+    @test Callback(optimCache).opts.trace.time == Vector{Float64}(undef, 0)
+    @test_nowarn Callback(optimCache, OptOptions(trace=Fields.Trace(rand(5), rand(5), rand(Int, 5), rand(5), rand(5))))
+    @test_throws ArgumentError Callback(optimCache, OptOptions(trace=Fields.Trace(rand(5), rand(3), rand(Int, 5), rand(5), rand(5))))
 
     # test trace assignment
-    cb = Callback()
+    cb = Callback(optimCache)
     value = rand(); g_norm = rand(); iter = rand(1:10); metadata = Dict("time"=>rand(), "Current step size"=>rand(), "x"=>nothing);
     cb(DummyTrace(value, g_norm, iter, metadata))
     @test cb.opts.trace.value == [value]

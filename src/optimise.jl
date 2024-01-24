@@ -44,14 +44,14 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
 end
 
 function _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
+    # initialise cache function
+    dR! = ResGrad(g, modes, base_prof, Re, Ro, free_mean)
+
     # initialise callback function
-    cb = Callback(opts)
+    cb = Callback(dR!, opts)
 
     # initialise directory to write optimisation data
     opts.write ? _write_opt(opts, g, modes, base_prof, Re, Ro, free_mean) : nothing
-
-    # initialise cache function
-    dR! = ResGrad(g, modes, base_prof, Re, Ro, free_mean)
 
     # remove mean profile if desired
     if !free_mean
