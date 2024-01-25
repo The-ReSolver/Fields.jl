@@ -88,9 +88,9 @@ _gen_optim_opts(opts, cb) = Optim.Options(; g_tol=opts.g_tol,
                                             store_trace=false)
 
 function _print_header(print_io)
-    println(print_io, "-------------------------------------------------------------")
-    println(print_io, "|  Iteration  |  Step Size  |  Residual     |  Gradient     |")
-    println(print_io, "-------------------------------------------------------------")
+    println(print_io, "-----------------------------------------------------------------------------")
+    println(print_io, "|  Iteration  |  Step Size  |       ω₀      |  Residual     |  Gradient     |")
+    println(print_io, "-----------------------------------------------------------------------------")
     flush(print_io)
     return nothing
 end

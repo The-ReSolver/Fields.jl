@@ -32,17 +32,17 @@ function (f::Callback)(x)
     f.opts.write && x.iteration % f.opts.n_it_write == 0 ? _write_data(f.opts.write_loc, f.opts.trace, x.metadata["x"]) : nothing
 
     # print the sate if desired
-    f.opts.verbose && x.iteration % f.opts.n_it_print == 0 ? _print_state(f.opts.print_io, x.iteration, x.metadata["Current step size"], x.value, x.g_norm) : nothing
+    f.opts.verbose && x.iteration % f.opts.n_it_print == 0 ? _print_state(f.opts.print_io, x.iteration, x.metadata["Current step size"], get_ω(f.cache.spec_cache[1]), x.value, x.g_norm) : nothing
 
     # update frequency
     # TODO: add ability to deal with case where optimal frequency is NaN (time derivative is small)
-    Int(x.iteration % f.opts.update_frequency_every) == 0 ? (f.cache.spec_cache[1].grid.dom[2] = optimalFrequency(f.cache)) : nothing
+    Int(x.iteration % f.opts.update_frequency_every) == 0 && x.iteration != 0 ? f.cache.spec_cache[1].grid.dom[2] = optimalFrequency(f.cache) : nothing
 
     return false
 end
 
-function _print_state(print_io, iter, step_size, value, g_norm)
-    str = @sprintf("|%10d   |   %5.2e  |  %5.5e  |  %5.5e  |", iter, step_size, value, g_norm)
+function _print_state(print_io, iter, step_size, freq, value, g_norm)
+    str = @sprintf("|%10d   |   %5.2e  |  %5.5e  |  %5.5e  |  %5.5e  |", iter, step_size, freq, value, g_norm)
     println(print_io, str)
     flush(print_io)
     return nothing
