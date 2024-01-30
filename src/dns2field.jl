@@ -83,20 +83,7 @@ Base.lastindex(data::DNSData) = tryparse(Float64, data.snaps_string[lastindex(da
 _read_params(loc::String) = read(Inifile(), loc)
 _fetch_param(ini::Inifile, param::Symbol, ::Type{T}=Float64) where {T} = tryparse(T, strip(get(ini, "params", string(param)), ';'))
 _getparamfield(data::DNSData, field::Symbol) = _fetch_param(getfield(data, :params), field)
-function _sort_snaps!(snaps::Vector{String})
-    # create a sorted list of snaps
-    float_snaps = tryparse.(Float64, snaps)
-    # TODO: use sortperm instead
-    ordered_snaps = sort(float_snaps)
-
-    # loop over the sorted snaps finding where they were and assigning to permutation vector
-    p = zeros(Int, length(ordered_snaps))
-    for (i, t) in enumerate(ordered_snaps)
-        p[i] = findfirst(x->x==t, float_snaps)
-    end
-
-    return permute!(snaps, p)
-end
+_sort_snaps!(snaps::Vector{String}) = sort(snaps, by=x->tryparse(Float64, x))
 _filterDirectoryToSnapshots(path) = filter!(x -> x=="params" || x=="K" || x=="t" ? false : true, readdir(path))
 
 
