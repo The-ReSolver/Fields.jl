@@ -26,11 +26,10 @@ function optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; me
     return optimise!(a, get_grid(u), modes, Re, Ro, mean=mean, opts=opts)
 end
 
-# TODO: get rid of grid in arguments since it is now stored in a
-function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
+function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
     if length(mean) == 0
-        base_prof = points(g)[1]
+        base_prof = points(get_grid(a))[1]
         free_mean = true
     else
         base_prof = mean
@@ -38,20 +37,20 @@ function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, g::Grid{S}, modes::Arr
     end
 
     # call fallback optimisation method
-    sol, trace = _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
+    sol, trace = _optimise!(a, modes, Re, Ro, base_prof, free_mean, opts)
 
     return sol, trace
 end
 
-function _optimise!(a, g, modes, Re, Ro, base_prof, free_mean, opts)
+function _optimise!(a, modes, Re, Ro, base_prof, free_mean, opts)
     # initialise cache function
-    dR! = ResGrad(g, modes, base_prof, Re, Ro, free_mean)
+    dR! = ResGrad(get_grid(a), modes, base_prof, Re, Ro, free_mean)
 
     # initialise callback function
     cb = Callback(dR!, opts)
 
     # initialise directory to write optimisation data
-    opts.write ? _write_opt(opts, g, modes, base_prof, Re, Ro, free_mean) : nothing
+    opts.write ? _write_opt(opts, get_grid(a), modes, base_prof, Re, Ro, free_mean) : nothing
 
     # remove mean profile if desired
     if !free_mean
