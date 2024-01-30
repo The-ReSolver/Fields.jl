@@ -30,7 +30,7 @@ end
 
 function DNSData(loc::String)
     ini = _read_params(loc*"params")
-    snaps = readdir(loc)[1:end - 1]
+    snaps = _filterDirectoryToSnapshots(loc)
     DNSData{_fetch_param(ini, :Ny, Int), _fetch_param(ini, :Nz, Int), length(snaps)}(loc, ini, _sort_snaps!(snaps))
 end
 loadDNS(loc) = DNSData(string(loc))
@@ -86,6 +86,7 @@ _getparamfield(data::DNSData, field::Symbol) = _fetch_param(getfield(data, :para
 function _sort_snaps!(snaps::Vector{String})
     # create a sorted list of snaps
     float_snaps = tryparse.(Float64, snaps)
+    # TODO: use sortperm instead
     ordered_snaps = sort(float_snaps)
 
     # loop over the sorted snaps finding where they were and assigning to permutation vector
@@ -96,6 +97,7 @@ function _sort_snaps!(snaps::Vector{String})
 
     return permute!(snaps, p)
 end
+_filterDirectoryToSnapshots(path) = filter!(x -> x=="params" || x=="K" || x=="t" ? false : true, readdir(path))
 
 
 # -----------------------------------------------------------------------------
@@ -186,6 +188,7 @@ mean(data::DNSData{Ny}; window::NTuple{2, Real}=(firstindex(data), lastindex(dat
 # how to manipulate
 # -----------------------------------------------------------------------------
 
+# TODO: fix these
 dns2field(loc::AbstractString; fft_flag::UInt32=ESTIMATE, times::Union{Nothing, NTuple{2, Real}}=nothing, skip_step::Int=1) = dns2field(DNSData(loc)[times, skip_step], fft_flag=fft_flag)
 
 function dns2field(data::DNSData{Ny, Nz, Nt}; fft_flag::UInt32=ESTIMATE) where {Ny, Nz, Nt}
