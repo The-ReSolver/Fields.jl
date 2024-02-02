@@ -18,13 +18,7 @@ function optimise_noninteractive!(dir)
     # return results (success failures etc.)
 end
 
-function optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {Nz, Nt, T, S<:SpectralField{<:Any, Nz, Nt, <:Any, T}}
-    # project velocity field onto modes
-    a = SpectralField(Grid(Vector{Float64}(undef, size(modes, 2)), Nz, Nt, Matrix{Float64}(undef, 0, 0), Matrix{Float64}(undef, 0, 0), ones(size(modes, 2)), get_ω(u), get_β(u)))
-    project!(a, u, get_ws(u), modes)
-    
-    return optimise!(a, get_grid(u), modes, Re, Ro, mean=mean, opts=opts)
-end
+optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {Nz, Nt, T, S<:SpectralField{<:Any, Nz, Nt, <:Any, T}} = optimise!(project!(SpectralField(get_grid(u), modes), u, get_ws(u), modes), modes, Re, Ro, mean=mean, opts=opts)
 
 function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
     # check if mean profile is provided
