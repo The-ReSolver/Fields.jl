@@ -13,23 +13,23 @@
     Dy = chebdiff(Ny); Dy2 = chebddiff(Ny)
     # Dy = DiffMatrix(y, 5, 1); Dy2 = DiffMatrix(y, 5, 2)
     grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Float64, Ny), 1.0, 5.8)
-    u = physicalfield(grid, u_fun)
-    û = spectralfield(grid)
+    u = PhysicalField(grid, u_fun)
+    û = SpectralField(grid)
     FFT = FFTPlan!(u, flags=ESTIMATE)
     IFFT = IFFTPlan!(û, flags=ESTIMATE)
     FFT(û, u)
 
     # initialise fields to hold derivatives
-    dûdy = spectralfield(grid)
-    dudy = physicalfield(grid)
-    d2ûdy2 = spectralfield(grid)
-    d2udy2 = physicalfield(grid)
-    dûdz = spectralfield(grid)
-    dudz = physicalfield(grid)
-    d2ûdz2 = spectralfield(grid)
-    d2udz2 = physicalfield(grid)
-    dûdt = spectralfield(grid)
-    dudt = physicalfield(grid)
+    dûdy = SpectralField(grid)
+    dudy = PhysicalField(grid)
+    d2ûdy2 = SpectralField(grid)
+    d2udy2 = PhysicalField(grid)
+    dûdz = SpectralField(grid)
+    dudz = PhysicalField(grid)
+    d2ûdz2 = SpectralField(grid)
+    d2udz2 = PhysicalField(grid)
+    dûdt = SpectralField(grid)
+    dudt = PhysicalField(grid)
 
     # compute derivatives
     ddy!(û, dûdy)
@@ -46,11 +46,11 @@
     IFFT(dudt, dûdt)
 
     # correct values
-    @test dudy ≈ physicalfield(grid, dudy_fun)
-    @test d2udy2 ≈ physicalfield(grid, d2udy2_fun)
-    @test dudz ≈ physicalfield(grid, dudz_fun)
-    @test d2udz2 ≈ physicalfield(grid, d2udz2_fun)
-    @test dudt ≈ physicalfield(grid, dudt_fun)
+    @test dudy ≈ PhysicalField(grid, dudy_fun)
+    @test d2udy2 ≈ PhysicalField(grid, d2udy2_fun)
+    @test dudz ≈ PhysicalField(grid, dudz_fun)
+    @test d2udz2 ≈ PhysicalField(grid, d2udz2_fun)
+    @test dudt ≈ PhysicalField(grid, dudt_fun)
 
     # test vectorfield methods
     @test ddy!(FFT(VectorField(grid, N=2), VectorField(grid, u_fun, u_fun)), VectorField(grid, N=2)) ≈ FFT(VectorField(grid, N=2), VectorField(grid, dudy_fun, dudy_fun))

@@ -34,7 +34,6 @@ function (f::Callback)(x)
     f.opts.verbose && x.iteration % f.opts.n_it_print == 0 ? _print_state(f.opts.print_io, x.iteration, x.metadata["Current step size"], get_ω(f.cache.spec_cache[1]), x.value, x.g_norm) : nothing
 
     # update frequency
-    # TODO: add ability to deal with case where optimal frequency is NaN (time derivative is small)
     Int(x.iteration % f.opts.update_frequency_every) == 0 && x.iteration != 0 ? f.cache.spec_cache[1].grid.dom[2] = optimalFrequency(f.cache) : nothing
 
     return callbackReturn

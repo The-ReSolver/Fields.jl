@@ -29,11 +29,3 @@ Base.size(::Grid{S}) where {S} = S
 
 # overload equality method
 Base.:(==)(x::Grid{Sx}, y::Grid{Sy}) where {Sx, Sy} = (x.y == y.y && Sx[2] == Sy[2] && Sx[3] == Sy[3])
-
-# method to construct field out of grid
-spectralfield(g::Grid{S, T}) where {S, T} = SpectralField(g, T)
-physicalfield(g::Grid{S, T}) where {S, T} = PhysicalField(g, T)
-physicalfield(g::Grid{S, T}, fun) where {S, T} = PhysicalField(g, fun, T)
-vectorfield(g::Grid{S, T}; N::Int=3, field_type::Symbol=:spectral) where {S, T} = VectorField(g; N=N, field_type=field_type)
-vectorfield(g::Grid, funcs...) = VectorField([physicalfield(g, funcs[i]) for i in 1:size(funcs, 1)]...)
-vectorfield(g::Grid) = vectorfield(g; N=3, field_type=:spectral)

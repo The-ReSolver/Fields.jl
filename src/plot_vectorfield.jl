@@ -1,7 +1,7 @@
 # This file contains the recipes required for easy plotting of a channel flow
 # at a given time instant.
 
-# TODO: add helper methods for different forms of the field (spectral field, temporal mode snapshot)
+# NOTE: deprecated for simple use of PyPlot
 
 @userplot FieldPlot
 @recipe function f(p::FieldPlot; arrow_scale=0.025, skip=nothing)

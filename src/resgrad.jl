@@ -384,7 +384,6 @@ end
 gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1])^2)
 
 function optimalFrequency(optimisationCache)
-    # extract required fields
     duds = VectorField([optimisationCache.spec_cache[i] for i in 4:6]...); duds ./= get_ω(optimisationCache.spec_cache[1])
     navierStokesRHS = VectorField([optimisationCache.spec_cache[i] for i in 25:27]...)
 
