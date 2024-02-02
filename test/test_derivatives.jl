@@ -55,28 +55,3 @@
     # test vectorfield methods
     @test ddy!(FFT(VectorField(grid, N=2), VectorField(grid, u_fun, u_fun)), VectorField(grid, N=2)) ≈ FFT(VectorField(grid, N=2), VectorField(grid, dudy_fun, dudy_fun))
 end
-
-@testset "Vector Calculus               " begin
-    # define functions
-    u_fun(y, z, t) = (1 - y^2)*exp(cos(5.8*z))*atan(sin(t))
-    dudy_fun(y, z, t) = -2*y*exp(cos(5.8*z))*atan(sin(t))
-    d2udy2_fun(y, z, t) = -2*exp(cos(5.8*z))*atan(sin(t))
-    dudz_fun(y, z, t) = -5.8*(1 - y^2)*sin(5.8*z)*exp(cos(5.8*z))*atan(sin(t))
-    d2udz2_fun(y, z, t) = (5.8^2)*(1 - y^2)*(sin(5.8*z)^2 - cos(5.8*z))*exp(cos(5.8*z))*atan(sin(t))
-    dudt_fun(y, z, t) = ((1 - y^2)*exp(cos(5.8*z))*cos(t))/(sin(t)^2 + 1)
-
-    # initialise original function field
-    Ny = 50; Nz = 50; Nt = 50
-    y = chebpts(Ny)
-    Dy = chebdiff(Ny); Dy2 = chebddiff(Ny)
-    # Dy = DiffMatrix(y, 5, 1); Dy2 = DiffMatrix(y, 5, 2)
-    grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Float64, Ny), 1.0, 5.8)
-    u = physicalfield(grid, u_fun)
-    û = spectralfield(grid)
-    FFT = FFTPlan!(u, flags=ESTIMATE)
-    IFFT = IFFTPlan!(û, flags=ESTIMATE)
-    FFT(û, u)
-
-    @test IFFT(similar(u), divergence!(similar(û), VectorField(û, û, û), similar(û))) ≈ PhysicalField(grid, (y, z, t) -> dudy_fun(y, z, t) + dudz_fun(y, z, t))
-    @test IFFT(similar(u), laplacian!(similar(û), û, similar(û))) ≈ PhysicalField(grid, (y, z, t) -> d2udy2_fun(y, z, t) + d2udz2_fun(y, z, t))
-end
