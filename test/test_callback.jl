@@ -32,4 +32,10 @@ end
     @test cb.opts.trace.iter == [iter, 5*iter]
     @test cb.opts.trace.time == [metadata["time"], metadata["time"]]
     @test cb.opts.trace.step_size == [metadata["Current step size"], metadata["Current step size"]]
+
+    # test internal callback method
+    @test cb(DummyTrace(value, g_norm, iter, metadata)) == false
+    cb2 = Callback(optimCache, OptOptions(callback=x->x.iteration==iter))
+    @test cb2(DummyTrace(value, g_norm, 2*iter, metadata)) == false
+    @test cb2(DummyTrace(value, g_norm, iter, metadata)) == true
 end

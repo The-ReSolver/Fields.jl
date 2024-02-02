@@ -16,6 +16,6 @@
     verbose::Bool = false
     print_io::IO = stdout
     n_it_print::Int = 1
-    callback::CB = x -> nothing; @assert !isempty(methods(callback))
+    callback::CB = x -> false; @assert !isempty(methods(callback))
     update_frequency_every::Union{Float64, Int} = Inf
 end

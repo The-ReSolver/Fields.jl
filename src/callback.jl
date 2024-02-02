@@ -20,10 +20,9 @@ struct Callback{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
     end
 end
 
-# TODO: add ability for extra callback to stop by passing true
 function (f::Callback)(x)
     # run extra callback method
-    f.opts.callback(x)
+    callbackReturn = f.opts.callback(x)
 
     # write current state to trace
     _update_trace!(f.opts.trace, x, f.start_iter, f.keep_zero)
@@ -38,7 +37,7 @@ function (f::Callback)(x)
     # TODO: add ability to deal with case where optimal frequency is NaN (time derivative is small)
     Int(x.iteration % f.opts.update_frequency_every) == 0 && x.iteration != 0 ? f.cache.spec_cache[1].grid.dom[2] = optimalFrequency(f.cache) : nothing
 
-    return false
+    return callbackReturn
 end
 
 function _print_state(print_io, iter, step_size, freq, value, g_norm)
