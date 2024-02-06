@@ -1,13 +1,14 @@
 # This file constains the definitions for the callback function used in the
 # optimisation
 
-struct Callback{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
+struct Callback{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN, A}
+    velocityCoefficients::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, A}
     cache::ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
     opts::OptOptions
     start_iter::Int
     keep_zero::Bool
 
-    function Callback(optimisationCache::ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}, opts::OptOptions=OptOptions()) where {Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
+    function Callback(optimisationCache::ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}, a::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, A}, opts::OptOptions=OptOptions()) where {Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN, A}
         if length(opts.trace.value) == 0
             keep_zero = true
             start_iter = 0
@@ -16,7 +17,7 @@ struct Callback{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
             start_iter = opts.trace.iter[end]
         end
 
-        new{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}(optimisationCache, opts, start_iter, keep_zero)
+        new{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN, A}(a, optimisationCache, opts, start_iter, keep_zero)
     end
 end
 
@@ -35,6 +36,9 @@ function (f::Callback)(x)
 
     # update frequency
     Int(x.iteration % f.opts.update_frequency_every) == 0 && x.iteration != 0 ? f.cache.spec_cache[1].grid.dom[2] = optimalFrequency(f.cache) : nothing
+
+    # update velocity coefficients
+    f.velocityCoefficients .= x.metadata["x"]
 
     return callbackReturn
 end

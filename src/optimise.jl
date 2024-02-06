@@ -35,10 +35,9 @@ function optimise!(velocityCoefficients::SpectralField{M, Nz, Nt, <:Any, T}, mod
     return sol, trace
 end
 
-# TODO: can I get a to be updated every iteration? (in the callback?)
 function _optimise!(a, dR!, ifFreeMean, opts)
     # initialise callback function
-    cb = Callback(dR!, opts)
+    cb = Callback(dR!, a, opts)
 
     # remove mean profile if desired
     if !ifFreeMean
@@ -57,9 +56,6 @@ function _optimise!(a, dR!, ifFreeMean, opts)
 
     # perform optimisation
     sol = optimize(Optim.only_fg!(fg!), a, opts.alg, _gen_optim_opts(opts, cb))
-
-    # update input
-    a .= Optim.minimizer(sol)
 
     return sol, opts.trace
 end
