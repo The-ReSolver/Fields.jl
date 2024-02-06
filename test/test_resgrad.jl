@@ -68,7 +68,7 @@ rxdudz_fun(y, z, t)  = rx_fun(y, z, t)*dudz_fun(y, z, t)
 rydvdz_fun(y, z, t)  = ry_fun(y, z, t)*dvdz_fun(y, z, t)
 rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
 
-@testset "Residual Gradient Velocity    " begin
+@testset "Residual Gradient Velocity            " begin
     # assign velocity field
     cache.spec_cache[1] .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun))
     cache.spec_cache[2] .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun))
@@ -101,7 +101,7 @@ rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
     @test cache.spec_cache[24] ≈ FFT!(SpectralField(grid), PhysicalField(grid, wdwdz_fun))
 end
 
-@testset "Residual Gradient Residual    " begin
+@testset "Residual Gradient Residual            " begin
     # assign velocity and residual fields
     cache.spec_cache[1]  .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun))
     cache.spec_cache[2]  .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun))
@@ -144,7 +144,7 @@ end
     @test cache.spec_cache[57] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rzdwdz_fun))
 end
 
-@testset "Optimal Frequency             " begin
+@testset "Optimal Frequency                     " begin
     # set velocity profile
     cache.spec_cache[1] .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun))
     cache.spec_cache[2] .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun))

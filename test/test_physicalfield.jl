@@ -1,4 +1,4 @@
-@testset "Physical Field Constructor    " begin
+@testset "Physical Field Constructor            " begin
         # take random variables
         Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
         y = rand(Float64, Ny)
@@ -23,7 +23,7 @@
         @test f == out
 end
 
-@testset "Physical Field Broadcasting   " begin
+@testset "Physical Field Broadcasting           " begin
         # take random variables
         Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
         ω = abs(randn())

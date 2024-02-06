@@ -1,4 +1,4 @@
-@testset "Optimisation                  " begin
+@testset "Optimisation                          " begin
     # initialise inputs to optimisation
     Ny = 5; Nz = 3; Nt = 2; M = 1;
     y = collect(range(-1, 1, length=Ny))

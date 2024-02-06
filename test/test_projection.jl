@@ -1,4 +1,4 @@
-@testset "Channel Profile Integration   " begin
+@testset "Channel Profile Integration           " begin
     # construct channel profiles to be integrated
     Ny = 64
     y = chebpts(Ny)
@@ -9,7 +9,7 @@
     @test Fields.channel_int(u, ws, v) ≈ 0.0530025 rtol=1e-6
 end
 
-@testset "Projection Onto Mode Set      " begin
+@testset "Projection Onto Mode Set              " begin
     # construct a set of modes
     N = 64
     M = rand(1:12)
@@ -23,7 +23,7 @@ end
     @test project(u, ws, Ψ) ≈ a
 end
 
-@testset "Projection of Field           " begin
+@testset "Projection of Field                   " begin
     # construct a field of modes
     Ny = 16; Nz = 16; Nt = 16
     M = rand(1:12)
@@ -43,7 +43,7 @@ end
     @test project(u, ws, Ψ) ≈ a
 end
 
-@testset "Projection of Vector Field    " begin
+@testset "Projection of Vector Field            " begin
     # construct a field of modes
     Ny = 16; Nz = 16; Nt = 16
     M = rand(1:12)
@@ -65,7 +65,7 @@ end
     @test project(u, ws, Ψ) ≈ a
 end
 
-@testset "Reverse Projection of a Field " begin
+@testset "Reverse Projection of a Field         " begin
     # construct the field of modes
     Ny = 16; Nz = 16; Nt = 16
     M = rand(1:12)

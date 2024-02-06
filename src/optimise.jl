@@ -1,53 +1,55 @@
 # This file contains the definitions required to solve the variational problem
 # using Optim.jl.
 
-# Basically, I need two modes:
-#   - one interactive for messing around in the REPL and Jupyter notebooks
-#   - one non-interactive that can do its work independently and allows me to come and go and inspect the results (as it goes ideally)
+# TODO: test with laminar case + unit tests for output functions
 
-# The interactive one works pretty well already, probably would be nice to add an optional wrapper to allow me to pass a velocity field to start.
+# The callback will handle the first iteration, I just need a way to start the optimisation without a given trace
 
-function optimise_noninteractive!(dir)
-    # load optimisation parameters from directory
+# ! Don't pass a trace argument to the optimisation options !
+function optimise!(options::OptOptions=OptOptions())
+    # load the optimisation
+    velocityCoefficients, modes, baseProfile, Re, Ro, ifFreeMean, trace = loadOptimisationState(opts.write_loc, options.restart)
+
+    # initialise residual function
+    dR! = ResGrad(get_grid(velocityCoefficients), modes, baseProfile, Re, Ro, ifFreeMean)
+
+    # update trace with values from disc
+    append!(options.trace.value, trace.value)
+    append!(options.trace.g_norm, trace.g_norm)
+    append!(options.trace.iter, trace.iter)
+    append!(options.trace.time, trace.time)
+    append!(options.trace.step_size, trace.step_size)
 
     # call optimisation
-    _optimise!()
+    sol = _optimise!(velocityCeofficients, dR!, ifFreeMean, options)
 
-    # write the data back to the disk
-
-    # return results (success failures etc.)
+    return sol, opts.trace
 end
 
 optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {Nz, Nt, T, S<:SpectralField{<:Any, Nz, Nt, <:Any, T}} = optimise!(project!(SpectralField(get_grid(u), modes), u, get_ws(u), modes), modes, Re, Ro, mean=mean, opts=opts)
-
-function optimise!(a::SpectralField{M, Nz, Nt, <:Any, T}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T, S}
+function optimise!(velocityCoefficients::SpectralField{M, Nz, Nt, <:Any, T}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {M, Nz, Nt, T}
     # check if mean profile is provided
-    if length(mean) == 0
-        base_prof = points(get_grid(a))[1]
-        free_mean = true
-    else
-        base_prof = mean
-        free_mean = false
-    end
+    baseProfile, ifFreeMean = _getBaseProfileFromMean(get_grid(velocityCoefficients), mean)
+
+    # initialise directory to write optimisation data
+    opts.write ? writeOptimisationParameters(opts.write_loc, get_grid(velocityCoefficients), modes, baseProfile, Re, Ro, ifFreeMean) : nothing
+
+    # generate residual cache
+    dR! = ResGrad(get_grid(velocityCoefficients), modes, baseProfile, Re, Ro, ifFreeMean)
 
     # call fallback optimisation method
-    sol, trace = _optimise!(a, modes, Re, Ro, base_prof, free_mean, opts)
+    sol, trace = _optimise!(velocityCoefficients, dR!, ifFreeMean, opts)
 
     return sol, trace
 end
 
-function _optimise!(a, modes, Re, Ro, base_prof, free_mean, opts)
-    # initialise cache function
-    dR! = ResGrad(get_grid(a), modes, base_prof, Re, Ro, free_mean)
-
+# TODO: can I get a to be updated every iteration? (in the callback?)
+function _optimise!(a, dR!, ifFreeMean, opts)
     # initialise callback function
     cb = Callback(dR!, opts)
 
-    # initialise directory to write optimisation data
-    opts.write ? _write_opt(opts, get_grid(a), modes, base_prof, Re, Ro, free_mean) : nothing
-
     # remove mean profile if desired
-    if !free_mean
+    if !ifFreeMean
         a[:, 1, 1] .= zero(Complex{T})
     end
 
@@ -68,6 +70,17 @@ function _optimise!(a, modes, Re, Ro, base_prof, free_mean, opts)
     a .= Optim.minimizer(sol)
 
     return sol, opts.trace
+end
+
+function _getBaseProfileFromMean(grid, mean)
+    if length(mean) == 0
+        baseProfile = points(grid)[1]
+        ifFreeMean = true
+    else
+        baseProfile = mean
+        ifFreeMean = false
+    end
+    return baseProfile, ifFreeMean
 end
 
 _gen_optim_opts(opts, cb) = Optim.Options(; g_tol=opts.g_tol,

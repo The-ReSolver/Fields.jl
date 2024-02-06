@@ -1,4 +1,4 @@
-@testset "Spectral Field Constructor    " begin
+@testset "Spectral Field Constructor            " begin
         # take random variables
         Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50); M = rand(1:Ny)
         y = rand(Float64, Ny)
@@ -24,7 +24,7 @@
         @test size(u2) == (M, (Nz >> 1) + 1, Nt)
 end
 
-@testset "Spectral Field Broadcasting   " begin
+@testset "Spectral Field Broadcasting           " begin
         # take random variables
         Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
         y = rand(Float64, Ny)
@@ -62,7 +62,7 @@ end
         @test e == vec.*a == a.*vec
 end
 
-@testset "Spectral Field Dot and Norm   " begin
+@testset "Spectral Field Dot and Norm           " begin
         # initialise grid variables
         Ny = 64; Nz = 64; Nt = 64
         y = chebpts(Ny)
@@ -93,7 +93,7 @@ end
         @test norm(spec1)^2*β*ω ≈ 58.74334913 rtol=1e-5
 end
 
-@testset "Projected Field Norm          " begin
+@testset "Projected Field Norm                  " begin
         # initialise grid
         Ny = 16; Nz = 16; Nt = 16
         y = chebpts(Ny)

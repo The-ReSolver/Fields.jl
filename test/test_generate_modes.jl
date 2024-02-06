@@ -1,4 +1,4 @@
-@testset "Mode Generation               " begin
+@testset "Mode Generation                       " begin
     # set parameters
     retain = rand(1:10)
     N = rand(1:16)

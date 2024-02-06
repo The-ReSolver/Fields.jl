@@ -1,61 +1,77 @@
-@testset "Simulation Outputs            " begin
-    # initialise inputs to optimisation
+@testset "Initialising Optimisation Directory   " begin
+    # initialise inputs
     Ny = 5; Nz = 3; Nt = 2; M = 1;
     y = collect(range(-1, 1, length=Ny))
     β = abs(rand())
     ω = abs(rand())
-    g = Grid(y, Nz, Nt, DiffMatrix(y, 3, 1), DiffMatrix(y, 3, 2), quadweights(y, 2), ω, β)
-    a = SpectralField(Grid(ones(M), Nz, Nt, Matrix{Float64}(undef, 0, 0), Matrix{Float64}(undef, 0, 0), ones(M), ω, β))
-    a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
+    grid = Grid(y, Nz, Nt, DiffMatrix(y, 3, 1), DiffMatrix(y, 3, 2), quadweights(y, 2), ω, β)
     modes = rand(ComplexF64, 3*Ny, M, (Nz >> 1) + 1, Nt)
-    base_prof = rand(Ny)
+    a = SpectralField(grid, modes)
+    a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
+    baseProfile = rand(Ny)
     Re = abs(rand())
     Ro = abs(rand())
-    free_mean = rand([true, false])
-    options = OptOptions(maxiter=2, write_loc="./tmp/")
-    try
-        mkdir("./tmp")
-    catch
-        nothing
-    end
+    ifFreeMean = rand([true, false])
+    mkpath("./tmp")
 
-    # generate output directory
-    Fields._init_opt_dir(options, g, modes, base_prof, Re, Ro, free_mean)
+    # write the parameters to the directory
+    initialiseOptimisationDirectory("./tmp/", a, modes, baseProfile, Re, Ro, ifFreeMean)
 
-    # test directory structure
-    ini = read(Inifile(), "./tmp/params")
-    @test isfile("./tmp/base_profile")
-    @test isfile("./tmp/modes")
-    @test isfile("./tmp/y")
-    @test get(ini, "sim_data", "Re") == string(Re)
-    @test get(ini, "sim_data", "Ro") == string(Ro)
-    @test get(ini, "sim_data", "free_mean") == string(free_mean)
-    @test get(ini, "grid_data", "Ny") == string(Ny)
-    @test get(ini, "grid_data", "Nz") == string(Nz)
-    @test get(ini, "grid_data", "Nt") == string(Nt)
-    @test get(ini, "grid_data", "M") == string(M)
-    @test get(ini, "grid_data", "Ny") == string(Ny)
-    @test get(ini, "grid_data", "beta") == string(β)
-    @test get(ini, "grid_data", "omega") == string(ω)
+    @test isfile("./tmp/parameters.jld2")
+    @test isfile("./tmp/0/velCoeff")
 
-    # write single field instance
-    i = rand(1:10)
-    Fields._write_data("./tmp/", i, a)
+    # read file back and test contents
+    grid2, baseProfile2, modes2, Re2, Ro2, ifFreeMean2 = readOptimisationParameters("./tmp/")
+    a2 = Fields._readOptimisationVelocityCoefficients("./tmp/0/", similar(a))
 
-    # check file has been successfully written
-    @test isfile("./tmp/"*string(i)*"/a")
-    a2 = Array{ComplexF64}(undef, M, (Nz >> 1) + 1, Nt)
-    open("./tmp/"*string(i)*"/a", "r") do f
-        read!(f, a2)
-    end
-    @test parent(a) == a2
+    @test grid == grid2
+    @test baseProfile == baseProfile2
+    @test modes == modes2
+    @test Re == Re2
+    @test Ro == Ro2
+    @test ifFreeMean == ifFreeMean2
 
-    # tear down all the files created
-    rm("./tmp/base_profile")
-    rm("./tmp/modes")
-    rm("./tmp/params")
-    rm("./tmp/y")
-    rm("./tmp/"*string(i)*"/a")
-    rm("./tmp/"*string(i))
-    rm("./tmp")
+    # tear down directory
+    rm("./tmp", recursive=true)
+end
+
+@testset "Load Optimisation State               " begin
+    # initialise inputs
+    Ny = 5; Nz = 3; Nt = 2; M = 1;
+    y = collect(range(-1, 1, length=Ny))
+    β = abs(rand())
+    ω = abs(rand())
+    grid = Grid(y, Nz, Nt, DiffMatrix(y, 3, 1), DiffMatrix(y, 3, 2), quadweights(y, 2), ω, β)
+    modes = rand(ComplexF64, 3*Ny, M, (Nz >> 1) + 1, Nt)
+    a = SpectralField(grid, modes)
+    a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
+    baseProfile = rand(Ny)
+    Re = abs(rand())
+    Ro = abs(rand())
+    ifFreeMean = rand([true, false])
+    trace = Fields.Trace([rand()], [rand()], [rand(1:10)], [rand()], [rand()])
+    mkpath("./tmp")
+
+    # do the write operations
+    initialiseOptimisationDirectory("./tmp/", a, modes, baseProfile, Re, Ro, ifFreeMean)
+    Fields.writeIteration("./tmp/0/", a, trace)
+
+    # load state back into memory
+    a2, modes2, baseProfile2, Re2, Ro2, ifFreeMean2, trace2 = @test_nowarn loadOptimisationState("./tmp/", 0)
+
+    @test a == a2
+    @test get_grid(a) == get_grid(a2)
+    @test modes == modes2
+    @test baseProfile == baseProfile2
+    @test Re == Re2
+    @test Ro == Ro2
+    @test ifFreeMean == ifFreeMean2
+    @test trace.value == trace2.value
+    @test trace.g_norm == trace2.g_norm
+    @test trace.iter == trace2.iter
+    @test trace.time == trace2.time
+    @test trace.step_size == trace2.step_size
+
+    # tear down directory
+    rm("./tmp", recursive=true)
 end

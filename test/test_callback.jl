@@ -5,7 +5,7 @@ struct DummyTrace
     metadata::Dict
 end
 
-@testset "Callback Function             " begin
+@testset "Callback Function                     " begin
     # initialise dummy cache
     optimCache = ResGrad(Grid([0.0], 1, 1, Matrix{Float64}(undef, 0, 0), Matrix{Float64}(undef, 0, 0), [0.0], 1.0, 1.0), Array{ComplexF64}(undef, 0, 0, 0, 0), [0.0], 1.0, 1.0, true)
 

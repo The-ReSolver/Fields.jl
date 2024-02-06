@@ -1,4 +1,4 @@
-@testset "Vector Field Constructor      " begin
+@testset "Vector Field Constructor              " begin
     # generate random arrays
     Ny = rand(3:50)
     Nz = rand(3:50)
@@ -43,7 +43,7 @@
     @test_throws MethodError VectorField("string1", "string2")
 end
 
-@testset "Vector Field Grid Methods     " begin
+@testset "Vector Field Grid Methods             " begin
     # initialise random variables
     Ny = rand(3:50)
     Nz = rand(3:50)
@@ -65,7 +65,7 @@ end
     end
 end
 
-@testset "Vector Field Broadcasting     " begin
+@testset "Vector Field Broadcasting             " begin
     # initialise random variables
     Ny = rand(3:50)
     Nz = rand(3:50)
@@ -89,7 +89,7 @@ end
     @test typeof(a .+ b) == typeof(a)
 end
 
-@testset "Vector Field Norm             " begin
+@testset "Vector Field Norm                     " begin
     # initialise grid
     Ny = 64; Nz = 64; Nt = 64
     y = chebpts(Ny)
