@@ -1,29 +1,21 @@
 # This file contains the definitions required to solve the variational problem
 # using Optim.jl.
 
-# TODO: test with laminar case + unit tests for output functions
-
-# The callback will handle the first iteration, I just need a way to start the optimisation without a given trace
-
 # ! Don't pass a trace argument to the optimisation options !
 function optimise!(options::OptOptions=OptOptions())
     # load the optimisation
-    velocityCoefficients, modes, baseProfile, Re, Ro, ifFreeMean, trace = loadOptimisationState(opts.write_loc, options.restart)
+    velocityCoefficients, trace, modes, baseProfile, Re, Ro, ifFreeMean = loadOptimisationState(options.write_loc, options.restart)
 
     # initialise residual function
     dR! = ResGrad(get_grid(velocityCoefficients), modes, baseProfile, Re, Ro, ifFreeMean)
 
     # update trace with values from disc
-    append!(options.trace.value, trace.value)
-    append!(options.trace.g_norm, trace.g_norm)
-    append!(options.trace.iter, trace.iter)
-    append!(options.trace.time, trace.time)
-    append!(options.trace.step_size, trace.step_size)
+    _append_trace!(options.trace, trace)
 
     # call optimisation
-    sol = _optimise!(velocityCeofficients, dR!, ifFreeMean, options)
+    sol = _optimise!(velocityCoefficients, dR!, ifFreeMean, options)
 
-    return sol, opts.trace
+    return sol, options.trace
 end
 
 optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {Nz, Nt, T, S<:SpectralField{<:Any, Nz, Nt, <:Any, T}} = optimise!(project!(SpectralField(get_grid(u), modes), u, get_ws(u), modes), modes, Re, Ro, mean=mean, opts=opts)
@@ -32,7 +24,7 @@ function optimise!(velocityCoefficients::SpectralField{M, Nz, Nt, <:Any, T}, mod
     baseProfile, ifFreeMean = _getBaseProfileFromMean(get_grid(velocityCoefficients), mean)
 
     # initialise directory to write optimisation data
-    opts.write ? writeOptimisationParameters(opts.write_loc, get_grid(velocityCoefficients), modes, baseProfile, Re, Ro, ifFreeMean) : nothing
+    opts.write ? initialiseOptimisationDirectory(opts.write_loc, velocityCoefficients, modes, baseProfile, Re, Ro, ifFreeMean) : nothing
 
     # generate residual cache
     dR! = ResGrad(get_grid(velocityCoefficients), modes, baseProfile, Re, Ro, ifFreeMean)

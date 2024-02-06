@@ -28,7 +28,7 @@ function (f::Callback)(x)
     _update_trace!(f.opts.trace, x, f.start_iter, f.keep_zero)
 
     # write data to disk
-    f.opts.write && x.iteration % f.opts.n_it_write == 0 ? writeIteration(f.opts.write_loc*string(f.opts.trace.iter[end]), f.opts.trace, x.metadata["x"]) : nothing
+    f.opts.write && x.iteration % f.opts.n_it_write == 0 ? writeIteration(f.opts.write_loc*string(f.opts.trace.iter[end]), x.metadata["x"], f.opts.trace) : nothing
 
     # print the sate if desired
     f.opts.verbose && x.iteration % f.opts.n_it_print == 0 ? _print_state(f.opts.print_io, x.iteration, x.metadata["Current step size"], get_ω(f.cache.spec_cache[1]), x.value, x.g_norm) : nothing

@@ -3,6 +3,7 @@
 
 export initialiseOptimisationDirectory, writeIteration, readOptimisationParameters, loadOptimisationState
 
+# TODO: save mean profile not base profile
 function initialiseOptimisationDirectory(path, velocityCoefficients, modes, baseProfile, Re, Ro, ifFreeMean)
     _writeOptimisationParameters(path, get_grid(velocityCoefficients), modes, baseProfile, Re, Ro, ifFreeMean)
     writeIteration(path*"0", velocityCoefficients)
@@ -12,7 +13,7 @@ function _loadOptimisationState(path, iteration)
     grid, baseProfile, modes, Re, Ro, ifFreeMean = readOptimisationParameters(path)
     velocityCoefficients = _readOptimisationVelocityCoefficients(path*string(iteration), SpectralField(grid, modes))
     trace = _tryToReadTrace(path*string(iteration))
-    return velocityCoefficients, modes, baseProfile, Re, Ro, ifFreeMean, trace
+    return velocityCoefficients, trace, modes, baseProfile, Re, Ro, ifFreeMean
 end
 loadOptimisationState(path, ::Float64) = _loadOptimisationState(path, _getFinalIteration(path))
 loadOptimisationState(path, iteration::Int) = _loadOptimisationState(path, iteration)
@@ -43,15 +44,13 @@ function _tryToReadTrace(path)
 end
 
 function _readTraceFile(path)
-    trace = jldopen(path, "r") do f
+    trace = jldopen(path, "a+") do f
         return Trace([read(f, "value")], [read(f, "g_norm")], [read(f, "iter")], [read(f, "time")], [read(f, "step_size")])
     end
     return trace
 end
 
-function _getFinalIteration(path)
-    # TODO: this
-end
+_getFinalIteration(path) = maximum(parse.(Int, filter!(x->tryparse(Int, x) !== nothing, readdir(path))))
 
 
 function _writeOptimisationParameters(path, grid, modes, baseProfile, Re, Ro, ifFreeMean)

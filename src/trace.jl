@@ -23,3 +23,11 @@ function _update_trace!(trace::Trace, state, start_iter, keep_zero)
     state.iteration != 0 || keep_zero ? push!(trace.time, state.metadata["time"]) : nothing
     state.iteration != 0 || keep_zero ? push!(trace.step_size, state.metadata["Current step size"]) : nothing
 end
+
+function _append_trace!(traceDestination::Trace, traceSource::Trace)
+    append!(traceDestination.value, traceSource.value)
+    append!(traceDestination.g_norm, traceSource.g_norm)
+    append!(traceDestination.iter, traceSource.iter)
+    append!(traceDestination.time, traceSource.time)
+    append!(traceDestination.step_size, traceSource.step_size)
+end
