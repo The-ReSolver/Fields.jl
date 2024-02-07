@@ -1,6 +1,7 @@
 # This file constains the definitions for the callback function used in the
 # optimisation
 
+# TODO: separate Optim.jl wrapper into separate package
 struct Callback{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN, A}
     velocityCoefficients::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, A}
     cache::ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
@@ -43,14 +44,13 @@ function (f::Callback)(x)
     return callbackReturn
 end
 
-# TODO: it goes up after each restart using Nelder-Mead! Something isn't being overwritten correctly
 function _parseOptimisationState(callback::Callback, x::Optim.OptimizationState{<:Any, <:Optim.FirstOrderOptimizer})
     callback.velocityCoefficients .= x.metadata["x"]
     return callback.velocityCoefficients, x.value, x.g_norm, x.iteration, x.metadata["time"], x.metadata["Current step size"]
 end
 function _parseOptimisationState(callback::Callback, x::Optim.OptimizationState{<:Any, <:Optim.NelderMead})
     _vectorToVelocityCoefficients!(callback.velocityCoefficients, x.metadata["centroid"])
-    return callback.velocityCoefficients, x.value, x.g_norm, x.iteration, x.metadata["time"], NaN
+    return callback.velocityCoefficients, x.value, x.g_norm, x.iteration, x.metadata["time"], 0.0
 end
 
 function _print_state(print_io, iter, step_size, freq, value, g_norm)
