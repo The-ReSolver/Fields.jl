@@ -4,13 +4,6 @@ using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf, Optim, Parameters
 
 using DAESolve
 
-# TODO: these might not be necessary?
-const LBFGS = Optim.LBFGS
-const ConjugateGradient = Optim.ConjugateGradient
-const GradientDescent = Optim.GradientDescent
-const MomentumGradientDescent = Optim.MomentumGradientDescent
-const AcceleratedGradientDescent = Optim.AcceleratedGradientDescent
-
 const HagerZhang = LineSearches.HagerZhang
 const MoreThuente = LineSearches.MoreThuente
 const BackTracking = LineSearches.BackTracking
