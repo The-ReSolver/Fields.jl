@@ -4,6 +4,7 @@ using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf, Optim, Parameters
 
 using DAESolve
 
+# TODO: these might not be necessary?
 const LBFGS = Optim.LBFGS
 const ConjugateGradient = Optim.ConjugateGradient
 const GradientDescent = Optim.GradientDescent
@@ -53,6 +54,7 @@ include("trace.jl")
 include("optoptions.jl")
 include("callback.jl")
 include("output.jl")
+include("vectorToField.jl")
 include("optimise.jl")
 
 end
