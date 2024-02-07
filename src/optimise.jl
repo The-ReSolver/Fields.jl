@@ -13,9 +13,9 @@ function optimise!(options::OptOptions=OptOptions())
     _append_trace!(options.trace, trace)
 
     # call optimisation
-    sol = _optimise!(velocityCoefficients, dR!, ifFreeMean, options)
+    results = _optimise!(velocityCoefficients, dR!, ifFreeMean, options)
 
-    return sol, options.trace
+    return results, options.trace
 end
 
 optimise!(u::VectorField{3, S}, modes::Array{ComplexF64, 4}, Re, Ro; mean::Vector{T}=T[], opts::OptOptions=OptOptions()) where {Nz, Nt, T, S<:SpectralField{<:Any, Nz, Nt, <:Any, T}} = optimise!(project!(SpectralField(get_grid(u), modes), u, get_ws(u), modes), modes, Re, Ro, mean=mean, opts=opts)
@@ -30,34 +30,44 @@ function optimise!(velocityCoefficients::SpectralField{M, Nz, Nt, <:Any, T}, mod
     dR! = ResGrad(get_grid(velocityCoefficients), modes, baseProfile, Re, Ro, ifFreeMean)
 
     # call fallback optimisation method
-    sol, trace = _optimise!(velocityCoefficients, dR!, ifFreeMean, opts)
+    results, trace = _optimise!(velocityCoefficients, dR!, ifFreeMean, opts)
 
-    return sol, trace
+    return results, trace
 end
 
-function _optimise!(a, dR!, ifFreeMean, opts)
+function _optimise!(velocityCoefficients, dR!, ifFreeMean, opts)
     # initialise callback function
-    cb = Callback(dR!, a, opts)
+    cb = Callback(dR!, velocityCoefficients, opts)
 
     # remove mean profile if desired
     if !ifFreeMean
-        a[:, 1, 1] .= zero(Complex{T})
-    end
-
-    # define objective function for optimiser
-    function fg!(::Any, G, x)
-        G === nothing ? R = dR!(x, false)[2] : (R = dR!(x, true)[2]; G .= dR!.out)
-
-        return R
+        velocityCoefficients[:, 1, 1] .= zero(Complex{T})
     end
 
     # print header for output
     opts.verbose ? _print_header(opts.print_io) : nothing
 
     # perform optimisation
-    sol = optimize(Optim.only_fg!(fg!), a, opts.alg, _gen_optim_opts(opts, cb))
+    results = _optimise!(velocityCoefficients, dR!, opts.alg, _gen_optim_opts(opts, cb))
 
-    return sol, opts.trace
+    return results, opts.trace
+end
+
+function _optimise!(velocityCoefficients, dR!, algorithm::Optim.AbstractOptimizer, optimOptions)
+    function fg!(::Any, G, x)
+        G === nothing ? R = dR!(x, false)[2] : (R = dR!(x, true)[2]; G .= dR!.out)
+
+        return R
+    end
+    optimize(Optim.only_fg!(fg!), velocityCoefficients, algorithm, optimOptions)
+end
+
+function _optimise!(velocityCoefficients::SpectralField{Ny, Nz, Nt}, dR!, ::Optim.NelderMead, optimOptions) where {Ny, Nz, Nt}
+    velocityCoefficientsTemp = similar(velocityCoefficients)
+    function f(x)
+        dR!(_vectorToVelocityCoefficients!(velocityCoefficientsTemp, x), false)[2]
+    end
+    optimize(f, _velocityCoefficientsToVector!(Vector{Float64}(undef, 2*Ny*(Nz >> 1 + 1)*Nt), velocityCoefficients), Optim.NelderMead(), optimOptions)
 end
 
 function _getBaseProfileFromMean(grid, mean)

@@ -25,22 +25,32 @@ function (f::Callback)(x)
     # run extra callback method
     callbackReturn = f.opts.callback(x)
 
+    # parse the optimisation state
+    velocityCoefficients, value, g_norm, iteration, time, step_size = _parseOptimisationState(f, x)
+
     # write current state to trace
-    _update_trace!(f.opts.trace, x, f.start_iter, f.keep_zero)
+    _update_trace!(f.opts.trace, value, g_norm, iteration, time, step_size, f.start_iter, f.keep_zero)
 
     # write data to disk
-    f.opts.write && x.iteration % f.opts.n_it_write == 0 ? writeIteration(f.opts.write_loc*string(f.opts.trace.iter[end]), x.metadata["x"], f.opts.trace) : nothing
+    f.opts.write && x.iteration % f.opts.n_it_write == 0 ? writeIteration(f.opts.write_loc*string(f.opts.trace.iter[end]), velocityCoefficients, f.opts.trace) : nothing
 
     # print the sate if desired
-    f.opts.verbose && x.iteration % f.opts.n_it_print == 0 ? _print_state(f.opts.print_io, x.iteration, x.metadata["Current step size"], get_ω(f.cache.spec_cache[1]), x.value, x.g_norm) : nothing
+    f.opts.verbose && x.iteration % f.opts.n_it_print == 0 ? _print_state(f.opts.print_io, iteration, step_size, get_ω(f.cache.spec_cache[1]), value, g_norm) : nothing
 
     # update frequency
     Int(x.iteration % f.opts.update_frequency_every) == 0 && x.iteration != 0 ? f.cache.spec_cache[1].grid.dom[2] = optimalFrequency(f.cache) : nothing
 
-    # update velocity coefficients
-    f.velocityCoefficients .= x.metadata["x"]
-
     return callbackReturn
+end
+
+# TODO: it goes up after each restart using Nelder-Mead! Something isn't being overwritten correctly
+function _parseOptimisationState(callback::Callback, x::Optim.OptimizationState{<:Any, <:Optim.FirstOrderOptimizer})
+    callback.velocityCoefficients .= x.metadata["x"]
+    return callback.velocityCoefficients, x.value, x.g_norm, x.iteration, x.metadata["time"], x.metadata["Current step size"]
+end
+function _parseOptimisationState(callback::Callback, x::Optim.OptimizationState{<:Any, <:Optim.NelderMead})
+    _vectorToVelocityCoefficients!(callback.velocityCoefficients, x.metadata["centroid"])
+    return callback.velocityCoefficients, x.value, x.g_norm, x.iteration, x.metadata["time"], NaN
 end
 
 function _print_state(print_io, iter, step_size, freq, value, g_norm)

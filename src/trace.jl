@@ -16,12 +16,14 @@ end
 
 Trace() = Trace([], [], [], [], [])
 
-function _update_trace!(trace::Trace, state, start_iter, keep_zero)
-    state.iteration != 0 || keep_zero ? push!(trace.value, state.value) : nothing
-    state.iteration != 0 || keep_zero ? push!(trace.g_norm, state.g_norm) : nothing
-    state.iteration != 0 || keep_zero ? push!(trace.iter, state.iteration + start_iter) : nothing
-    state.iteration != 0 || keep_zero ? push!(trace.time, state.metadata["time"]) : nothing
-    state.iteration != 0 || keep_zero ? push!(trace.step_size, state.metadata["Current step size"]) : nothing
+function _update_trace!(trace::Trace, value, g_norm, iteration, time, step_size, start_iter, keep_zero)
+    if iteration != 0 || keep_zero
+        push!(trace.value, value)
+        push!(trace.g_norm, g_norm)
+        push!(trace.iter, iteration + start_iter)
+        push!(trace.time, time)
+        push!(trace.step_size, step_size)
+    end
 end
 
 function _append_trace!(traceDestination::Trace, traceSource::Trace)
