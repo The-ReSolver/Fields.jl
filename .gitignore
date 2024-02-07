@@ -2,3 +2,4 @@ Manifest.toml
 *.txt
 dep/
 test/tmp/
+sample/
