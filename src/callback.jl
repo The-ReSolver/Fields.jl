@@ -2,6 +2,7 @@
 # optimisation
 
 # TODO: separate Optim.jl wrapper into separate package
+# TODO: ambiguous due to OptOptions type
 struct Callback{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN, A}
     velocityCoefficients::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, A}
     cache::ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
@@ -58,4 +59,4 @@ function _print_state(print_io, iter, step_size, freq, value, g_norm)
     println(print_io, str)
     flush(print_io)
     return nothing
-end
+e

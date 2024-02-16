@@ -21,7 +21,7 @@ export FFTPlan!, IFFTPlan!
 export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
 export Grid, points, spectralfield, physicalfield, vectorfield
 export PhysicalField
-export SpectralField, norm
+export SpectralField, norm, dot
 export VectorField
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 export project, project!, reverse_project!, expand!
