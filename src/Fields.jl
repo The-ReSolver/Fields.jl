@@ -43,11 +43,6 @@ include("derivatives.jl")
 include("dns2field.jl")
 include("plot_vectorfield.jl")
 include("resgrad.jl")
-include("trace.jl")
-include("optoptions.jl")
-include("callback.jl")
-include("output.jl")
 include("vectorToField.jl")
-include("optimise.jl")
 
 end
