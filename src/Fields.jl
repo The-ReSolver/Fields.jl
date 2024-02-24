@@ -1,20 +1,8 @@
 module Fields
 
-using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, Printf, Optim, Parameters, LineSearches, JLD2
+using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase
 
 using DAESolve
-
-const HagerZhang = LineSearches.HagerZhang
-const MoreThuente = LineSearches.MoreThuente
-const BackTracking = LineSearches.BackTracking
-const StrongWolfe = LineSearches.StrongWolfe
-const Static = LineSearches.Static
-
-const InitialPrevious = LineSearches.InitialPrevious
-const InitialStatic = LineSearches.InitialStatic
-const InitialHagerZhang = LineSearches.InitialHagerZhang
-const InitialQuadratic = LineSearches.InitialQuadratic
-const InitialConstantChange = LineSearches.InitialConstantChange
 
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!, divergence!, laplacian!
 export FFTPlan!, IFFTPlan!

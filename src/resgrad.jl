@@ -20,7 +20,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
         out = SpectralField(grid, ψs)
 
         # create field cache
-        proj_cache = [SpectralField(grid, ψs) for _ in 1:1]
+        proj_cache = [SpectralField(grid, ψs) for _ in 1:2]
         spec_cache = [SpectralField(grid)     for _ in 1:69]
         phys_cache = [PhysicalField(grid)     for _ in 1:35]
 
@@ -145,6 +145,12 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
 
     return f.out, gr(f)
 end
+
+function (f::ResGrad)(F, G, a::SpectralField)
+    G === nothing ? F = f(a, false)[2] : (F = f(a, true)[2]; G .= f.out)
+    return F
+end
+(f::ResGrad)(x) = f(_vectorToVelocityCoefficients!(f.proj_cache[2], x), false)[2]
 
 function _update_vel_cache!(cache::ResGrad) 
     # assign aliases
