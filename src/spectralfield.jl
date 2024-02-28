@@ -35,17 +35,8 @@ Base.abs(U::SpectralField) = (A = zeros(size(U)); A .= abs.(U); return A)
 # method to extract grid
 get_grid(U::SpectralField) = U.grid
 
-# TODO: redo with better dispatch
-function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Grid{S}, <:Any, PROJECTED}, q::SpectralField{Ny, Nz, Nt, <:Grid{S}, <:Any, PROJECTED}) where {Ny, Nz, Nt, S, PROJECTED}
-    # check if field and grid are the same size
-    if PROJECTED
-        prod = _projectedSpaceDot(p, q)
-    else
-        prod = _fullSpaceDot(p, q)
-    end
-
-    return prod
-end
+LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, true}) where {Ny, Nz, Nt} = _projectedSpaceDot(p, q)
+LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}) where {Ny, Nz, Nt} = _fullSpaceDot(p, q)
 LinearAlgebra.norm(p::SpectralField) = sqrt(LinearAlgebra.dot(p, p))
 Base.maximum(::Function, gradient::SpectralField) = norm(gradient) # this method exists just so Optim.jl uses the correct norm in the trace
 

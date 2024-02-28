@@ -73,7 +73,7 @@ end
         β = abs(rand())
 
         # initialise grid
-        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, typeof(ω)(β))
+        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 
         # initialise function
         func1(y, z, t) = (1 - y^2)*exp(cos(β*z))*cos(sin(ω*t))
