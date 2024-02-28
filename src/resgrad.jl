@@ -100,8 +100,8 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
     rxdudz   = f.spec_cache[55]
     rydvdz   = f.spec_cache[56]
     rzdwdz   = f.spec_cache[57]
-    dwdτ     = f.spec_cache[58]
-    dudτ     = f.spec_cache[59]
+    dudτ     = f.spec_cache[58]
+    dwdτ     = f.spec_cache[59]
     dvdτ     = f.spec_cache[60]
     s        = f.proj_cache[1]
     ws       = f.ws
