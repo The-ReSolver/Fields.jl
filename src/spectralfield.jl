@@ -35,12 +35,9 @@ Base.abs(U::SpectralField) = (A = zeros(size(U)); A .= abs.(U); return A)
 # method to extract grid
 get_grid(U::SpectralField) = U.grid
 
-LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, true}) where {Ny, Nz, Nt} = _projectedSpaceDot(p, q)
-LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}) where {Ny, Nz, Nt} = _fullSpaceDot(p, q)
-LinearAlgebra.norm(p::SpectralField) = sqrt(LinearAlgebra.dot(p, p))
-Base.maximum(::Function, gradient::SpectralField) = norm(gradient) # this method exists just so Optim.jl uses the correct norm in the trace
-
-function _projectedSpaceDot(p::SpectralField{M, Nz, Nt}, q::SpectralField{M, Nz, Nt}) where {M, Nz, Nt}
+# LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, true}) where {Ny, Nz, Nt} = _projectedSpaceDot(p, q)
+# LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}) where {Ny, Nz, Nt} = _fullSpaceDot(p, q)
+function LinearAlgebra.dot(p::SpectralField{M, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{M, Nz, Nt, <:Any, <:Any, true}) where {M, Nz, Nt}
     # initialise sum variable
     prod = 0.0
 
@@ -66,7 +63,7 @@ function _projectedSpaceDot(p::SpectralField{M, Nz, Nt}, q::SpectralField{M, Nz,
     return ((8π^2)/(β*ω))*prod
 end
 
-function _fullSpaceDot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}) where {Ny, Nz, Nt}
     # initialise sum variable
     prod = 0.0
 
@@ -91,6 +88,10 @@ function _fullSpaceDot(p::SpectralField{Ny, Nz, Nt}, q::SpectralField{Ny, Nz, Nt
 
     return ((8π^2)/(β*ω))*prod
 end
+
+LinearAlgebra.norm(p::SpectralField) = sqrt(LinearAlgebra.dot(p, p))
+Base.maximum(::Function, gradient::SpectralField) = norm(gradient) # this method exists just so Optim.jl uses the correct norm in the trace
+
 
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl
