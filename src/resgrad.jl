@@ -21,7 +21,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
 
         # create field cache
         proj_cache = [SpectralField(grid, ψs) for _ in 1:2]
-        spec_cache = [SpectralField(grid)     for _ in 1:69]
+        spec_cache = [SpectralField(grid)     for _ in 1:60]
         phys_cache = [PhysicalField(grid)     for _ in 1:35]
 
         # create transform plans
@@ -178,14 +178,6 @@ function _update_vel_cache!(cache::ResGrad)
     wdvdz    = cache.spec_cache[22]
     vdwdy    = cache.spec_cache[23]
     wdwdz    = cache.spec_cache[24]
-    tmp1     = cache.spec_cache[58]
-    tmp2     = cache.spec_cache[59]
-    tmp3     = cache.spec_cache[60]
-    tmp4     = cache.spec_cache[61]
-    tmp5     = cache.spec_cache[62]
-    tmp6     = cache.spec_cache[63]
-    tmp7     = cache.spec_cache[64]
-    tmp8     = cache.spec_cache[65]
     v_p      = cache.phys_cache[1]
     w_p      = cache.phys_cache[2]
     dudy_p   = cache.phys_cache[3]
@@ -224,14 +216,14 @@ function _update_vel_cache!(cache::ResGrad)
 
     # compute the nonlinear terms
     @sync begin
-        Base.Threads.@spawn IFFT!(v_p, v, tmp1)
-        Base.Threads.@spawn IFFT!(w_p, w, tmp2)
-        Base.Threads.@spawn IFFT!(dudy_p, dudy, tmp3)
-        Base.Threads.@spawn IFFT!(dvdy_p, dvdy, tmp4)
-        Base.Threads.@spawn IFFT!(dwdy_p, dwdy, tmp5)
-        Base.Threads.@spawn IFFT!(dudz_p, dudz, tmp6)
-        Base.Threads.@spawn IFFT!(dvdz_p, dvdz, tmp7)
-        Base.Threads.@spawn IFFT!(dwdz_p, dwdz, tmp8)
+        Base.Threads.@spawn IFFT!(v_p, v)
+        Base.Threads.@spawn IFFT!(w_p, w)
+        Base.Threads.@spawn IFFT!(dudy_p, dudy)
+        Base.Threads.@spawn IFFT!(dvdy_p, dvdy)
+        Base.Threads.@spawn IFFT!(dwdy_p, dwdy)
+        Base.Threads.@spawn IFFT!(dudz_p, dudz)
+        Base.Threads.@spawn IFFT!(dvdz_p, dvdz)
+        Base.Threads.@spawn IFFT!(dwdz_p, dwdz)
     end
     @sync begin
         Base.Threads.@spawn vdudy_p .= v_p.*dudy_p
@@ -285,15 +277,6 @@ function _update_res_cache!(cache::ResGrad)
     rxdudz   = cache.spec_cache[55]
     rydvdz   = cache.spec_cache[56]
     rzdwdz   = cache.spec_cache[57]
-    tmp1     = cache.spec_cache[61]
-    tmp2     = cache.spec_cache[62]
-    tmp3     = cache.spec_cache[63]
-    tmp4     = cache.spec_cache[64]
-    tmp5     = cache.spec_cache[65]
-    tmp6     = cache.spec_cache[66]
-    tmp7     = cache.spec_cache[67]
-    tmp8     = cache.spec_cache[68]
-    tmp9     = cache.spec_cache[69]
     v_p      = cache.phys_cache[1]
     w_p      = cache.phys_cache[2]
     dudy_p   = cache.phys_cache[3]
@@ -347,15 +330,15 @@ function _update_res_cache!(cache::ResGrad)
 
     # compute the nonlienar terms
     @sync begin
-        Base.Threads.@spawn IFFT!(rx_p, rx, tmp1)
-        Base.Threads.@spawn IFFT!(ry_p, ry, tmp2)
-        Base.Threads.@spawn IFFT!(rz_p, rz, tmp3)
-        Base.Threads.@spawn IFFT!(drxdy_p, drxdy, tmp4)
-        Base.Threads.@spawn IFFT!(drydy_p, drydy, tmp5)
-        Base.Threads.@spawn IFFT!(drzdy_p, drzdy, tmp6)
-        Base.Threads.@spawn IFFT!(drxdz_p, drxdz, tmp7)
-        Base.Threads.@spawn IFFT!(drydz_p, drydz, tmp8)
-        Base.Threads.@spawn IFFT!(drzdz_p, drzdz, tmp9)
+        Base.Threads.@spawn IFFT!(rx_p, rx)
+        Base.Threads.@spawn IFFT!(ry_p, ry)
+        Base.Threads.@spawn IFFT!(rz_p, rz)
+        Base.Threads.@spawn IFFT!(drxdy_p, drxdy)
+        Base.Threads.@spawn IFFT!(drydy_p, drydy)
+        Base.Threads.@spawn IFFT!(drzdy_p, drzdy)
+        Base.Threads.@spawn IFFT!(drxdz_p, drxdz)
+        Base.Threads.@spawn IFFT!(drydz_p, drydz)
+        Base.Threads.@spawn IFFT!(drzdz_p, drzdz)
     end
     @sync begin
         Base.Threads.@spawn vdrxdy_p .= v_p.*drxdy_p
@@ -392,6 +375,5 @@ gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/
 function optimalFrequency(optimisationCache)
     duds = VectorField([optimisationCache.spec_cache[i] for i in 4:6]...); duds ./= get_ω(optimisationCache.spec_cache[1])
     navierStokesRHS = VectorField([optimisationCache.spec_cache[i] for i in 25:27]...)
-
     return dot(duds, navierStokesRHS)/(norm(duds)^2)
 end

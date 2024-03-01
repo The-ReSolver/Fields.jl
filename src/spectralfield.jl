@@ -35,8 +35,7 @@ Base.abs(U::SpectralField) = (A = zeros(size(U)); A .= abs.(U); return A)
 # method to extract grid
 get_grid(U::SpectralField) = U.grid
 
-# LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, true}) where {Ny, Nz, Nt} = _projectedSpaceDot(p, q)
-# LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}) where {Ny, Nz, Nt} = _fullSpaceDot(p, q)
+
 function LinearAlgebra.dot(p::SpectralField{M, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{M, Nz, Nt, <:Any, <:Any, true}) where {M, Nz, Nt}
     # initialise sum variable
     prod = 0.0

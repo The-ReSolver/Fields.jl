@@ -23,10 +23,8 @@
     IFFT = IFFTPlan!(grid; flags=ESTIMATE)
 
     # is the transform invertible correctly
-    FFT(Â1, A1)
-    IFFT(B1, Â1, copy(Â1))
-    FFT(𝐀̂, 𝐀)
-    IFFT(𝐁, 𝐀̂, VectorField(grid; N = 2))
+    FFT(Â1, A1); IFFT(B1, Â1)
+    FFT(𝐀̂, 𝐀); IFFT(𝐁, 𝐀̂)
     @test A1 ≈ B1
     @test 𝐀 ≈ 𝐁
 end

@@ -13,6 +13,8 @@ const PATIENT = FFTW.PATIENT
 const WISDOM_ONLY = FFTW.WISDOM_ONLY
 const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
 
+dealias_size(Nz, Nt) = (Nz + (Nz >> 1), Nt + (Nt >> 1))
+
 struct FFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
 
@@ -20,81 +22,58 @@ struct FFTPlan!{Ny, Nz, Nt, PLAN}
                         flags::UInt32=EXHAUSTIVE,
                         timelimit::Real=NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
-        plan = FFTW.plan_rfft(similar(parent(u)), order;
-                                flags=flags, timelimit=timelimit)
+        plan = FFTW.plan_rfft(similar(parent(u)), order; flags=flags, timelimit=timelimit)
         new{Ny, Nz, Nt, typeof(plan)}(plan)
     end
 end
 
 FFTPlan!(grid::Grid{S, T}; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = FFTPlan!(PhysicalField(grid, T); flags=flags, timelimit=timelimit, order=order)
 
-function (f::FFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt},
-                                    u::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    # perform transform
+function (f::FFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt}, u::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     FFTW.unsafe_execute!(f.plan, parent(u), parent(û))
-
-    # normalise
     parent(û) .*= (1/(Nz*Nt))
-
     return û
 end
 
-function (f::FFTPlan!{Ny, Nz, Nt})(û::VectorField{N, S}, u::VectorField{N, P}) where
-            {Ny, Nz, Nt, N, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}}
+function (f::FFTPlan!{Ny, Nz, Nt})(û::VectorField{N, S}, u::VectorField{N, P}) where {Ny, Nz, Nt, N, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}}
     for i in 1:N
         f(û[i], u[i])
     end
-
     return û
 end
 
+
 struct IFFTPlan!{Ny, Nz, Nt, PLAN}
     plan::PLAN
+    cache::Array{ComplexF64, 3}
 
     function IFFTPlan!(û::SpectralField{Ny, Nz, Nt};
                         flags::UInt32=EXHAUSTIVE,
                         timelimit::Real=NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
-        plan = FFTW.plan_brfft(similar(parent(û)), Nz, order;
-                                flags=flags, timelimit=timelimit)
-        new{Ny, Nz, Nt, typeof(plan)}(plan)
+        plan = FFTW.plan_brfft(similar(parent(û)), Nz, order; flags=flags, timelimit=timelimit)
+        new{Ny, Nz, Nt, typeof(plan)}(plan, similar(parent(û)))
     end
 end
 
 IFFTPlan!(grid::Grid{S, T}; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T); flags=flags, timelimit=timelimit, order=order)
 
-function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
-                                    û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    # perform transform
-    return f(u, û, similar(û))
-end
-
-function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}) where
-            {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
+function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}) where {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
     for i in 1:N
-        f(u[i], û[i], similar(û[i]))
+        f(u[i], û[i])
     end
-
     return u
 end
 
-function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt},
-                                    û::SpectralField{Ny, Nz, Nt},
-                                    û_tmp::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    # copy spectral contents to temporary field
-    û_tmp .= û
-
-    # perform transform
-    FFTW.unsafe_execute!(f.plan, parent(û_tmp), parent(u))
-
+function (f::IFFTPlan!{Ny, Nz, Nt})(u::PhysicalField{Ny, Nz, Nt}, û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    f.cache .= û
+    FFTW.unsafe_execute!(f.plan, f.cache, parent(u))
     return u
 end
 
-function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}, û_tmp::VectorField{N, S}) where
-            {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
+function (f::IFFTPlan!{Ny, Nz, Nt})(u::VectorField{N, P}, û::VectorField{N, S}) where {Ny, Nz, Nt, N, P<:PhysicalField{Ny, Nz, Nt}, S<:SpectralField{Ny, Nz, Nt}}
     for i in 1:N
-        f(u[i], û[i], û_tmp[i])
+        f(u[i], û[i])
     end
-
     return u
 end
