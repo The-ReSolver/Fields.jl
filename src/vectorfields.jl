@@ -11,9 +11,8 @@ struct VectorField{N, S} <: AbstractVector{S}
 end
 
 # outer constructor based off grid
-function VectorField(grid::Grid; N::Int=3, fieldType::Type{T}=SpectralField) where {T<:Union{SpectralField, PhysicalField}}
-    return VectorField([fieldType(grid) for i in 1:N]...)
-end
+VectorField(grid::Grid; N::Int=3, fieldType::Type{T}=SpectralField) where {T<:Union{SpectralField, PhysicalField}} = VectorField([fieldType(grid) for i in 1:N]...)
+VectorField(grid::Grid, dealias::Bool=true; N::Int=3) = VectorField([PhysicalField(grid, dealias) for i in 1:N]...)
 
 # outer constructor based on grid and functions
 VectorField(grid::Grid, funcs::Vararg) = VectorField([PhysicalField(grid, funcs[i]) for i in 1:length(funcs)]...)

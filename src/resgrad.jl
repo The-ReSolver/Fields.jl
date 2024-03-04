@@ -2,15 +2,15 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, DEALIAS, PLAN, IPLAN}
     out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
     proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}}
     spec_cache::Vector{SpectralField{Ny, Nz, Nt, Grid{S, T, D}, T, false, Array{Complex{T}, 3}}}
     phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}}}
-    fft::FFTPlan!{Ny, Nz, Nt, PLAN}
-    ifft::IFFTPlan!{Ny, Nz, Nt, IPLAN}
+    fft::FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
+    ifft::IFFTPlan!{Ny, Nz, Nt, DEALIAS, IPLAN}
     base::Vector{Float64}
     Re_recip::T
     Ro::T
@@ -38,6 +38,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, PLAN, IPLAN}
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
             eltype(phys_cache[1]),
+            false,
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(out,
                                 ψs,

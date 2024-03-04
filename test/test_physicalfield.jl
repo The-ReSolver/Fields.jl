@@ -10,7 +10,8 @@
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 
         # intialise using different constructors
-        @test isa(PhysicalField(grid), PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}})
+        @test PhysicalField(grid) isa PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, false}
+        @test PhysicalField(grid, true) isa PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, true}
 
         # construct from function
         fun(y, z, t) = (1 - y^2)*exp(cos(z))*atan(sin(t))
@@ -21,6 +22,16 @@
                 out[ny, nz, nt] = fun(y[ny], z[nz], t[nt])
         end
         @test f == out
+
+        # construct dealiased from function
+        g = PhysicalField(grid, fun, true)
+        out = zeros(Ny, ceil(Int, 3*Nz/2), ceil(Int, 3*Nt/2))
+        z_padded = (0:(size(out, 2) - 1))*(2π/(size(out, 2)*β))
+        t_padded = (0:(size(out, 3) - 1))*(2π/(size(out, 3)*ω))
+        for nt in eachindex(t_padded), nz in eachindex(z_padded), ny in 1:Ny
+                out[ny, nz, nt] = fun(y[ny], z_padded[nz], t_padded[nt])
+        end
+        @test g == out
 end
 
 @testset "Physical Field Broadcasting           " begin
