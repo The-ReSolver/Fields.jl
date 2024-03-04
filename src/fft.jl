@@ -13,13 +13,41 @@ const PATIENT = FFTW.PATIENT
 const WISDOM_ONLY = FFTW.WISDOM_ONLY
 const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
 
-# TODO: verify this
-padded_size(Nz, Nt) = (Nz + ((Nz + 1) >> 1), Nt + ((Nt + 1) >> 1))
+padded_size(Nz, Nt) = (ceil(Int, 3*Nz/2), ceil(Int, 3*Nt/2))
 
 # TODO: make sure allocations are zero
-# FIXME: copying doesn't take into account shift
-copy_to_truncated!(truncated, padded) = copyto!(truncated, @view(padded[:, size(truncated)[2:3]...]))
-copy_to_padded!(padded, truncated) = copyto!(@view(padded[:, size(truncated)[2:3]]), truncated)
+function copy_to_truncated!(truncated, padded)
+    Nz, Nt = size(truncated)[2:3]
+    Nt_padded = size(padded, 3)
+    if Nt > 1
+        for nt in 1:floor(Int, Nt/2)
+            copyto!(@view(truncated[:, :, nt]), @view(padded[:, 1:Nz, nt]))
+        end
+        for nt in floor(Int, Nt/2 + 1):Nt
+            copyto!(@view(truncated[:, :, nt]), @view(padded[:, 1:Nz, nt + (Nt_padded - Nt)]))
+        end
+    else
+        copyto!(@view(truncated[:, :, 1]), @view(padded[:, 1:Nz, 1]))
+    end
+    return truncated
+end
+function copy_to_padded!(padded, truncated)
+    Nz, Nt = size(truncated)[2:3]
+    Nt_padded = size(padded, 3)
+    if Nt > 1
+        for nt in 1:floor(Int, Nt/2)
+            @views copyto!(padded[:, 1:Nz, nt], truncated[:, :, nt])
+        end
+        for nt in floor(Int, Nt/2 + 1):Nt
+            @views copyto!(padded[:, 1:Nz, nt + (Nt_padded - Nt)], truncated[:, :, nt])
+        end
+    else
+        @views copyto!(padded[:, 1:Nz, 1], truncated[:, :, 1])
+    end
+    return padded
+end
+
+apply_mask!(padded::Array{T, 3}) where {T} = (padded .= zero(T); return padded)
 
 
 struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
@@ -30,13 +58,15 @@ struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
                         flags::UInt32=EXHAUSTIVE,
                         timelimit::Real=NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
-        padded = dealias ? zeros(ComplexF64, Ny, padded_size((Nz >> 1) + 1, Nt)...) : zeros(ComplexF64, 0, 0, 0)
+        Nz_padded, Nt_padded = padded_size(Nz, Nt)
+        padded = dealias ? zeros(ComplexF64, Ny, (Nz_padded >> 1) + 1, Nt_padded) : zeros(ComplexF64, 0, 0, 0)
         plan = FFTW.plan_rfft(similar(parent(u)), order; flags=flags, timelimit=timelimit)
         new{Ny, Nz, Nt, dealias, typeof(plan)}(plan, padded)
     end
 end
 FFTPlan!(grid::Grid{S, T}, dealias::Bool=false; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = FFTPlan!(PhysicalField(grid, dealias, T), dealias; flags=flags, timelimit=timelimit, order=order)
 
+# TODO: redo type parameters to be able to use FFTW.unsafe_execute
 function (f::FFTPlan!{<:Any, <:Any, <:Any, true})(û::SpectralField, u::PhysicalField)
     mul!(f.padded, f.plan, parent(u)) # let FFTW do the size checks instead of prescribing from type parameters
     copy_to_truncated!(û, f.padded)
@@ -71,8 +101,9 @@ struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
                         timelimit::Real=NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
         if dealias
-            padded = zeros(ComplexF64, Ny, padded_size((Nz >> 1) + 1, Nt)...)
-            plan = FFTW.plan_brfft(similar(padded), Nz, order; flags=flags, timelimit=timelimit)
+            Nz_padded, Nt_padded = padded_size(Nz, Nt)
+            padded = zeros(ComplexF64, Ny, (Nz_padded >> 1) + 1, Nt_padded)
+            plan = FFTW.plan_brfft(similar(padded), Nz_padded, order; flags=flags, timelimit=timelimit)
         else
             padded = zeros(ComplexF64, 0, 0, 0)
             plan = FFTW.plan_brfft(similar(parent(û)), Nz, order; flags=flags, timelimit=timelimit)
@@ -83,7 +114,7 @@ end
 IFFTPlan!(grid::Grid{S, T}, dealias::Bool=false; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T), dealias; flags=flags, timelimit=timelimit, order=order)
 
 function (f::IFFTPlan!{<:Any, <:Any, <:Any, true})(u::PhysicalField, û::SpectralField)
-    copy_to_padded!(f.padded, û)
+    copy_to_padded!(apply_mask!(f.padded), û)
     mul!(parent(u), f.plan, f.padded) # let FFTW do the size checks instead of prescribing from type parameters
     return u
 end

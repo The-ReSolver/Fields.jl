@@ -12,10 +12,9 @@ end
 PhysicalField(grid::Grid{S}, fun, dealias::Bool=false, ::Type{T}=Float64) where {T, S} = PhysicalField{dealias}(grid, field_from_function(fun, points(grid), grid.dom, Val(dealias)))
 PhysicalField(grid::Grid{S}, dealias::Bool=false, ::Type{T}=Float64) where {S, T<:Real} = PhysicalField(grid, (y,z,t)->zero(T), dealias, T)
 
-# TODO: check this produces an array of the correct size
 function field_from_function(fun, grid_points, dom, ::Val{true})
     Nz, Nt = length.(grid_points[2:3])
-    z_padded, t_padded = map(x->(0:(x[2] - 1))*(2π/(dom[x[1]]*x[2])), enumerate([ceil(Int, 3*Nz/2), ceil(Int, 3*Nt/2)]))
+    z_padded, t_padded = map(x->(0:(x[2] - 1))*(2π/(dom[x[1]]*x[2])), enumerate(padded_size(Nz, Nt)))
     return fun.(reshape(grid_points[1], :, 1, 1), reshape(z_padded, 1, :, 1), reshape(t_padded, 1, 1, :))
 end
 field_from_function(fun, grid_points, ::Any, ::Val{false}) = fun.(reshape(grid_points[1], :, 1, 1), reshape(grid_points[2], 1, :, 1), reshape(grid_points[3], 1, 1, :))
