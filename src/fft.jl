@@ -76,8 +76,7 @@ end
 
 function (f::FFTPlan!{Ny, Nz, Nt, false})(û::SpectralField{Ny, Nz, Nt}, u::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     FFTW.unsafe_execute!(f.plan, parent(u), parent(û))
-    # TODO: remove unnecessary call to parent
-    parent(û) .*= (1/(Nz*Nt))
+    û .*= (1/(Nz*Nt))
     return û
 end
 
