@@ -15,19 +15,14 @@ const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
 
 padded_size(Nz, Nt) = (ceil(Int, 3*Nz/2), ceil(Int, 3*Nt/2))
 
-# TODO: make sure allocations are zero
 function copy_to_truncated!(truncated, padded)
     Nz, Nt = size(truncated)[2:3]
     Nt_padded = size(padded, 3)
     if Nt > 1
-        for nt in 1:floor(Int, Nt/2)
-            copyto!(@view(truncated[:, :, nt]), @view(padded[:, 1:Nz, nt]))
-        end
-        for nt in floor(Int, Nt/2 + 1):Nt
-            copyto!(@view(truncated[:, :, nt]), @view(padded[:, 1:Nz, nt + (Nt_padded - Nt)]))
-        end
+        @views copyto!(truncated[:, :, 1:floor(Int, Nt/2)], padded[:, 1:Nz, 1:floor(Int, Nt/2)])
+        @views copyto!(truncated[:, :, floor(Int, Nt/2 + 1):Nt], padded[:, 1:Nz, (floor(Int, Nt/2 + 1) + Nt_padded - Nt):Nt_padded])
     else
-        copyto!(@view(truncated[:, :, 1]), @view(padded[:, 1:Nz, 1]))
+        @views copyto!(truncated[:, :, 1], padded[:, 1:Nz, 1])
     end
     return truncated
 end
@@ -35,12 +30,8 @@ function copy_to_padded!(padded, truncated)
     Nz, Nt = size(truncated)[2:3]
     Nt_padded = size(padded, 3)
     if Nt > 1
-        for nt in 1:floor(Int, Nt/2)
-            @views copyto!(padded[:, 1:Nz, nt], truncated[:, :, nt])
-        end
-        for nt in floor(Int, Nt/2 + 1):Nt
-            @views copyto!(padded[:, 1:Nz, nt + (Nt_padded - Nt)], truncated[:, :, nt])
-        end
+        @views copyto!(padded[:, 1:Nz, 1:floor(Int, Nt/2)], truncated[:, :, 1:floor(Int, Nt/2)])
+        @views copyto!(padded[:, 1:Nz, (floor(Int, Nt/2 + 1) + Nt_padded - Nt):Nt_padded], truncated[:, :, floor(Int, Nt/2 + 1):Nt])
     else
         @views copyto!(padded[:, 1:Nz, 1], truncated[:, :, 1])
     end
