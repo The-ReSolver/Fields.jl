@@ -66,9 +66,8 @@ struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
 end
 FFTPlan!(grid::Grid{S, T}, dealias::Bool=false; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = FFTPlan!(PhysicalField(grid, dealias, T), dealias; flags=flags, timelimit=timelimit, order=order)
 
-# TODO: redo type parameters to be able to use FFTW.unsafe_execute
-function (f::FFTPlan!{<:Any, <:Any, <:Any, true})(û::SpectralField, u::PhysicalField)
-    mul!(f.padded, f.plan, parent(u)) # let FFTW do the size checks instead of prescribing from type parameters
+function (f::FFTPlan!{Ny, Nz, Nt, true})(û::SpectralField{Ny, Nz, Nt}, u::PhysicalField{Ny, Nz, Nt, <:Any, <:Any, <:Any, true}) where {Ny, Nz, Nt}
+    FFTW.unsafe_execute!(f.plan, parent(u), f.padded)
     copy_to_truncated!(û, f.padded)
     û .*= (1/prod(size(u)[2:3]))
     return û
@@ -112,9 +111,9 @@ struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
 end
 IFFTPlan!(grid::Grid{S, T}, dealias::Bool=false; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T), dealias; flags=flags, timelimit=timelimit, order=order)
 
-function (f::IFFTPlan!{<:Any, <:Any, <:Any, true})(u::PhysicalField, û::SpectralField)
+function (f::IFFTPlan!{Ny, Nz, Nt, true})(u::PhysicalField{Ny, Nz, Nt, <:Any, <:Any, <:Any, true}, û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     copy_to_padded!(apply_mask!(f.padded), û)
-    mul!(parent(u), f.plan, f.padded) # let FFTW do the size checks instead of prescribing from type parameters
+    FFTW.unsafe_execute!(f.plan, f.padded, parent(u))
     return u
 end
 
