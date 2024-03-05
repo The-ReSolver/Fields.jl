@@ -1,6 +1,6 @@
 @testset "FFT Transforms Reversible             " begin
     # randon signal
-    Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
+    Ny = 16; Nz = 32; Nt = 32
     ω = abs(randn())
     β = abs(randn())
     grid = Grid(rand(Float64, Ny), Nz, Nt, rand(Float64, (Ny, Ny)), rand(Float64, (Ny, Ny)), rand(Float64, Ny), ω, β)

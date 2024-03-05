@@ -79,10 +79,8 @@ end
 
 
 # TODO: add ability to omit caching copy
-# TODO: remove unnecessary extra cached array
 struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     plan::PLAN
-    cache::Array{ComplexF64, 3}
     padded::Array{ComplexF64, 3}
 
     function IFFTPlan!(û::SpectralField{Ny, Nz, Nt}, dealias::Bool=false;
@@ -94,10 +92,10 @@ struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
             padded = zeros(ComplexF64, Ny, (Nz_padded >> 1) + 1, Nt_padded)
             plan = FFTW.plan_brfft(similar(padded), Nz_padded, order; flags=flags, timelimit=timelimit)
         else
-            padded = zeros(ComplexF64, 0, 0, 0)
+            padded = similar(parent(û))
             plan = FFTW.plan_brfft(similar(parent(û)), Nz, order; flags=flags, timelimit=timelimit)
         end
-        new{Ny, Nz, Nt, dealias, typeof(plan)}(plan, similar(parent(û)), padded)
+        new{Ny, Nz, Nt, dealias, typeof(plan)}(plan, padded)
     end
 end
 IFFTPlan!(grid::Grid{S, T}, dealias::Bool=false; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T), dealias; flags=flags, timelimit=timelimit, order=order)
@@ -109,8 +107,8 @@ function (f::IFFTPlan!{Ny, Nz, Nt, true})(u::PhysicalField{Ny, Nz, Nt, <:Any, <:
 end
 
 function (f::IFFTPlan!{Ny, Nz, Nt, false})(u::PhysicalField{Ny, Nz, Nt}, û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    f.cache .= û
-    FFTW.unsafe_execute!(f.plan, f.cache, parent(u))
+    f.padded .= û
+    FFTW.unsafe_execute!(f.plan, f.padded, parent(u))
     return u
 end
 
