@@ -78,7 +78,6 @@ function (f::FFTPlan!)(û::VectorField{N, S}, u::VectorField{N, P}) where {N, S
 end
 
 
-# TODO: add ability to omit caching copy
 struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     plan::PLAN
     padded::Array{ComplexF64, 3}
@@ -106,9 +105,13 @@ function (f::IFFTPlan!{Ny, Nz, Nt, true})(u::PhysicalField{Ny, Nz, Nt, <:Any, <:
     return u
 end
 
-function (f::IFFTPlan!{Ny, Nz, Nt, false})(u::PhysicalField{Ny, Nz, Nt}, û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    f.padded .= û
-    FFTW.unsafe_execute!(f.plan, f.padded, parent(u))
+function (f::IFFTPlan!{Ny, Nz, Nt, false})(u::PhysicalField{Ny, Nz, Nt}, û::SpectralField{Ny, Nz, Nt}, safe::Bool=true) where {Ny, Nz, Nt}
+    if safe
+        f.padded .= û
+        FFTW.unsafe_execute!(f.plan, f.padded, parent(u))
+    else
+        FFTW.unsafe_execute!(f.plan, parent(û), parent(u))
+    end
     return u
 end
 
