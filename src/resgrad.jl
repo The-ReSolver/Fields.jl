@@ -8,25 +8,25 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, DEALIAS, PLAN, IPLAN}
     ws::Vector{Float64}
     proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}}
     spec_cache::Vector{SpectralField{Ny, Nz, Nt, Grid{S, T, D}, T, false, Array{Complex{T}, 3}}}
-    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}}}
+    phys_cache::Vector{PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}, DEALIAS}}
     fft::FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, DEALIAS, IPLAN}
     base::Vector{Float64}
     Re_recip::T
     Ro::T
 
-    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real, free_mean::Bool=false) where {S}
+    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real, free_mean::Bool=false, dealias::Bool=true) where {S}
         # initialise output vector field
         out = SpectralField(grid, ψs)
 
         # create field cache
-        proj_cache = [SpectralField(grid, ψs) for _ in 1:2]
-        spec_cache = [SpectralField(grid)     for _ in 1:60]
-        phys_cache = [PhysicalField(grid)     for _ in 1:35]
+        proj_cache = [SpectralField(grid, ψs)      for _ in 1:2]
+        spec_cache = [SpectralField(grid)          for _ in 1:60]
+        phys_cache = [PhysicalField(grid, dealias) for _ in 1:35]
 
         # create transform plans
-        FFT! = FFTPlan!(grid)
-        IFFT! = IFFTPlan!(grid)
+        FFT! = FFTPlan!(grid, dealias)
+        IFFT! = IFFTPlan!(grid, dealias)
 
         # convert parameters to compatible type
         Re = convert(eltype(phys_cache[1]), Re)
@@ -38,7 +38,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, DEALIAS, PLAN, IPLAN}
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
             eltype(phys_cache[1]),
-            false,
+            dealias,
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(out,
                                 ψs,
