@@ -76,7 +76,6 @@ find_field(::Any, rest) = find_field(rest)
 find_field(x) = x
 find_field(::Tuple{}) = nothing
 
-# TODO: check if this broadcasts over all the arrays or goes into the underlying arrays
 @inline function Base.copyto!(dest::VectorField{N}, bc::Broadcast.Broadcasted{VectorFieldStyle}) where {N}
     for i in 1:N
         copyto!(dest.elements[i], unpack(bc, i))
