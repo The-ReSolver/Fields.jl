@@ -40,6 +40,17 @@ end
 
 apply_mask!(padded::Array{T}) where {T} = (padded .= zero(T); return padded)
 
+function apply_symmetry!(array::Array)
+    for i in axes(array, 1), j in 2:((size(array, 3) >> 1) + 1)
+        pos = array[i, 1, j]
+        neg = array[i, 1, end - j + 2]
+        _re = 0.5*(real(pos) + real(neg))
+        _im = 0.5*(imag(pos) - imag(neg))
+        array[i, 1, j] = _re + 1im*_im
+        array[i, 1, end - j + 2] = _re - 1im*_im
+    end
+    return array
+end
 
 struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     plan::PLAN
@@ -99,13 +110,16 @@ struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
 end
 IFFTPlan!(grid::Grid{S, T}, dealias::Bool=false; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T), dealias; flags=flags, timelimit=timelimit, order=order)
 
+# TODO: should come up with a better way to do this than just applying symmetry manually
 function (f::IFFTPlan!{Ny, Nz, Nt, true})(u::PhysicalField{Ny, Nz, Nt, <:Any, <:Any, <:Any, true}, û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    apply_symmetry!(parent(û))
     copy_to_padded!(apply_mask!(f.padded), û)
     FFTW.unsafe_execute!(f.plan, f.padded, parent(u))
     return u
 end
 
 function (f::IFFTPlan!{Ny, Nz, Nt, false})(u::PhysicalField{Ny, Nz, Nt}, û::SpectralField{Ny, Nz, Nt}, safe::Bool=true) where {Ny, Nz, Nt}
+    apply_symmetry!(parent(û))
     if safe
         f.padded .= û
         FFTW.unsafe_execute!(f.plan, f.padded, parent(u))

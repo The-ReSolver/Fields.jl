@@ -8,9 +8,10 @@ Dy2 = chebddiff(Ny)
 β = 1.0
 grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Ny), ω, β)
 FFT! = FFTPlan!(grid, flags=ESTIMATE)
+modes = Array{ComplexF64}(undef, 3*Ny, M, (Nz >> 1) + 1, Nt)
 
 # initialise residual gradient cache
-cache = ResGrad(grid, Array{ComplexF64}(undef, Ny, M, Nz, Nt), rand(Float64, Ny), Re, Ro)
+cache = ResGrad(grid, modes, y, Re, Ro)
 
 # initialise functions
 u_fun(y, z, t)       = (y^3)*exp(cos(z))*sin(t)
@@ -142,6 +143,21 @@ end
     @test cache.spec_cache[55] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rxdudz_fun))
     @test cache.spec_cache[56] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rydvdz_fun))
     @test cache.spec_cache[57] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rzdwdz_fun))
+end
+
+@testset "Residual Gradient Symmetry            " begin
+    a = SpectralField(grid, modes)
+    a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
+    Fields.apply_symmetry!(parent(a))
+    cache(a)
+    symmetric = true
+    for i in 2:((Nt >> 1) + 1)
+        if !isapprox(cache.out[:, 1, i], cache.out[:, 1, end - i + 2], rtol=1e-9)
+            symmetric = false
+            break
+        end
+    end
+    @test symmetric
 end
 
 @testset "Optimal Frequency                     " begin

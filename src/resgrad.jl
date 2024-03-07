@@ -151,7 +151,7 @@ function (f::ResGrad)(F, G, a::SpectralField)
     G === nothing ? F = f(a, false)[2] : (F = f(a, true)[2]; G .= f.out)
     return F
 end
-(f::ResGrad)(x) = f(_vectorToVelocityCoefficients!(f.proj_cache[2], x), false)[2]
+(f::ResGrad)(x::Vector{T}) where {T<:AbstractFloat} = f(_vectorToVelocityCoefficients!(f.proj_cache[2], x), false)[2]
 
 function _update_vel_cache!(cache::ResGrad) 
     # assign aliases
