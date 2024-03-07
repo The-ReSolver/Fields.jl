@@ -13,7 +13,7 @@ const PATIENT = FFTW.PATIENT
 const WISDOM_ONLY = FFTW.WISDOM_ONLY
 const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
 
-padded_size(Nz, Nt) = (ceil(Int, 3*Nz/2), ceil(Int, 3*Nt/2))
+padded_size(Nz, Nt) = (Nz + ((Nz + 2) >> 1), Nt + ((Nt + 1) >> 1))
 
 function copy_to_truncated!(truncated, padded)
     Nz, Nt = size(truncated)[2:3]
@@ -38,7 +38,7 @@ function copy_to_padded!(padded, truncated)
     return padded
 end
 
-apply_mask!(padded::Array{T, 3}) where {T} = (padded .= zero(T); return padded)
+apply_mask!(padded::Array{T}) where {T} = (padded .= zero(T); return padded)
 
 
 struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}

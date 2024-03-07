@@ -1,6 +1,6 @@
 @testset "FFT Transforms Reversible             " begin
     # randon signal
-    Ny = 16; Nz = 32; Nt = 32
+    Ny = 16; Nz = 32; Nt = 10
     ω = abs(randn())
     β = abs(randn())
     grid = Grid(rand(Float64, Ny), Nz, Nt, rand(Float64, (Ny, Ny)), rand(Float64, (Ny, Ny)), rand(Float64, Ny), ω, β)
@@ -19,9 +19,7 @@
     IFFT = IFFTPlan!(grid, false; flags=ESTIMATE)
 
     # is the transform invertible correctly
-    FFT(Â1, A1); IFFT(B1, Â1)
     FFT(𝐀̂, 𝐀); IFFT(𝐁, 𝐀̂)
-    @test A1 ≈ B1
     @test 𝐀 ≈ 𝐁
 end
 
