@@ -40,8 +40,9 @@ end
 
 apply_mask!(padded::Array{T}) where {T} = (padded .= zero(T); return padded)
 
+# TODO: test and understand this properly
 function apply_symmetry!(array::Array)
-    for i in axes(array, 1), j in 2:((size(array, 3) >> 1) + 1)
+    for i in axes(array, 1), j in 2:(((size(array, 3) - 1) >> 1) + 1)
         pos = array[i, 1, j]
         neg = array[i, 1, end - j + 2]
         _re = 0.5*(real(pos) + real(neg))
