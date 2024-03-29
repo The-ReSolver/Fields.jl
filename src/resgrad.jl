@@ -141,6 +141,9 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
         # take off the mean profile
         if !FREEMEAN
             f.out[:, 1, 1] .= 0
+            f.out[:, 1, 2:end] .*= 0.5
+        else
+            f.out[:, 1, :] .*= 0.5
         end
     end
 
