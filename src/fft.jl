@@ -13,7 +13,13 @@ const PATIENT = FFTW.PATIENT
 const WISDOM_ONLY = FFTW.WISDOM_ONLY
 const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
 
-padded_size(Nz, Nt) = (Nz + ((Nz + 2) >> 1), Nt + ((Nt + 1) >> 1))
+function padded_size(Nz, Nt)
+    Nz_padded = ceil(Int, Nz*(3/2))
+    Nt_padded = ceil(Int, Nt*(3/2))
+    Nz_padded = Nz_padded % 2 == 0 ? Nz_padded + 1 : Nz_padded
+    Nt_padded = Nt_padded % 2 == 0 ? Nt_padded + 1 : Nt_padded
+    return Nz_padded, Nt_padded
+end
 
 function copy_to_truncated!(truncated, padded)
     Nz, Nt = size(truncated)[2:3]
