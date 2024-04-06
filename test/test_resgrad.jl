@@ -1,5 +1,5 @@
 # initialise field grid
-Ny = 32; Nz = 32; Nt = 32; M = 5
+Ny = 32; Nz = 33; Nt = 33; M = 5
 Re = 100.0; Ro = 0.5
 y = chebpts(Ny)
 Dy = chebdiff(Ny)
@@ -148,7 +148,7 @@ end
 @testset "Residual Gradient Symmetry            " begin
     a = SpectralField(grid, modes)
     a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
-    Fields.apply_symmetry!(parent(a))
+    Fields.apply_symmetry!(a)
     cache(a)
     symmetric = true
     for i in 2:((Nt >> 1) + 1)

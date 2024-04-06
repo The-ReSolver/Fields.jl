@@ -25,7 +25,7 @@
 
         # construct dealiased from function
         g = PhysicalField(grid, fun, true)
-        out = zeros(Ny, ceil(Int, 3*Nz/2), ceil(Int, 3*Nt/2))
+        out = zeros(Ny, Fields.padded_size(Nz, Nt)...)
         z_padded = (0:(size(out, 2) - 1))*(2π/(size(out, 2)*β))
         t_padded = (0:(size(out, 3) - 1))*(2π/(size(out, 3)*ω))
         for nt in eachindex(t_padded), nz in eachindex(z_padded), ny in 1:Ny

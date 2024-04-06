@@ -1,8 +1,8 @@
 @testset "Vector Field Constructor              " begin
     # generate random arrays
     Ny = rand(3:50)
-    Nz = rand(3:50)
-    Nt = rand(3:50)
+    Nz = rand(3:2:51)
+    Nt = rand(3:2:51)
     u1 = rand(Float64, (Ny, Nz, Nt))
     u2 = rand(Float64, (Ny, Nz))
     v1 = rand(Float64, (Ny, Nz, Nt))
@@ -47,8 +47,8 @@ end
 @testset "Vector Field Grid Methods             " begin
     # initialise random variables
     Ny = rand(3:50)
-    Nz = rand(3:50)
-    Nt = rand(3:50)
+    Nt = rand(3:2:51)
+    Nz = rand(3:2:51)
     ω = abs(randn())
     β = abs(randn())
 
@@ -69,8 +69,8 @@ end
 @testset "Vector Field Broadcasting             " begin
     # initialise random variables
     Ny = rand(3:50)
-    Nz = rand(3:50)
-    Nt = rand(3:50)
+    Nz = rand(3:2:51)
+    Nt = rand(3:2:51)
     ω = abs(randn())
     β = abs(randn())
 
@@ -92,7 +92,7 @@ end
 
 @testset "Vector Field Norm                     " begin
     # initialise grid
-    Ny = 64; Nz = 64; Nt = 64
+    Ny = 64; Nz = 65; Nt = 65
     y = chebpts(Ny)
     Dy = chebdiff(Ny)
     Dy2 = chebddiff(Ny)

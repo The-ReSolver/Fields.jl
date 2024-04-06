@@ -1,6 +1,6 @@
 @testset "Spectral Field Constructor            " begin
         # take random variables
-        Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50); M = rand(1:Ny)
+        Ny = rand(3:50); Nz = rand(3:2:51); Nt = rand(3:2:51); M = rand(1:Ny)
         y = rand(Float64, Ny)
         Dy = rand(Float64, (Ny, Ny))
         Dy2 = rand(Float64, (Ny, Ny))
@@ -26,7 +26,7 @@ end
 
 @testset "Spectral Field Broadcasting           " begin
         # take random variables
-        Ny = rand(3:50); Nz = rand(3:50); Nt = rand(3:50)
+        Ny = rand(3:50); Nz = rand(3:2:51); Nt = rand(3:2:51)
         y = rand(Float64, Ny)
         Dy = rand(Float64, (Ny, Ny))
         Dy2 = rand(Float64, (Ny, Ny))
@@ -64,7 +64,7 @@ end
 
 @testset "Spectral Field Dot and Norm           " begin
         # initialise grid variables
-        Ny = 64; Nz = 64; Nt = 64
+        Ny = 64; Nz = 65; Nt = 65
         y = chebpts(Ny)
         Dy = chebdiff(Ny)
         Dy2 = chebddiff(Ny)
@@ -95,7 +95,7 @@ end
 
 @testset "Projected Field Norm                  " begin
         # initialise grid
-        Ny = 16; Nz = 16; Nt = 16
+        Ny = 16; Nz = 17; Nt = 17
         y = chebpts(Ny)
         Dy = rand(Ny, Ny)
         Dy2 = rand(Ny, Ny)

@@ -5,7 +5,10 @@ struct SpectralField{Ny, Nz, Nt, G, T, PROJECTED, A} <: AbstractArray{Complex{T}
     field::A
     grid::G
 
-    SpectralField{PROJECTED}(field::AbstractArray{Complex{T}, 3}, grid::Grid{S, T}) where {PROJECTED, S, T} = new{size(field, 1), S[2], S[3], typeof(grid), T, PROJECTED, typeof(field)}(field, grid)
+    function SpectralField{PROJECTED}(field::AbstractArray{Complex{T}, 3}, grid::Grid{S, T}) where {PROJECTED, S, T}
+        all(isodd.(S[2:3])) || throw(ArgumentError("Grid size must be odd!"))
+        new{size(field, 1), S[2], S[3], typeof(grid), T, PROJECTED, typeof(field)}(field, grid)
+    end
 end
 
 # construct field from grid

@@ -8,7 +8,7 @@
     dudt_fun(y, z, t) = ((1 - y^2)*exp(cos(5.8*z))*cos(t))/(sin(t)^2 + 1)
 
     # initialise original function field
-    Ny = 50; Nz = 50; Nt = 50
+    Ny = 50; Nz = 51; Nt = 51
     y = chebpts(Ny)
     Dy = chebdiff(Ny); Dy2 = chebddiff(Ny)
     # Dy = DiffMatrix(y, 5, 1); Dy2 = DiffMatrix(y, 5, 2)
