@@ -70,7 +70,7 @@ function ddt!(u::SpectralField{Ny, Nz, Nt}, dudt::SpectralField{Ny, Nz, Nt}) whe
 
     # loop over positive temporal modes multiplying by modifier
     @inbounds begin
-        for nt in 1:floor(Int, Nt/2), nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+        for nt in 1:((Nt >> 1) + 1), nz in 1:((Nz >> 1) + 1), ny in 1:Ny
             dudt[ny, nz, nt] = (1im*(nt - 1)*ω)*u[ny, nz, nt]
         end
     end
@@ -78,7 +78,7 @@ function ddt!(u::SpectralField{Ny, Nz, Nt}, dudt::SpectralField{Ny, Nz, Nt}) whe
     # loop over negative temporal modes multiplying by modifier
     if Nt > 1
         @inbounds begin
-            for nt in floor(Int, (Nt/2) + 1):Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+            for nt in ((Nt >> 1) + 2):Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
                 dudt[ny, nz, nt] = (1im*(nt - 1 - Nt)*ω)*u[ny, nz, nt]
             end
         end
