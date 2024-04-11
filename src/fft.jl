@@ -25,8 +25,8 @@ function copy_to_truncated!(truncated, padded)
     Nz, Nt = size(truncated)[2:3]
     Nt_padded = size(padded, 3)
     if Nt > 1
-        @views copyto!(truncated[:, :, 1:floor(Int, Nt/2)], padded[:, 1:Nz, 1:floor(Int, Nt/2)])
-        @views copyto!(truncated[:, :, floor(Int, Nt/2 + 1):Nt], padded[:, 1:Nz, (floor(Int, Nt/2 + 1) + Nt_padded - Nt):Nt_padded])
+        @views copyto!(truncated[:, :, 1:((Nt >> 1) + 1)], padded[:, 1:Nz, 1:((Nt >> 1) + 1)])
+        @views copyto!(truncated[:, :, ((Nt >> 1) + 2):Nt], padded[:, 1:Nz, ((Nt >> 1) + 2 + Nt_padded - Nt):Nt_padded])
     else
         @views copyto!(truncated[:, :, 1], padded[:, 1:Nz, 1])
     end
@@ -36,8 +36,8 @@ function copy_to_padded!(padded, truncated)
     Nz, Nt = size(truncated)[2:3]
     Nt_padded = size(padded, 3)
     if Nt > 1
-        @views copyto!(padded[:, 1:Nz, 1:floor(Int, Nt/2)], truncated[:, :, 1:floor(Int, Nt/2)])
-        @views copyto!(padded[:, 1:Nz, (floor(Int, Nt/2 + 1) + Nt_padded - Nt):Nt_padded], truncated[:, :, floor(Int, Nt/2 + 1):Nt])
+        @views copyto!(padded[:, 1:Nz, 1:((Nt >> 1) + 1)], truncated[:, :, 1:((Nt >> 1) + 1)])
+        @views copyto!(padded[:, 1:Nz, ((Nt >> 1) + 2 + Nt_padded - Nt):Nt_padded], truncated[:, :, ((Nt >> 1) + 2):Nt])
     else
         @views copyto!(padded[:, 1:Nz, 1], truncated[:, :, 1])
     end
@@ -46,16 +46,26 @@ end
 
 apply_mask!(padded::Array{T}) where {T} = (padded .= zero(T); return padded)
 
-function apply_symmetry!(array::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    for i in 1:Ny, j in 2:((Nt + 1)÷2)
-        pos = array[i, 1, j]
-        neg = array[i, 1, end - j + 2]
+# TODO: the apply symmetry methods technically work differently, will this cause problems?
+function apply_symmetry!(u::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    for nt in 2:((Nt + 1)÷2), ny in 1:Ny
+        pos = u[ny, 1, nt]
+        neg = u[ny, 1, end - nt + 2]
         _re = 0.5*(real(pos) + real(neg))
         _im = 0.5*(imag(pos) - imag(neg))
-        array[i, 1, j] = _re + 1im*_im
-        array[i, 1, end - j + 2] = _re - 1im*_im
+        u[ny, 1, nt] = _re + 1im*_im
+        u[ny, 1, end - nt + 2] = _re - 1im*_im
     end
-    return array
+    return u
+end
+
+function apply_symmetry!(a::SpectralField{M, Nz, Nt}, modes) where {M, Nz, Nt}
+    u = Vector{ComplexF64}(undef, size(modes, 1))
+    for nt in 2:((Nt >> 1) + 1)
+        mul!(u, @view(modes[:, :, 1, nt]), @view(a[:, 1, nt]))
+        project!(@view(a[:, 1, end - nt + 2]), conj.(u), repeat(get_ws(get_grid(a)), 3), @view(modes[:, :, 1, end - nt + 2]))
+    end
+    return a
 end
 
 struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
