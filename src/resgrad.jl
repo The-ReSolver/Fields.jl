@@ -131,9 +131,19 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
         _update_res_cache!(f)
 
         # compute the RHS of the evolution equation
-        @. dudτ = -drxdt - vdrxdy - wdrxdz                            - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
-        @. dvdτ = -drydt - vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx
-        @. dwdτ = -drzdt - vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz - f.Re_recip*(d2rzdy2 + d2rzdz2)
+        # TODO: where the hell do the factors of half come from???
+        @. dudτ = -vdrxdy - wdrxdz                           
+        @. dvdτ = -vdrydy - wdrydz + rxdudy + rydvdy + rzdwdy
+        @. dwdτ = -vdrzdy - wdrzdz + rxdudz + rydvdz + rzdwdz
+        dudτ[:, 1, 2:end] .*= 0.5
+        dvdτ[:, 1, 2:end] .*= 0.5
+        dwdτ[:, 1, 2:end] .*= 0.5
+        @. dudτ += -drxdt - f.Re_recip*(d2rxdy2 + d2rxdz2) + f.Ro*ry
+        @. dvdτ += -drydt - f.Re_recip*(d2rydy2 + d2rydz2) - f.Ro*rx
+        @. dwdτ += -drzdt - f.Re_recip*(d2rzdy2 + d2rzdz2)
+        dudτ[:, 1, 1] .*= 0.5
+        dvdτ[:, 1, 1] .*= 0.5
+        dwdτ[:, 1, 1] .*= 0.5
 
         # project to get velocity coefficient evolution
         project!(f.out, [dudτ, dvdτ, dwdτ], ws, ψs)
@@ -141,9 +151,6 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
         # take off the mean profile
         if !FREEMEAN
             f.out[:, 1, 1] .= 0
-            f.out[:, 1, 2:end] .*= 0.5
-        else
-            f.out[:, 1, :] .*= 0.5
         end
     end
 
