@@ -15,7 +15,7 @@ VectorField(grid::Grid; N::Int=3, fieldType::Type{T}=SpectralField) where {T<:Un
 VectorField(grid::Grid, dealias::Bool; N::Int=3) = VectorField([PhysicalField(grid, dealias) for i in 1:N]...)
 
 # outer constructor based on grid and functions
-VectorField(grid::Grid, funcs::Vararg) = VectorField([PhysicalField(grid, funcs[i]) for i in 1:length(funcs)]...)
+VectorField(grid::Grid, funcs::Vararg; dealias::Bool=false) = VectorField([PhysicalField(grid, funcs[i], dealias) for i in 1:length(funcs)]...)
 
 # define index style
 Base.IndexStyle(::Type{<:VectorField}) = Base.IndexLinear()
