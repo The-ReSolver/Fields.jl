@@ -69,85 +69,50 @@ rxdudz_fun(y, z, t)  = rx_fun(y, z, t)*dudz_fun(y, z, t)
 rydvdz_fun(y, z, t)  = ry_fun(y, z, t)*dvdz_fun(y, z, t)
 rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
 
+# TODO: check allocated of update methods
 @testset "Residual Gradient Velocity            " begin
     # assign velocity field
-    cache.spec_cache[1] .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun, true))
-    cache.spec_cache[2] .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun, true))
-    cache.spec_cache[3] .= FFT!(SpectralField(grid), PhysicalField(grid, w_fun, true))
+    cache.spec_cache[1] .= FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true))
 
     # compute the cache
     Fields._update_vel_cache!(cache)
 
     # test for correctness
-    @test cache.spec_cache[4]  ≈ FFT!(SpectralField(grid), PhysicalField(grid, dudt_fun,   true))
-    @test cache.spec_cache[5]  ≈ FFT!(SpectralField(grid), PhysicalField(grid, dvdt_fun,   true))
-    @test cache.spec_cache[6]  ≈ FFT!(SpectralField(grid), PhysicalField(grid, dwdt_fun,   true))
-    @test cache.spec_cache[7]  ≈ FFT!(SpectralField(grid), PhysicalField(grid, dudy_fun,   true))
-    @test cache.spec_cache[8]  ≈ FFT!(SpectralField(grid), PhysicalField(grid, dvdy_fun,   true))
-    @test cache.spec_cache[9]  ≈ FFT!(SpectralField(grid), PhysicalField(grid, dwdy_fun,   true))
-    @test cache.spec_cache[10] ≈ FFT!(SpectralField(grid), PhysicalField(grid, dudz_fun,   true))
-    @test cache.spec_cache[11] ≈ FFT!(SpectralField(grid), PhysicalField(grid, dvdz_fun,   true))
-    @test cache.spec_cache[12] ≈ FFT!(SpectralField(grid), PhysicalField(grid, dwdz_fun,   true))
-    @test cache.spec_cache[13] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2udy2_fun, true))
-    @test cache.spec_cache[14] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2vdy2_fun, true))
-    @test cache.spec_cache[15] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2wdy2_fun, true))
-    @test cache.spec_cache[16] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2udz2_fun, true))
-    @test cache.spec_cache[17] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2vdz2_fun, true))
-    @test cache.spec_cache[18] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2wdz2_fun, true))
-    @test cache.spec_cache[19] ≈ FFT!(SpectralField(grid), PhysicalField(grid, vdudy_fun,  true))
-    @test cache.spec_cache[20] ≈ FFT!(SpectralField(grid), PhysicalField(grid, wdudz_fun,  true))
-    @test cache.spec_cache[21] ≈ FFT!(SpectralField(grid), PhysicalField(grid, vdvdy_fun,  true))
-    @test cache.spec_cache[22] ≈ FFT!(SpectralField(grid), PhysicalField(grid, wdvdz_fun,  true))
-    @test cache.spec_cache[23] ≈ FFT!(SpectralField(grid), PhysicalField(grid, vdwdy_fun,  true))
-    @test cache.spec_cache[24] ≈ FFT!(SpectralField(grid), PhysicalField(grid, wdwdz_fun,  true))
+    @test cache.spec_cache[2]  ≈ FFT!(VectorField(grid), VectorField(grid, dudt_fun, dvdt_fun, dwdt_fun,       dealias=true))
+    @test cache.spec_cache[3]  ≈ FFT!(VectorField(grid), VectorField(grid, dudy_fun, dvdy_fun, dwdy_fun,       dealias=true))
+    @test cache.spec_cache[4]  ≈ FFT!(VectorField(grid), VectorField(grid, dudz_fun, dvdz_fun, dwdz_fun,       dealias=true))
+    @test cache.spec_cache[5]  ≈ FFT!(VectorField(grid), VectorField(grid, d2udy2_fun, d2vdy2_fun, d2wdy2_fun, dealias=true))
+    @test cache.spec_cache[6]  ≈ FFT!(VectorField(grid), VectorField(grid, d2udz2_fun, d2vdz2_fun, d2wdz2_fun, dealias=true))
+    @test cache.spec_cache[7]  ≈ FFT!(VectorField(grid), VectorField(grid, vdudy_fun, vdvdy_fun, vdwdy_fun,    dealias=true))
+    @test cache.spec_cache[8]  ≈ FFT!(VectorField(grid), VectorField(grid, wdudz_fun, wdvdz_fun, wdwdz_fun,    dealias=true))
 end
 
 @testset "Residual Gradient Residual            " begin
     # assign velocity and residual fields
-    cache.spec_cache[1]  .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun,  true))
-    cache.spec_cache[2]  .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun,  true))
-    cache.spec_cache[3]  .= FFT!(SpectralField(grid), PhysicalField(grid, w_fun,  true))
-    cache.spec_cache[28] .= FFT!(SpectralField(grid), PhysicalField(grid, rx_fun, true))
-    cache.spec_cache[29] .= FFT!(SpectralField(grid), PhysicalField(grid, ry_fun, true))
-    cache.spec_cache[30] .= FFT!(SpectralField(grid), PhysicalField(grid, rz_fun, true))
+    cache.spec_cache[1]  .= FFT!(VectorField(grid), VectorField(grid, u_fun,  v_fun,  w_fun,  dealias=true))
+    cache.spec_cache[10] .= FFT!(VectorField(grid), VectorField(grid, rx_fun, ry_fun, rz_fun, dealias=true))
 
     # update the cache
     Fields._update_vel_cache!(cache)
     Fields._update_res_cache!(cache)
 
     # test for correctness
-    @test cache.spec_cache[31] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drxdt_fun,   true))
-    @test cache.spec_cache[32] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drydt_fun,   true))
-    @test cache.spec_cache[33] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drzdt_fun,   true))
-    @test cache.spec_cache[34] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drxdy_fun,   true))
-    @test cache.spec_cache[35] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drydy_fun,   true))
-    @test cache.spec_cache[36] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drzdy_fun,   true))
-    @test cache.spec_cache[37] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drxdz_fun,   true))
-    @test cache.spec_cache[38] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drydz_fun,   true))
-    @test cache.spec_cache[39] ≈ FFT!(SpectralField(grid), PhysicalField(grid, drzdz_fun,   true))
-    @test cache.spec_cache[40] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2rxdy2_fun, true))
-    @test cache.spec_cache[41] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2rydy2_fun, true))
-    @test cache.spec_cache[42] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2rzdy2_fun, true))
-    @test cache.spec_cache[43] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2rxdz2_fun, true))
-    @test cache.spec_cache[44] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2rydz2_fun, true))
-    @test cache.spec_cache[45] ≈ FFT!(SpectralField(grid), PhysicalField(grid, d2rzdz2_fun, true))
-    @test cache.spec_cache[46] ≈ FFT!(SpectralField(grid), PhysicalField(grid, vdrxdy_fun,  true))
-    @test cache.spec_cache[47] ≈ FFT!(SpectralField(grid), PhysicalField(grid, wdrxdz_fun,  true))
-    @test cache.spec_cache[48] ≈ FFT!(SpectralField(grid), PhysicalField(grid, vdrydy_fun,  true))
-    @test cache.spec_cache[49] ≈ FFT!(SpectralField(grid), PhysicalField(grid, wdrydz_fun,  true))
-    @test cache.spec_cache[50] ≈ FFT!(SpectralField(grid), PhysicalField(grid, vdrzdy_fun,  true))
-    @test cache.spec_cache[51] ≈ FFT!(SpectralField(grid), PhysicalField(grid, wdrzdz_fun,  true))
-    @test cache.spec_cache[52] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rxdudy_fun,  true))
-    @test cache.spec_cache[53] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rydvdy_fun,  true))
-    @test cache.spec_cache[54] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rzdwdy_fun,  true))
-    @test cache.spec_cache[55] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rxdudz_fun,  true))
-    @test cache.spec_cache[56] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rydvdz_fun,  true))
-    @test cache.spec_cache[57] ≈ FFT!(SpectralField(grid), PhysicalField(grid, rzdwdz_fun,  true))
+    @test cache.spec_cache[11] ≈ FFT!(VectorField(grid), VectorField(grid, drxdt_fun, drydt_fun, drzdt_fun,        dealias=true))
+    @test cache.spec_cache[12] ≈ FFT!(VectorField(grid), VectorField(grid, drxdy_fun, drydy_fun, drzdy_fun,        dealias=true))
+    @test cache.spec_cache[13] ≈ FFT!(VectorField(grid), VectorField(grid, drxdz_fun, drydz_fun, drzdz_fun,        dealias=true))
+    @test cache.spec_cache[14] ≈ FFT!(VectorField(grid), VectorField(grid, d2rxdy2_fun, d2rydy2_fun, d2rzdy2_fun,  dealias=true))
+    @test cache.spec_cache[15] ≈ FFT!(VectorField(grid), VectorField(grid, d2rxdz2_fun, d2rydz2_fun, d2rzdz2_fun,  dealias=true))
+    @test cache.spec_cache[16] ≈ FFT!(VectorField(grid), VectorField(grid, vdrxdy_fun, vdrydy_fun, vdrzdy_fun,     dealias=true))
+    @test cache.spec_cache[17] ≈ FFT!(VectorField(grid), VectorField(grid, wdrxdz_fun, wdrydz_fun, wdrzdz_fun,     dealias=true))
+    @test cache.spec_cache[18] ≈ FFT!(VectorField(grid), VectorField(grid, (y, z, t)->0.0, rxdudy_fun, rxdudz_fun, dealias=true))
+    @test cache.spec_cache[19] ≈ FFT!(VectorField(grid), VectorField(grid, (y, z, t)->0.0, rydvdy_fun, rydvdz_fun, dealias=true))
+    @test cache.spec_cache[20] ≈ FFT!(VectorField(grid), VectorField(grid, (y, z, t)->0.0, rzdwdy_fun, rzdwdz_fun, dealias=true))
 end
 
 @testset "Residual Gradient Symmetry            " begin
     a = SpectralField(grid, modes)
     a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
+    a[:, 1, 1] .= real.(a[:, 1, 1])
     Fields.apply_symmetry!(a)
     cache(a)
     symmetric = true
@@ -162,9 +127,7 @@ end
 
 @testset "Optimal Frequency                     " begin
     # set velocity profile
-    cache.spec_cache[1] .= FFT!(SpectralField(grid), PhysicalField(grid, u_fun, true))
-    cache.spec_cache[2] .= FFT!(SpectralField(grid), PhysicalField(grid, v_fun, true))
-    cache.spec_cache[3] .= FFT!(SpectralField(grid), PhysicalField(grid, w_fun, true))
+    cache.spec_cache[1] .= FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true))
 
     # run the cache update
     Fields._update_vel_cache!(cache)
