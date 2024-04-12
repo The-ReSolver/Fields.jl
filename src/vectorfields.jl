@@ -41,6 +41,14 @@ Base.vcat(q::VectorField, p::VectorField) = VectorField(q..., p...)
 LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} = sum(LinearAlgebra.dot(q[i], p[i]) for i = 1:N)
 LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
 
+# cross product with constant vector
+function cross!(vu::VectorField{3, S}, v::AbstractVector, u::VectorField{3, S}) where {S}
+    @. vu[1] = v[2]*u[3] - v[3]*u[2]
+    @. vu[2] = v[3]*u[1] - v[1]*u[3]
+    @. vu[3] = v[1]*u[2] - v[2]*u[1]
+    return vu
+end
+
 # method to extract grid
 get_grid(q::VectorField) = get_grid(q[1])
 
