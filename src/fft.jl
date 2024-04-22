@@ -6,6 +6,8 @@
 #   - Nz_spec = (Nz_phys >> 1) + 1
 #   - Nt_spec = Nt_phys
 
+# key to proper symmetry is the identity "((Nt - 1) >> 1) + 1"
+
 const ESTIMATE = FFTW.ESTIMATE
 const EXHAUSTIVE = FFTW.EXHAUSTIVE
 const MEASURE = FFTW.MEASURE
@@ -16,8 +18,8 @@ const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
 function padded_size(Nz, Nt)
     Nz_padded = ceil(Int, Nz*(3/2))
     Nt_padded = ceil(Int, Nt*(3/2))
-    Nz_padded = Nz_padded % 2 == 0 ? Nz_padded + 1 : Nz_padded
-    Nt_padded = Nt_padded % 2 == 0 ? Nt_padded + 1 : Nt_padded
+    Nz_padded = (Nz_padded - Nz) % 2 == 0 ? Nz_padded : Nz_padded + 1
+    Nt_padded = (Nt_padded - Nt) % 2 == 0 ? Nt_padded : Nt_padded + 1
     return Nz_padded, Nt_padded
 end
 
@@ -25,8 +27,14 @@ function copy_to_truncated!(truncated, padded)
     Nz, Nt = size(truncated)[2:3]
     Nt_padded = size(padded, 3)
     if Nt > 1
-        @views copyto!(truncated[:, :, 1:((Nt >> 1) + 1)], padded[:, 1:Nz, 1:((Nt >> 1) + 1)])
-        @views copyto!(truncated[:, :, ((Nt >> 1) + 2):Nt], padded[:, 1:Nz, ((Nt >> 1) + 2 + Nt_padded - Nt):Nt_padded])
+        if Nt % 2 == 0
+            # FIXME: doesn't work for even grid numbers, should figure out why at some point
+            @views copyto!(truncated[:, :, 1:((Nt >> 1) + 1)], padded[:, 1:Nz, 1:((Nt >> 1) + 1)])
+            @views copyto!(truncated[:, :, ((Nt >> 1) + 2):Nt], padded[:, 1:Nz, ((Nt >> 1) + 2 + Nt_padded - Nt):Nt_padded])
+        else
+            @views copyto!(truncated[:, :, 1:((Nt >> 1) + 1)], padded[:, 1:Nz, 1:((Nt >> 1) + 1)])
+            @views copyto!(truncated[:, :, ((Nt >> 1) + 2):Nt], padded[:, 1:Nz, ((Nt >> 1) + 2 + Nt_padded - Nt):Nt_padded])
+        end
     else
         @views copyto!(truncated[:, :, 1], padded[:, 1:Nz, 1])
     end
@@ -36,8 +44,13 @@ function copy_to_padded!(padded, truncated)
     Nz, Nt = size(truncated)[2:3]
     Nt_padded = size(padded, 3)
     if Nt > 1
-        @views copyto!(padded[:, 1:Nz, 1:((Nt >> 1) + 1)], truncated[:, :, 1:((Nt >> 1) + 1)])
-        @views copyto!(padded[:, 1:Nz, ((Nt >> 1) + 2 + Nt_padded - Nt):Nt_padded], truncated[:, :, ((Nt >> 1) + 2):Nt])
+        if Nt % 2 == 0
+            @views copyto!(padded[:, 1:Nz, 1:(((Nt - 1) >> 1) + 1)], truncated[:, :, 1:(((Nt - 1) >> 1) + 1)])
+            @views copyto!(padded[:, 1:Nz, (((Nt - 1) >> 1) + 2 + Nt_padded - Nt):Nt_padded], truncated[:, :, (((Nt - 1) >> 1) + 2):Nt])
+        else
+            @views copyto!(padded[:, 1:Nz, 1:(((Nt - 1) >> 1) + 1)], truncated[:, :, 1:(((Nt - 1) >> 1) + 1)])
+            @views copyto!(padded[:, 1:Nz, (((Nt - 1) >> 1) + 2 + Nt_padded - Nt):Nt_padded], truncated[:, :, (((Nt - 1) >> 1) + 2):Nt])
+        end
     else
         @views copyto!(padded[:, 1:Nz, 1], truncated[:, :, 1])
     end
@@ -46,9 +59,8 @@ end
 
 apply_mask!(padded::Array{T}) where {T} = (padded .= zero(T); return padded)
 
-# TODO: the apply symmetry methods technically work differently, will this cause problems?
 function apply_symmetry!(u::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    for nt in 2:((Nt + 1)÷2), ny in 1:Ny
+    for nt in 2:(((Nt - 1) >> 1) + 1), ny in 1:Ny
         pos = u[ny, 1, nt]
         neg = u[ny, 1, end - nt + 2]
         _re = 0.5*(real(pos) + real(neg))
@@ -59,14 +71,6 @@ function apply_symmetry!(u::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     return u
 end
 
-function apply_symmetry!(a::SpectralField{M, Nz, Nt}, modes) where {M, Nz, Nt}
-    u = Vector{ComplexF64}(undef, size(modes, 1))
-    for nt in 2:((Nt >> 1) + 1)
-        mul!(u, @view(modes[:, :, 1, nt]), @view(a[:, 1, nt]))
-        project!(@view(a[:, 1, end - nt + 2]), conj.(u), repeat(get_ws(get_grid(a)), 3), @view(modes[:, :, 1, end - nt + 2]))
-    end
-    return a
-end
 
 struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     plan::PLAN

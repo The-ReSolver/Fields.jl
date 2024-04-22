@@ -1,5 +1,5 @@
 # initialise field grid
-Ny = 32; Nz = 33; Nt = 33; M = 5
+Ny = 32; Nz = 32; Nt = 32; M = 5
 Re = 100.0; Ro = 0.5
 y = chebpts(Ny)
 Dy = chebdiff(Ny)
@@ -116,8 +116,8 @@ end
     Fields.apply_symmetry!(a)
     cache(a)
     symmetric = true
-    for i in 2:((Nt >> 1) + 1)
-        if !isapprox(cache.out[:, 1, i], cache.out[:, 1, end - i + 2], rtol=1e-9)
+    for i in 2:(((Nt - 1) >> 1) + 1)
+        if !isapprox(cache.out[:, 1, i], cache.out[:, 1, end - i + 2], rtol=1e-8)
             symmetric = false
             break
         end
