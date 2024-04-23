@@ -1,6 +1,6 @@
 module Fields
 
-using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase
+using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, JLD2
 
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!, divergence!, laplacian!
 export FFTPlan!, IFFTPlan!

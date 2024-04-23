@@ -1,11 +1,12 @@
 name = "Fields"
 uuid = "54c0c897-3bff-4ba2-acae-d4c1acf2c14a"
 authors = ["Thomas Burton <tburton5572@gmail.com>"]
-version = "0.17.0"
+version = "0.17.1"
 
 [deps]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 IniFile = "83e8ac13-25f8-5344-8a64-a9f2b223428f"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Mmap = "a63ad114-7e13-5084-954f-fe012c677804"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
