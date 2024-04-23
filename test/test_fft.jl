@@ -25,7 +25,7 @@ end
 
 @testset "FFT Dealiasing                        " begin
     # initialise fields
-    Ny = 16; Nz = 32; Nt = 32
+    Ny = 16; Nz = 33; Nt = 33
     ω = abs(randn())
     β = abs(randn())
     grid = Grid(rand(Float64, Ny), Nz, Nt, rand(Float64, (Ny, Ny)), rand(Float64, (Ny, Ny)), rand(Float64, Ny), ω, β)
@@ -42,8 +42,8 @@ end
     FFT = FFTPlan!(grid, true; flags=ESTIMATE)
     IFFT = IFFTPlan!(grid, true; flags=ESTIMATE)
 
-    @test size(FFT.padded) == (16, 25, 48)
-    @test size(IFFT.padded) == (16, 25, 48)
+    @test size(FFT.padded) == (16, 26, 51)
+    @test size(IFFT.padded) == (16, 26, 51)
 
     FFT(𝐀̂, 𝐀); IFFT(𝐁, 𝐀̂)
     @test 𝐀 ≈ 𝐁
