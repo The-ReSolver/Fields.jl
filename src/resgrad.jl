@@ -21,7 +21,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, DEALIAS, PLAN, IPLAN}
 
         # create field cache
         proj_cache = [SpectralField(grid, ψs)                    for _ in 1:2]
-        spec_cache = [VectorField(grid, fieldType=SpectralField) for _ in 1:22]
+        spec_cache = [VectorField(grid, fieldType=SpectralField) for _ in 1:23]
         phys_cache = [VectorField(grid, dealias)                 for _ in 1:13]
 
         # create transform plans
@@ -87,6 +87,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
 
     # compute the navier-stokes
     cross!(crossprod, [0, 0, 1], u)
+    # TODO: just re-use the ns field
     @. ns = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) + f.Ro*crossprod
 
     # convert to residual in terms of modal basis
@@ -102,6 +103,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
         dudτ[1][:, 1, 2:end] .*= 0.5
         dudτ[2][:, 1, 2:end] .*= 0.5
         dudτ[3][:, 1, 2:end] .*= 0.5
+        # TODO: try cross product by passing reference rather than copying values
         cross!(crossprod, [0, 0, 1], r)
         @. dudτ += -drdt - f.Re_recip*(d2rdy2 + d2rdz2) - f.Ro*crossprod
         dudτ[1][:, 1, 1] .*= 0.5
@@ -242,8 +244,18 @@ end
 
 gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1])^2)
 
+# TODO: should I use projected or unprojected NS operator (pretty sure they should be the same)
 function optimalFrequency(optimisationCache)
-    duds = optimisationCache.spec_cache[2]; duds ./= get_ω(optimisationCache.spec_cache[1])
-    navierStokesRHS = optimisationCache.spec_cache[9]
-    return dot(duds, navierStokesRHS)/(norm(duds)^2)
+    dudt       = optimisationCache.spec_cache[2]
+    d2udy2     = optimisationCache.spec_cache[5]
+    d2udz2     = optimisationCache.spec_cache[6]
+    vdudy      = optimisationCache.spec_cache[7]
+    wdudz      = optimisationCache.spec_cache[8]
+    crossprod  = optimisationCache.spec_cache[22]
+    nsOperator = optimisationCache.spec_cache[23]
+    s          = optimisationCache.proj_cache[1]
+
+    @. nsOperator = -vdudy - wdudz + optimisationCache.Re_recip*(d2udy2 + d2udz2) - optimisationCache.Ro*crossprod
+
+    return get_ω(dudt)*dot(dudt, nsOperator)/(norm(dudt)^2)
 end

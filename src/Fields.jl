@@ -3,7 +3,7 @@ module Fields
 using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, JLD2
 
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!, divergence!, laplacian!
-export FFTPlan!, IFFTPlan!
+export FFTPlan!, IFFTPlan!, apply_symmetry!
 export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
 export Grid, points, spectralfield, physicalfield, vectorfield
 export PhysicalField
@@ -12,7 +12,7 @@ export VectorField
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 export project, project!, reverse_project!, expand!
 export Evolution, Constraint
-export ResGrad
+export ResGrad, optimalFrequency
 export gd!, optimise!, OptOptions, Callback
 export generateGridOfModes
 
