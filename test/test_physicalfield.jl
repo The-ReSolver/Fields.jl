@@ -14,7 +14,7 @@
         @test PhysicalField(grid, true) isa PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, true}
 
         # construct from function
-        fun(y, z, t) = (1 - y^2)*exp(cos(z))*atan(sin(t))
+        fun(y, z, t) = (1 - y^2)*exp(cos(β*z))*atan(sin(ω*t))
         f = PhysicalField(grid, fun)
         y, z, t = points(grid)
         out = zeros(Ny, Nz, Nt)
@@ -54,4 +54,28 @@ end
 
         # test broadcasting
         @test typeof(a .+ b) == typeof(a)
+end
+
+@testset "Kinetic Energy                        " begin
+        # take random variables
+        Ny = 32; Nz = 32; Nt = 16
+        y = chebpts(Ny)
+        Dy = rand(Float64, (Ny, Ny))
+        Dy2 = rand(Float64, (Ny, Ny))
+        ws = chebws(Ny)
+        # ω = abs(randn())
+        # β = abs(randn())
+        ω = 2π
+        β = 2π
+        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+
+        _, _, t = points(grid)
+
+        # construct from function
+        fun(y, z, t) = (1 - y^2)*exp(cos(β*z))*atan(sin(ω*t))
+        f = PhysicalField(grid, fun)
+        g = VectorField(grid, fun, fun, fun)
+
+        @test Fields.energy(f) ≈ repeat([2.4315*π/β], Nt).*(atan.(sin.(ω.*t)).^2) rtol=1e-4
+        @test Fields.energy(g) ≈ repeat([2.4315*3π/β], Nt).*(atan.(sin.(ω.*t)).^2) rtol=1e-4
 end

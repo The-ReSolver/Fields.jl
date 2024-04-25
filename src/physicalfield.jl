@@ -33,6 +33,21 @@ Base.copy(u::PhysicalField) = (v = similar(u); v .= u; v)
 # method to extract grid
 get_grid(u::PhysicalField) = u.grid
 
+
+function energy!(K, p::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    q = rfft(parent(p), [2])./Nz
+    for nt in 1:Nt, nz in 2:((Nz >> 1) + 1), ny in 1:Ny
+        K[nt] += p.grid.ws[ny]*norm(q[ny, nz, nt])^2
+    end
+    for nt in 1:Nt, ny in 1:Ny
+        K[nt] += 0.5*p.grid.ws[ny]*norm(q[ny, 1, nt])^2
+    end
+    β = get_β(p)
+    K .*= 2π/β
+    return K
+end
+energy(p::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = energy!(zeros(Nt), p)
+
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl
 const PhysicalFieldStyle = Broadcast.ArrayStyle{PhysicalField}
