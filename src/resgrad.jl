@@ -252,7 +252,6 @@ function optimalFrequency(optimisationCache)
     wdudz      = optimisationCache.spec_cache[8]
     crossprod  = optimisationCache.spec_cache[22]
     nsOperator = optimisationCache.spec_cache[23]
-    s          = optimisationCache.proj_cache[1]
 
     @. nsOperator = -vdudy - wdudz + optimisationCache.Re_recip*(d2udy2 + d2udz2) - optimisationCache.Ro*crossprod
 

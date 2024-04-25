@@ -15,6 +15,7 @@ export Evolution, Constraint
 export ResGrad, optimalFrequency
 export gd!, optimise!, OptOptions, Callback
 export generateGridOfModes
+export writeSpectralField, readSpectralField, writeVectorField, readVectorField
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 
