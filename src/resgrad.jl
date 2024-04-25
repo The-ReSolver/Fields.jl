@@ -244,7 +244,6 @@ end
 
 gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1])^2)
 
-# TODO: should I use projected or unprojected NS operator (pretty sure they should be the same)
 function optimalFrequency(optimisationCache)
     dudt       = optimisationCache.spec_cache[2]
     d2udy2     = optimisationCache.spec_cache[5]

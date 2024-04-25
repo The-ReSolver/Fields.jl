@@ -5,7 +5,7 @@
 # derivatives are obtained in the most efficient manner in this space.
 
 ddy!(u::SpectralField{Ny, Nz, Nt}, dudy::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = LinearAlgebra.mul!(dudy, get_Dy(u), u)
-function ddy!(u::VectorField{N, S}, dudy::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function ddy!(u::VectorField{N, S}, dudy::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
         ddy!(u[i], dudy[i])
     end
@@ -14,7 +14,7 @@ function ddy!(u::VectorField{N, S}, dudy::VectorField{N, S}) where {N, Ny, Nz, N
 end
 
 d2dy2!(u::SpectralField{Ny, Nz, Nt}, d2udy2::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = LinearAlgebra.mul!(d2udy2, get_Dy2(u), u)
-function d2dy2!(u::VectorField{N, S}, d2udy2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function d2dy2!(u::VectorField{N, S}, d2udy2::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
         d2dy2!(u[i], d2udy2[i])
     end
@@ -35,7 +35,7 @@ function ddz!(u::SpectralField{Ny, Nz, Nt}, dudz::SpectralField{Ny, Nz, Nt}) whe
 
     return dudz
 end
-function ddz!(u::VectorField{N, S}, dudz::VectorField{N, S}) where {N, S}
+function ddz!(u::VectorField{N, S}, dudz::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
         ddz!(u[i], dudz[i])
     end
@@ -56,7 +56,7 @@ function d2dz2!(u::SpectralField{Ny, Nz, Nt}, d2udz2::SpectralField{Ny, Nz, Nt})
 
     return d2udz2
 end
-function d2dz2!(u::VectorField{N, S}, d2udz2::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function d2dz2!(u::VectorField{N, S}, d2udz2::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
         d2dz2!(u[i], d2udz2[i])
     end
@@ -86,10 +86,19 @@ function ddt!(u::SpectralField{Ny, Nz, Nt}, dudt::SpectralField{Ny, Nz, Nt}) whe
 
     return dudt
 end
-function ddt!(u::VectorField{N, S}, dudt::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function ddt!(u::VectorField{N, S}, dudt::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
         ddt!(u[i], dudt[i])
     end
 
     return dudt
+end
+
+function vorticity!(ω::VectorField{3, S}, u::VectorField{3, S}) where {S<:SpectralField}
+    dudy = ddy!(u, similar(u))
+    dudz = ddz!(u, similar(u))
+    ω[1] .=   dudy[3] .- dudz[2]
+    ω[2] .=   dudz[1]
+    ω[3] .= .-dudy[1]
+    return ω
 end

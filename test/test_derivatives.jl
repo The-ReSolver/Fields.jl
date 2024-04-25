@@ -1,11 +1,22 @@
 @testset "Field Derivatives                     " begin
     # define functions
-    u_fun(y, z, t) = (1 - y^2)*exp(cos(5.8*z))*atan(sin(t))
-    dudy_fun(y, z, t) = -2*y*exp(cos(5.8*z))*atan(sin(t))
+    u_fun(y, z, t)      = (1 - y^2)*exp(cos(5.8*z))*atan(sin(t))
+    dudy_fun(y, z, t)   = -2*y*exp(cos(5.8*z))*atan(sin(t))
     d2udy2_fun(y, z, t) = -2*exp(cos(5.8*z))*atan(sin(t))
-    dudz_fun(y, z, t) = -5.8*(1 - y^2)*sin(5.8*z)*exp(cos(5.8*z))*atan(sin(t))
+    dudz_fun(y, z, t)   = -5.8*(1 - y^2)*sin(5.8*z)*exp(cos(5.8*z))*atan(sin(t))
     d2udz2_fun(y, z, t) = (5.8^2)*(1 - y^2)*(sin(5.8*z)^2 - cos(5.8*z))*exp(cos(5.8*z))*atan(sin(t))
-    dudt_fun(y, z, t) = ((1 - y^2)*exp(cos(5.8*z))*cos(t))/(sin(t)^2 + 1)
+    dudt_fun(y, z, t)   = ((1 - y^2)*exp(cos(5.8*z))*cos(t))/(sin(t)^2 + 1)
+
+    v_fun(y, z, t)      = sin(π*y)*exp(sin(2.0*5.8*z))*cos(t)
+    dvdy_fun(y, z, t)   = π*cos(π*y)*exp(sin(2.0*5.8*z))*cos(t)
+    dvdz_fun(y, z, t)   = 2.0*5.8*sin(π*y)*cos(2.0*5.8*z)*exp(sin(2.0*5.8*z))*cos(t)
+
+    w_fun(y, z, t)      = (1 - y^2)*cos(5.8*z)*exp(sin(t))
+    dwdy_fun(y, z, t)   = -2*y*cos(5.8*z)*exp(sin(t))
+
+    ωx_fun(y, z, t)     = dwdy_fun(y, z, t) - dvdz_fun(y, z, t)
+    ωy_fun(y, z, t)     = dudz_fun(y, z, t)
+    ωz_fun(y, z, t)     = -dudy_fun(y, z, t)
 
     # initialise original function field
     Ny = 50; Nz = 51; Nt = 51
@@ -53,5 +64,8 @@
     @test dudt ≈ PhysicalField(grid, dudt_fun)
 
     # test vectorfield methods
-    @test ddy!(FFT(VectorField(grid, N=2), VectorField(grid, u_fun, u_fun)), VectorField(grid, N=2)) ≈ FFT(VectorField(grid, N=2), VectorField(grid, dudy_fun, dudy_fun))
+    @test ddy!(FFT(VectorField(grid, N=2), VectorField(grid, u_fun, v_fun)), VectorField(grid, N=2)) ≈ FFT(VectorField(grid, N=2), VectorField(grid, dudy_fun, dvdy_fun))
+
+    # test voriticy function
+    @test vorticity!(VectorField(grid), FFT(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun))) ≈ FFT(VectorField(grid), VectorField(grid, ωx_fun, ωy_fun, ωz_fun))
 end
