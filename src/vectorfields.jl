@@ -41,14 +41,6 @@ Base.vcat(q::VectorField, p::VectorField) = VectorField(q..., p...)
 LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} = sum(LinearAlgebra.dot(q[i], p[i]) for i = 1:N)
 LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
 
-function energy(p::VectorField{N, P}) where {N, Nt, P<:PhysicalField{<:Any, <:Any, Nt}}
-    K = zeros(Nt)
-    for i in 1:N
-        energy!(K, p[i])
-    end
-    return K
-end
-
 # cross product with constant vector
 function cross!(vu::VectorField{3, S}, v::AbstractVector, u::VectorField{3, S}) where {S}
     @. vu[1] = v[2]*u[3] - v[3]*u[2]
