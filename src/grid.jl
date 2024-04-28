@@ -28,3 +28,5 @@ Base.size(::Grid{S}) where {S} = S
 
 # overload equality method
 Base.:(==)(x::Grid{Sx}, y::Grid{Sy}) where {Sx, Sy} = (x.y == y.y && Sx[2] == Sy[2] && Sx[3] == Sy[3])
+
+interpolate(grid::Grid, S::NTuple{2, Int}) = Grid(grid.y, S..., grid.Dy..., grid.ws, get_ω(grid), get_β(grid))

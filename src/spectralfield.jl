@@ -115,11 +115,3 @@ Base.@propagate_inbounds function Base.setindex!(U::SpectralField, v, I...)
     @inbounds parent(U)[I...] = v
     return v
 end
-
-function padField(u::SpectralField{Ny, Nz, Nt, <:Any, T}, padSize::NTuple{2, Int}) where {Ny, Nz, Nt, T}
-    padded = zeros(Complex{T}, Ny, (padSize[1] >> 1) + 1, padSize[2])
-    for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
-        padded[:, nz, nt] .= u[:, nz, nt]
-    end
-    return padded
-end

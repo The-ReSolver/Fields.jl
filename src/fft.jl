@@ -155,3 +155,38 @@ function (f::IFFTPlan!)(u::VectorField{N, P}, û::VectorField{N, S}) where {N, 
     end
     return u
 end
+
+
+function (f::IFFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt}, padSize::NTuple{2, Int}) where {Ny, Nz, Nt}
+    grid_p = interpolate(get_grid(û), padSize)
+    ûp = SpectralField(grid_p)
+    u = PhysicalField(grid_p)
+    for nt in 1:Nt, nz in 2:((Nz >> 1) + 1)
+        ûp[:, nz, nt] .= û[:, nz, nt]
+    end
+    for nt in 2:((Nt >> 1) + 1)
+        ûp[:, 1, nt] .= û[:, 1, nt]
+        ûp[:, 1, end - nt + 2] .= û[:, 1, end - nt + 2]
+    end
+    ûp[:, 1, 1] .= û[:, 1, 1]
+    u.data .= brfft(parent(ûp), padSize[1], [2, 3])
+    return u
+end
+
+function (f::IFFTPlan!{Ny, Nz, Nt})(û::VectorField{N, S}, padSize::NTuple{2, Int}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+    grid_p = interpolate(get_grid(û), padSize)
+    ûp = VectorField(grid_p)
+    u = VectorField(grid_p, fieldType=PhysicalField)
+    for i in 1:N
+        for nt in 1:Nt, nz in 2:((Nz >> 1) + 1)
+            ûp[i][:, nz, nt] .= û[i][:, nz, nt]
+        end
+        for nt in 2:((Nt >> 1) + 1)
+            ûp[i][:, 1, nt] .= û[i][:, 1, nt]
+            ûp[i][:, 1, end - nt + 2] .= û[i][:, 1, end - nt + 2]
+        end
+        ûp[i][:, 1, 1] .= û[i][:, 1, 1]
+        u[i] .= brfft(ûp[i], padSize[1], [2, 3])
+    end
+    return u
+end
