@@ -18,21 +18,21 @@ energy(p::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt} = energy!(zeros(Nt), p)
 function energy(p::VectorField{N, P}) where {N, Nt, P<:PhysicalField{<:Any, <:Any, Nt}}
     K = zeros(Nt)
     for i in 1:N
-        energy!(K, p[i])
+        K .+= energy(p[i])
     end
     return K
 end
 
-function energy(u::SpectralField, IFFT::IFFTPlan!)
-    up = IFFT(PhysicalField(get_grid(u)), u)
+function energy(u::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    up = PhysicalField{false}(get_grid(u), brfft(parent(u), Nz, [2, 3]))
     return energy(up)
 end
 
-function energy(u::VectorField{N, S}, IFFT::IFFTPlan!) where {N, Nt, S<:SpectralField{<:Any, <:Any, Nt}}
+function energy(u::VectorField{N, S}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
     K = zeros(Nt)
-    up = IFFT(VectorField(get_grid(u), fieldType=PhysicalField))
+    up = [PhysicalField{false}(get_grid(u), brfft(parent(u[i]), Nz, [2, 3])) for i in 1:N]
     for i in 1:N
-        energy!(K, up[i])
+        K .+= energy(up[i])
     end
     return K
 end
