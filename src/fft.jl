@@ -186,7 +186,7 @@ function (f::IFFTPlan!{Ny, Nz, Nt})(û::VectorField{N, S}, padSize::NTuple{2, I
             ûp[i][:, 1, end - nt + 2] .= û[i][:, 1, end - nt + 2]
         end
         ûp[i][:, 1, 1] .= û[i][:, 1, 1]
-        u[i] .= brfft(ûp[i], padSize[1], [2, 3])
+        u[i] .= brfft(parent(ûp[i]), padSize[1], [2, 3])
     end
     return u
 end
