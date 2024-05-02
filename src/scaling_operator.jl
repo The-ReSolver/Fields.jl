@@ -3,6 +3,10 @@
 
 abstract type NormScaling end
 
+struct UniformScaling <: NormScaling end
+
+Base.getindex(I::UniformScaling, ::Int, ::Int, ::Int) = 1
+
 struct FarazmandScaling{T} <: NormScaling
     ω::T
     β::T

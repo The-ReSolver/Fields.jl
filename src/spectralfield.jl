@@ -91,7 +91,7 @@ function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q:
     return ((8π^2)/(β*ω))*prod
 end
 
-function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, A) where {Ny, Nz, Nt}
+function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, A::NormScaling) where {Ny, Nz, Nt}
     prod = 0.0
     ws = get_ws(p)
     for nt in 1:Nt, nz in 2:((Nz >> 1) + 1), ny in 1:Ny
@@ -106,7 +106,7 @@ function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q:
     return ((8π^2)/(get_β(p)*get_ω(p)))*prod
 end
 
-function LinearAlgebra.dot(p::SpectralField{M, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{M, Nz, Nt, <:Any, <:Any, true}, A) where {M, Nz, Nt}
+function LinearAlgebra.dot(p::SpectralField{M, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{M, Nz, Nt, <:Any, <:Any, true}, A::NormScaling) where {M, Nz, Nt}
     prod = 0.0
     for nt in 1:Nt, nz in 2:((Nz >> 1) + 1), m in 1:M
         prod += A[m, nz, nt]*real(dot(p[m, nz, nt], q[m, nz, nt]))
@@ -130,7 +130,6 @@ function LinearAlgebra.mul!(v::SpectralField{Ny, Nz, Nt}, A::NormScaling, u::Spe
     end
     return v
 end
-
 
 # ~ BROADCASTING ~
 # taken from MultiscaleArrays.jl

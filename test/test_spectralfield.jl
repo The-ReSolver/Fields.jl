@@ -75,9 +75,11 @@ end
         a = SpectralField(grid)
         a .= rand(ComplexF64, Ny, (Nz >> 1) + 1, Nt)
         A = Fields.FarazmandScaling(ω, β)
+        I = Fields.UniformScaling()
 
         # compute scaling
         b = mul!(similar(a), A, a)
+        c = mul!(similar(a), I, a)
 
         passed = true
         for ny in 1:Ny, nz in 1:((Nz >> 1) + 1), nt in 1:Nt
@@ -87,6 +89,8 @@ end
                 end
         end
         @test passed
+
+        @test c == a
 end
 
 @testset "Spectral Field Dot and Norm           " begin

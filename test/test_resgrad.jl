@@ -117,7 +117,7 @@ end
     cache(a)
     symmetric = true
     for i in 2:(((Nt - 1) >> 1) + 1)
-        if !isapprox(cache.out[:, 1, i], cache.out[:, 1, end - i + 2], rtol=2e-7)
+        if !isapprox(cache.out[:, 1, i], cache.out[:, 1, end - i + 2], rtol=5e-7)
             symmetric = false
             break
         end

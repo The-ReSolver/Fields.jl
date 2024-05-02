@@ -39,9 +39,9 @@ Base.vcat(q::VectorField, p::VectorField) = VectorField(q..., p...)
 
 # inner-product and norm
 LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} = sum(LinearAlgebra.dot(q[i], p[i]) for i = 1:N)
-LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}, A) where {N} = sum(LinearAlgebra.dot(q[i], p[i], A) for i = 1:N)
+LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}, A::NormScaling) where {N} = sum(LinearAlgebra.dot(q[i], p[i], A) for i = 1:N)
 LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
-LinearAlgebra.norm(q::VectorField, A) = sqrt(LinearAlgebra.dot(q, q, A))
+LinearAlgebra.norm(q::VectorField, A::NormScaling) = sqrt(LinearAlgebra.dot(q, q, A))
 
 function LinearAlgebra.mul!(q::VectorField{N}, A::NormScaling, p::VectorField{N}) where {N}
     for i in 1:N
