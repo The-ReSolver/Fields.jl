@@ -62,6 +62,33 @@ end
         @test e == vec.*a == a.*vec
 end
 
+@testset "Spectral Field Farazmand Scaling      " begin
+        # initialise
+        Ny = rand(3:50); Nz = rand(3:2:51); Nt = rand(3:2:51)
+        y = rand(Float64, Ny)
+        Dy = rand(Float64, (Ny, Ny))
+        Dy2 = rand(Float64, (Ny, Ny))
+        ws = rand(Float64, Ny)
+        ω = abs(randn())
+        β = abs(randn())
+        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+        a = SpectralField(grid)
+        a .= rand(ComplexF64, Ny, (Nz >> 1) + 1, Nt)
+        A = Fields.FarazmandScaling(ω, β)
+
+        # compute scaling
+        b = mul!(similar(a), A, a)
+
+        passed = true
+        for ny in 1:Ny, nz in 1:((Nz >> 1) + 1), nt in 1:Nt
+                if !(b[ny, nz, nt] ≈ a[ny, nz, nt]/(1 + (nz*β)^2 + (nt*ω)^2))
+                        passed = false
+                        break
+                end
+        end
+        @test passed
+end
+
 @testset "Spectral Field Dot and Norm           " begin
         # initialise grid variables
         Ny = 64; Nz = 65; Nt = 65
@@ -71,6 +98,7 @@ end
         ws = chebws(Ny)
         ω = abs(rand())
         β = abs(rand())
+        A = Fields.FarazmandScaling(ω, β)
 
         # initialise grid
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
@@ -91,6 +119,9 @@ end
         # test norm
         @test dot(spec1, spec2)*β*ω ≈ 13.4066 rtol=1e-6
         @test norm(spec1)^2*β*ω ≈ 58.74334913 rtol=1e-5
+
+        # test weighted norm
+        @test norm(spec1, A) ≈ sqrt(dot(spec1, mul!(similar(spec1), A, spec1)))
 end
 
 @testset "Projected Field Norm                  " begin
@@ -103,6 +134,7 @@ end
         ω = abs(rand())
         β = abs(rand())
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+        A = Fields.FarazmandScaling(ω, β)
 
         # construct modes
         M = rand(1:12)
@@ -118,4 +150,5 @@ end
         expand!(u, a, Ψ)
 
         @test norm(u) ≈ norm(a)
+        @test norm(u, A) ≈ norm(a, A)
 end

@@ -7,6 +7,8 @@ using Fields
 using ChebUtils
 using FDGrids
 
+# TODO: smart testing using ARGS
+
 include("test_projection.jl")
 include("test_grid.jl")
 include("test_generate_modes.jl")

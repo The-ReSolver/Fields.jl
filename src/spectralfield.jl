@@ -91,8 +91,45 @@ function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q:
     return ((8π^2)/(β*ω))*prod
 end
 
+function LinearAlgebra.dot(p::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, q::SpectralField{Ny, Nz, Nt, <:Any, <:Any, false}, A) where {Ny, Nz, Nt}
+    prod = 0.0
+    ws = get_ws(p)
+    for nt in 1:Nt, nz in 2:((Nz >> 1) + 1), ny in 1:Ny
+        prod += A[ny, nz, nt]*ws[ny]*real(dot(p[ny, nz, nt], q[ny, nz, nt]))
+    end
+    for nt in 2:((Nt >> 1) + 1), ny in 1:Ny
+        prod += A[ny, 1, nt]*ws[ny]*real(dot(p[ny, 1, nt], q[ny, 1, nt]))
+    end
+    for ny in 1:Ny
+        prod += 0.5*A[ny, 1, 1]*ws[ny]*real(dot(p[ny, 1, 1], q[ny, 1, 1]))
+    end
+    return ((8π^2)/(get_β(p)*get_ω(p)))*prod
+end
+
+function LinearAlgebra.dot(p::SpectralField{M, Nz, Nt, <:Any, <:Any, true}, q::SpectralField{M, Nz, Nt, <:Any, <:Any, true}, A) where {M, Nz, Nt}
+    prod = 0.0
+    for nt in 1:Nt, nz in 2:((Nz >> 1) + 1), m in 1:M
+        prod += A[m, nz, nt]*real(dot(p[m, nz, nt], q[m, nz, nt]))
+    end
+    for nt in 2:((Nt >> 1) + 1), m in 1:M
+        prod += A[m, 1, nt]*real(dot(p[m, 1, nt], q[m, 1, nt]))
+    end
+    for m in 1:M
+        prod += 0.5*A[m, 1, 1]*real(dot(p[m, 1, 1], q[m, 1, 1]))
+    end
+    return ((8π^2)/(get_β(p)*get_ω(p)))*prod
+end
+
 LinearAlgebra.norm(p::SpectralField) = sqrt(LinearAlgebra.dot(p, p))
+LinearAlgebra.norm(p::SpectralField, A) = sqrt(LinearAlgebra.dot(p, p, A))
 Base.maximum(::Function, gradient::SpectralField) = norm(gradient) # this method exists just so Optim.jl uses the correct norm in the trace
+
+function LinearAlgebra.mul!(v::SpectralField{Ny, Nz, Nt}, A::NormScaling, u::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+    for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+        v[ny, nz, nt] = A[ny, nz, nt]*u[ny, nz, nt]
+    end
+    return v
+end
 
 
 # ~ BROADCASTING ~

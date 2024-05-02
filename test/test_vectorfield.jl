@@ -90,6 +90,35 @@ end
     @test typeof(a .+ b) == typeof(a)
 end
 
+@testset "Vector Field Farazmand Scaling        " begin
+    # initialise
+    Ny = rand(3:50); Nz = rand(3:2:51); Nt = rand(3:2:51)
+    y = rand(Float64, Ny)
+    Dy = rand(Float64, (Ny, Ny))
+    Dy2 = rand(Float64, (Ny, Ny))
+    ws = rand(Float64, Ny)
+    ω = abs(randn())
+    β = abs(randn())
+    grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+    a = VectorField(grid)
+    for i in 1:3
+        a[i] .= rand(ComplexF64, Ny, (Nz >> 1) + 1, Nt)
+    end
+    A = Fields.FarazmandScaling(ω, β)
+
+    # compute scaling
+    b = mul!(similar(a), A, a)
+
+    passed = true
+    for i in 1:3, ny in 1:Ny, nz in 1:((Nz >> 1) + 1), nt in 1:Nt
+        if !(b[i][ny, nz, nt] ≈ a[i][ny, nz, nt]/(1 + (nz*β)^2 + (nt*ω)^2))
+            passed = false
+            break
+        end
+    end
+    @test passed
+end
+
 @testset "Vector Field Norm                     " begin
     # initialise grid
     Ny = 64; Nz = 65; Nt = 65
@@ -100,6 +129,7 @@ end
     ω = 1.0
     β = 1.0
     grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+    A = Fields.FarazmandScaling(ω, β)
 
     # definition of fields as functions
     u_func(y, z, t) = (1 - y^2)*exp(cos(z))*atan(sin(t))
@@ -116,4 +146,7 @@ end
 
     # test norm
     @test norm(vec_s)^2 ≈ 33.04894874 + 165.2156694 + 13.65625483 rtol=1e-5
+
+    # test weights norm
+    @test norm(vec_s, A) ≈ sqrt(dot(vec_s, mul!(similar(vec_s), A, vec_s)))
 end

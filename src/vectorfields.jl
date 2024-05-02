@@ -39,7 +39,16 @@ Base.vcat(q::VectorField, p::VectorField) = VectorField(q..., p...)
 
 # inner-product and norm
 LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}) where {N} = sum(LinearAlgebra.dot(q[i], p[i]) for i = 1:N)
+LinearAlgebra.dot(q::VectorField{N}, p::VectorField{N}, A) where {N} = sum(LinearAlgebra.dot(q[i], p[i], A) for i = 1:N)
 LinearAlgebra.norm(q::VectorField) = sqrt(LinearAlgebra.dot(q, q))
+LinearAlgebra.norm(q::VectorField, A) = sqrt(LinearAlgebra.dot(q, q, A))
+
+function LinearAlgebra.mul!(q::VectorField{N}, A::NormScaling, p::VectorField{N}) where {N}
+    for i in 1:N
+        LinearAlgebra.mul!(q[i], A, p[i])
+    end
+    return q
+end
 
 # cross product with constant vector
 function cross!(vu::VectorField{3, S}, v::AbstractVector, u::VectorField{3, S}) where {S}

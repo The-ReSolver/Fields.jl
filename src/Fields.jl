@@ -19,6 +19,7 @@ export writeSpectralField, readSpectralField, writeVectorField, readVectorField
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 
+include("scaling_operator.jl")
 include("projection.jl")
 include("grid.jl")
 include("generate_modes.jl")
