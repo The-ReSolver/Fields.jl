@@ -2,7 +2,7 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, DEALIAS, PLAN, IPLAN}
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PLAN, IPLAN}
     out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
@@ -12,15 +12,16 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, DEALIAS, PLAN, IPLAN}
     fft::FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, DEALIAS, IPLAN}
     base::Vector{Float64}
+    norm::NORM
     Re_recip::T
     Ro::T
 
-    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real, free_mean::Bool=false, dealias::Bool=true) where {S}
+    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid))) where {S}
         # initialise output vector field
         out = SpectralField(grid, ψs)
 
         # create field cache
-        proj_cache = [SpectralField(grid, ψs)                    for _ in 1:2]
+        proj_cache = [SpectralField(grid, ψs)                    for _ in 1:3]
         spec_cache = [VectorField(grid, fieldType=SpectralField) for _ in 1:23]
         phys_cache = [VectorField(grid, dealias)                 for _ in 1:13]
 
@@ -35,6 +36,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, DEALIAS, PLAN, IPLAN}
         new{S...,
             size(ψs, 2),
             free_mean,
+            typeof(norm),
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
             eltype(phys_cache[1][1]),
@@ -49,6 +51,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, S, D, T, DEALIAS, PLAN, IPLAN}
                                 FFT!,
                                 IFFT!,
                                 base_prof,
+                                norm,
                                 1/Re,
                                 Ro)
     end
@@ -75,6 +78,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
     dudτ      = f.spec_cache[21]
     crossprod = f.spec_cache[22]
     s         = f.proj_cache[1]
+    s̃         = f.proj_cache[3]
 
     # convert velocity coefficients to full-space
     expand!(u, a, f.modes)
@@ -91,7 +95,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
     @. ns = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) + f.Ro*crossprod
 
     # convert to residual in terms of modal basis
-    expand!(r, project!(s, ns, f.ws, f.modes), f.modes)
+    expand!(r, mul!(s̃, f.norm, project!(s, ns, f.ws, f.modes)), f.modes)
 
     if compute_grad
         # compute all the terms for the variational evolution
@@ -126,9 +130,10 @@ function (f::ResGrad)(F, G, a::SpectralField)
     G === nothing ? F = f(a, false)[2] : (F = f(a, true)[2]; G .= f.out)
     return F
 end
+# TODO: get rid of Nelder-Mead compatibility stuff
 (f::ResGrad)(x::Vector{T}) where {T<:AbstractFloat} = f(_vectorToVelocityCoefficients!(f.proj_cache[2], x), false)[2]
 
-function _update_vel_cache!(cache::ResGrad) 
+function _update_vel_cache!(cache::ResGrad)
     # assign aliases
     u       = cache.spec_cache[1]
     dudt    = cache.spec_cache[2]
@@ -177,7 +182,7 @@ function _update_vel_cache!(cache::ResGrad)
     return cache
 end
 
-function _update_res_cache!(cache::ResGrad) 
+function _update_res_cache!(cache::ResGrad)
     # assign aliases
     r       = cache.spec_cache[10]
     drdt    = cache.spec_cache[11]
@@ -242,7 +247,7 @@ function _update_res_cache!(cache::ResGrad)
     end
 end
 
-gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1])^2)
+gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1], cache.norm)^2)
 
 function optimalFrequency(optimisationCache)
     dudt       = optimisationCache.spec_cache[2]

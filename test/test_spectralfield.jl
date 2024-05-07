@@ -82,8 +82,20 @@ end
         c = mul!(similar(a), I, a)
 
         passed = true
-        for ny in 1:Ny, nz in 1:((Nz >> 1) + 1), nt in 1:Nt
+        for ny in 1:Ny, nz in 2:((Nz >> 1) + 1), nt in 1:Nt
                 if !(b[ny, nz, nt] ≈ a[ny, nz, nt]/(1 + (nz*β)^2 + (nt*ω)^2))
+                        passed = false
+                        break
+                end
+        end
+        for ny in 1:Ny, nt in 2:((Nt >> 1) + 1)
+                if !(b[ny, 1, nt] ≈ a[ny, 1, nt]/(1 + β^2 + (nt*ω)^2))
+                        passed = false
+                        break
+                end
+        end
+        for ny in 1:Ny
+                if !(b[ny, 1, 1] ≈ a[ny, 1, 1]/(1 + β^2 + ω^2))
                         passed = false
                         break
                 end

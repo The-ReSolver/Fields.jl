@@ -125,8 +125,15 @@ LinearAlgebra.norm(p::SpectralField, A) = sqrt(LinearAlgebra.dot(p, p, A))
 Base.maximum(::Function, gradient::SpectralField) = norm(gradient) # this method exists just so Optim.jl uses the correct norm in the trace
 
 function LinearAlgebra.mul!(v::SpectralField{Ny, Nz, Nt}, A::NormScaling, u::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+    for nt in 1:Nt, nz in 2:((Nz >> 1) + 1), ny in 1:Ny
         v[ny, nz, nt] = A[ny, nz, nt]*u[ny, nz, nt]
+    end
+    for nt in 2:((Nt >> 1) + 1), ny in 1:Ny
+        v[ny, 1, nt] = A[ny, 1, nt]*u[ny, 1, nt]
+        v[ny, 1, end - nt + 2] = A[ny, 1, nt]*u[ny, 1, end - nt + 2]
+    end
+    for ny in 1:Ny
+        v[ny, 1, 1] = A[ny, 1, 1]*u[ny, 1, 1]
     end
     return v
 end
