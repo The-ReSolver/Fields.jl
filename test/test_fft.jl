@@ -42,8 +42,10 @@ end
     FFT = FFTPlan!(grid, true; flags=ESTIMATE)
     IFFT = IFFTPlan!(grid, true; flags=ESTIMATE)
 
-    @test size(FFT.padded) == (16, 26, 51)
-    @test size(IFFT.padded) == (16, 26, 51)
+    # @test size(FFT.padded) == (16, 26, 51)
+    # @test size(IFFT.padded) == (16, 26, 51)
+    @test size(FFT.padded) == (16, 34, 67)
+    @test size(IFFT.padded) == (16, 34, 67)
 
     FFT(𝐀̂, 𝐀); IFFT(𝐁, 𝐀̂)
     @test 𝐀 ≈ 𝐁

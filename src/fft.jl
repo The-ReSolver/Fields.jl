@@ -16,8 +16,10 @@ const WISDOM_ONLY = FFTW.WISDOM_ONLY
 const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
 
 function padded_size(Nz, Nt)
-    Nz_padded = ceil(Int, Nz*(3/2))
-    Nt_padded = ceil(Int, Nt*(3/2))
+    # Nz_padded = ceil(Int, Nz*(3/2))
+    # Nt_padded = ceil(Int, Nt*(3/2))
+    Nz_padded = ceil(Int, Nz*2 + 1)
+    Nt_padded = ceil(Int, Nt*2 + 1)
     Nz_padded = (Nz_padded - Nz) % 2 == 0 ? Nz_padded : Nz_padded + 1
     Nt_padded = (Nt_padded - Nt) % 2 == 0 ? Nt_padded : Nt_padded + 1
     return Nz_padded, Nt_padded
