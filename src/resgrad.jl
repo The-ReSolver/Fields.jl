@@ -2,13 +2,14 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PLAN, IPLAN}
+# TODO: simplify this
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN, IPLAN}
     out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
     proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}}
     spec_cache::Vector{VectorField{3, SpectralField{Ny, Nz, Nt, Grid{S, T, D}, T, false, Array{Complex{T}, 3}}}}
-    phys_cache::Vector{VectorField{3, PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}, DEALIAS}}}
+    phys_cache::Vector{VectorField{3, PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}, DEALIAS, PADFACTOR}}}
     fft::FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     ifft::IFFTPlan!{Ny, Nz, Nt, DEALIAS, IPLAN}
     base::Vector{Float64}
@@ -16,7 +17,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PLAN, IPLAN}
     Re_recip::T
     Ro::T
 
-    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid))) where {S}
+    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid))) where {S}
         # initialise output vector field
         out = SpectralField(grid, ψs)
 
@@ -26,8 +27,10 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PLAN, IPLAN}
         phys_cache = [VectorField(grid, dealias)                 for _ in 1:13]
 
         # create transform plans
-        FFT! = FFTPlan!(grid, dealias)
-        IFFT! = IFFTPlan!(grid, dealias)
+        pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
+        pad_factor = Float64(pad_factor)
+        FFT! = FFTPlan!(grid, dealias, pad_factor=pad_factor)
+        IFFT! = IFFTPlan!(grid, dealias, pad_factor=pad_factor)
 
         # convert parameters to compatible type
         Re = convert(eltype(phys_cache[1][1]), Re)
@@ -41,6 +44,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PLAN, IPLAN}
             typeof(grid.Dy[1]),
             eltype(phys_cache[1][1]),
             dealias,
+            pad_factor,
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(out,
                                 ψs,

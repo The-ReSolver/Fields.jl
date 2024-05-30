@@ -25,10 +25,10 @@
     @test VectorField(u1, v1, w1) isa VectorField{3, Array{Float64, 3}}
     @test VectorField(grid) isa VectorField{3, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, false, Array{Complex{Float64}, 3}}}
     @test VectorField(grid; N=2) isa VectorField{2, SpectralField{Ny, Nz, Nt, typeof(grid), Float64, false, Array{Complex{Float64}, 3}}}
-    @test VectorField(grid, N=5, fieldType=PhysicalField) isa VectorField{5, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, false}}
-    @test VectorField(grid, true, N=5) isa VectorField{5, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, true}}
-    @test VectorField(grid, fun1) isa VectorField{1, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, false}}
-    @test VectorField(grid, fun1, fun2, fun3) isa VectorField{3, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, false}}
+    @test VectorField(grid, N=5, fieldType=PhysicalField) isa VectorField{5, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, false, 1.5}}
+    @test VectorField(grid, true, N=5) isa VectorField{5, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, true, 1.5}}
+    @test VectorField(grid, fun1) isa VectorField{1, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, false, 1.5}}
+    @test VectorField(grid, fun1, fun2, fun3) isa VectorField{3, PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, false, 1.5}}
 
     # test copy  and similar methods
     a = VectorField(grid)

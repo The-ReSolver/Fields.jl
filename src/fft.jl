@@ -15,11 +15,9 @@ const PATIENT = FFTW.PATIENT
 const WISDOM_ONLY = FFTW.WISDOM_ONLY
 const NO_TIMELIMIT = FFTW.NO_TIMELIMIT
 
-function padded_size(Nz, Nt)
-    # Nz_padded = ceil(Int, Nz*(3/2))
-    # Nt_padded = ceil(Int, Nt*(3/2))
-    Nz_padded = ceil(Int, Nz*2 + 1)
-    Nt_padded = ceil(Int, Nt*2 + 1)
+function padded_size(Nz, Nt, factor=3/2)
+    Nz_padded = ceil(Int, Nz*factor)
+    Nt_padded = ceil(Int, Nt*factor)
     Nz_padded = (Nz_padded - Nz) % 2 == 0 ? Nz_padded : Nz_padded + 1
     Nt_padded = (Nt_padded - Nt) % 2 == 0 ? Nt_padded : Nt_padded + 1
     return Nz_padded, Nt_padded
@@ -79,16 +77,17 @@ struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     padded::Array{ComplexF64, 3}
 
     function FFTPlan!(u::PhysicalField{Ny, Nz, Nt}, dealias::Bool=false;
+                        pad_factor::Float64=3/2,
                         flags::UInt32=EXHAUSTIVE,
                         timelimit::Real=NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
-        Nz_padded, Nt_padded = padded_size(Nz, Nt)
+        Nz_padded, Nt_padded = padded_size(Nz, Nt, pad_factor)
         padded = dealias ? zeros(ComplexF64, Ny, (Nz_padded >> 1) + 1, Nt_padded) : zeros(ComplexF64, 0, 0, 0)
         plan = FFTW.plan_rfft(similar(parent(u)), order; flags=flags, timelimit=timelimit)
         new{Ny, Nz, Nt, dealias, typeof(plan)}(plan, padded)
     end
 end
-FFTPlan!(grid::Grid{S, T}, dealias::Bool=false; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = FFTPlan!(PhysicalField(grid, dealias, T), dealias; flags=flags, timelimit=timelimit, order=order)
+FFTPlan!(grid::Grid{S, T}, dealias::Bool=false; pad_factor::Float64=3/2, flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = FFTPlan!(PhysicalField(grid, dealias, T, pad_factor=pad_factor), dealias; pad_factor=pad_factor, flags=flags, timelimit=timelimit, order=order)
 
 function (f::FFTPlan!{Ny, Nz, Nt, true})(û::SpectralField{Ny, Nz, Nt}, u::PhysicalField{Ny, Nz, Nt, <:Any, <:Any, <:Any, true}) where {Ny, Nz, Nt}
     FFTW.unsafe_execute!(f.plan, parent(u), f.padded)
@@ -116,11 +115,12 @@ struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
     padded::Array{ComplexF64, 3}
 
     function IFFTPlan!(û::SpectralField{Ny, Nz, Nt}, dealias::Bool=false;
+                        pad_factor::Float64=3/2,
                         flags::UInt32=EXHAUSTIVE,
                         timelimit::Real=NO_TIMELIMIT,
                         order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
         if dealias
-            Nz_padded, Nt_padded = padded_size(Nz, Nt)
+            Nz_padded, Nt_padded = padded_size(Nz, Nt, pad_factor)
             padded = zeros(ComplexF64, Ny, (Nz_padded >> 1) + 1, Nt_padded)
             plan = FFTW.plan_brfft(similar(padded), Nz_padded, order; flags=flags, timelimit=timelimit)
         else
@@ -130,7 +130,7 @@ struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
         new{Ny, Nz, Nt, dealias, typeof(plan)}(plan, padded)
     end
 end
-IFFTPlan!(grid::Grid{S, T}, dealias::Bool=false; flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T), dealias; flags=flags, timelimit=timelimit, order=order)
+IFFTPlan!(grid::Grid{S, T}, dealias::Bool=false; pad_factor::Float64=3/2, flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T), dealias; pad_factor=pad_factor, flags=flags, timelimit=timelimit, order=order)
 
 # TODO: should come up with a better way to do this than just applying symmetry manually
 function (f::IFFTPlan!{Ny, Nz, Nt, true})(u::PhysicalField{Ny, Nz, Nt, <:Any, <:Any, <:Any, true}, û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}

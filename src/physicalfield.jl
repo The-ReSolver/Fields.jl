@@ -1,23 +1,23 @@
 # This file contains the custom type to define a scalar field in physical space
 # for a rotating plane couette flow.
 
-struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A, DEALIAS} <: AbstractArray{T, 3}
+struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A, DEALIAS, PADFACTOR} <: AbstractArray{T, 3}
     data::A
     grid::G
 
-    PhysicalField{DEALIAS}(grid::Grid{S}, field::AbstractArray{T, 3}) where {DEALIAS, S, T} = new{S..., typeof(grid), T, typeof(field), DEALIAS}(field, grid)
+    PhysicalField{DEALIAS, PADFACTOR}(grid::Grid{S}, field::AbstractArray{T, 3}) where {DEALIAS, PADFACTOR, S, T} = new{S..., typeof(grid), T, typeof(field), DEALIAS, PADFACTOR}(field, grid)
 end
 
 # outer constructors
-PhysicalField(grid::Grid{S}, fun, dealias::Bool=false, ::Type{T}=Float64) where {T, S} = PhysicalField{dealias}(grid, field_from_function(fun, points(grid), grid.dom, Val(dealias)))
-PhysicalField(grid::Grid{S}, dealias::Bool=false, ::Type{T}=Float64) where {S, T<:Real} = PhysicalField(grid, (y,z,t)->zero(T), dealias, T)
+PhysicalField(grid::Grid{S}, fun, dealias::Bool=false, ::Type{T}=Float64; pad_factor::Real=3/2) where {T, S} = PhysicalField{dealias, pad_factor}(grid, field_from_function(fun, points(grid), grid.dom, Val(dealias), pad_factor))
+PhysicalField(grid::Grid{S}, dealias::Bool=false, ::Type{T}=Float64; pad_factor::Real=3/2) where {S, T<:Real} = PhysicalField(grid, (y,z,t)->zero(T), dealias, T, pad_factor=pad_factor)
 
-function field_from_function(fun, grid_points, dom, ::Val{true})
+function field_from_function(fun, grid_points, dom, ::Val{true}, pad_factor)
     Nz, Nt = length.(grid_points[2:3])
-    z_padded, t_padded = map(x->(0:(x[2] - 1))*(2π/(dom[x[1]]*x[2])), enumerate(padded_size(Nz, Nt)))
+    z_padded, t_padded = map(x->(0:(x[2] - 1))*(2π/(dom[x[1]]*x[2])), enumerate(padded_size(Nz, Nt, pad_factor)))
     return fun.(reshape(grid_points[1], :, 1, 1), reshape(z_padded, 1, :, 1), reshape(t_padded, 1, 1, :))
 end
-field_from_function(fun, grid_points, ::Any, ::Val{false}) = fun.(reshape(grid_points[1], :, 1, 1), reshape(grid_points[2], 1, :, 1), reshape(grid_points[3], 1, 1, :))
+field_from_function(fun, grid_points, ::Any, ::Val{false}, ::Real) = fun.(reshape(grid_points[1], :, 1, 1), reshape(grid_points[2], 1, :, 1), reshape(grid_points[3], 1, 1, :))
 
 # get parent array
 Base.parent(u::PhysicalField) = u.data
@@ -27,7 +27,7 @@ Base.size(u::PhysicalField) = size(parent(u))
 Base.IndexStyle(::Type{<:PhysicalField}) = Base.IndexLinear()
 
 # similar
-Base.similar(u::PhysicalField{Ny, Nz, Nt, G, T, A, DEALIAS}, ::Type{S}=eltype(u)) where {Ny, Nz, Nt, G, T, A, DEALIAS, S} = PhysicalField(u.grid, DEALIAS, S)
+Base.similar(u::PhysicalField{Ny, Nz, Nt, G, T, A, DEALIAS, PADFACTOR}, ::Type{S}=eltype(u)) where {Ny, Nz, Nt, G, T, A, DEALIAS, PADFACTOR, S} = PhysicalField(u.grid, DEALIAS, S, pad_factor=PADFACTOR)
 Base.copy(u::PhysicalField) = (v = similar(u); v .= u; v)
 
 # method to extract grid
