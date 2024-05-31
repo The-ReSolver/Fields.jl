@@ -18,17 +18,18 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN,
     Ro::T
 
     function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid))) where {S}
+        pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
+        pad_factor = Float64(pad_factor)
+
         # initialise output vector field
         out = SpectralField(grid, ψs)
 
         # create field cache
-        proj_cache = [SpectralField(grid, ψs)                    for _ in 1:3]
-        spec_cache = [VectorField(grid, fieldType=SpectralField) for _ in 1:23]
-        phys_cache = [VectorField(grid, dealias)                 for _ in 1:13]
+        proj_cache = [SpectralField(grid, ψs)                           for _ in 1:3]
+        spec_cache = [VectorField(grid, fieldType=SpectralField)        for _ in 1:23]
+        phys_cache = [VectorField(grid, dealias, pad_factor=pad_factor) for _ in 1:13]
 
         # create transform plans
-        pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
-        pad_factor = Float64(pad_factor)
         FFT! = FFTPlan!(grid, dealias, pad_factor=pad_factor)
         IFFT! = IFFTPlan!(grid, dealias, pad_factor=pad_factor)
 
