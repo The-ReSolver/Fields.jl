@@ -7,6 +7,7 @@ function _velocityCoefficientsToVector!(vector, velocityCoefficients::SpectralFi
         vector[2*(ny + Ny*(nz - 1) + Ny*NzSpectral*(nt - 1)) - 1] = real(velocityCoefficients[ny, nz, nt])
         vector[2*(ny + Ny*(nz - 1) + Ny*NzSpectral*(nt - 1))]     = imag(velocityCoefficients[ny, nz, nt])
     end
+    vector[end] = get_ω(velocityCoefficients)
     return vector
 end
 
@@ -15,5 +16,6 @@ function _vectorToVelocityCoefficients!(velocityCoefficients::SpectralField{Ny, 
     for nt in 1:Nt, nz in 1:NzSpectral, ny in 1:Ny
         velocityCoefficients[ny, nz, nt] = vector[2*(ny + Ny*(nz - 1) + NzSpectral*Ny*(nt - 1)) - 1] + 1im*vector[2*(ny + Ny*(nz - 1) + NzSpectral*Ny*(nt - 1))]
     end
+    velocityCoefficients.grid.dom[2] = vector[end]
     return velocityCoefficients
 end
