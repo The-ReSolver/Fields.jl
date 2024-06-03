@@ -3,7 +3,7 @@
 # projection.
 
 # TODO: simplify this
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN, IPLAN}
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN, IPLAN}
     out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     ws::Vector{Float64}
@@ -17,7 +17,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN,
     Re_recip::T
     Ro::T
 
-    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid))) where {S}
+    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false) where {S}
         pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
         pad_factor = Float64(pad_factor)
 
@@ -40,6 +40,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN,
         new{S...,
             size(ψs, 2),
             free_mean,
+            include_period,
             typeof(norm),
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
@@ -62,7 +63,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN,
     end
 end
 
-function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, compute_grad::Bool=true) where {Ny, Nz, Nt, M, FREEMEAN}
+function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M, Nz, Nt}, compute_grad::Bool=true) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD}
     # assign aliases
     u         = f.spec_cache[1]
     dudt      = f.spec_cache[2]
@@ -128,15 +129,32 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN})(a::SpectralField{M, Nz, Nt}, comp
         end
     end
 
-    return f.out, gr(f)
+    if INCLUDEPERIOD
+        return f.out, gr(f), frequencyGradient(f)
+    else
+        return f.out, gr(f)
+    end
 end
 
-function (f::ResGrad)(F, G, a::SpectralField)
+gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1], cache.norm)^2)
+frequencyGradient(cache::ResGrad) = dot(cache.spec_cache[2], cache.spec_cache[10])/get_ω(cache.spec_cache[1])
+
+
+function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, false})(F, G, a::SpectralField)
     G === nothing ? F = f(a, false)[2] : (F = f(a, true)[2]; G .= f.out)
     return F
 end
-# TODO: get rid of Nelder-Mead compatibility stuff
-(f::ResGrad)(x::Vector{T}) where {T<:AbstractFloat} = f(_vectorToVelocityCoefficients!(f.proj_cache[2], x), false)[2]
+
+function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, true})(F, G, x::Vector{T}) where {T<:Real}
+    a = _vectorToVelocityCoefficients!(f.proj_cache[2], x)
+    return f(F, G, a)
+end
+function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, true})(F, G, a::SpectralField)
+    G === nothing ? F = f(a, false)[2] : (output = f(a, true)[2:3]; _velocityCoefficientsToVector!(G, f.out); G[end] = output[2])
+    return output[1]
+end
+
+
 
 function _update_vel_cache!(cache::ResGrad)
     # assign aliases
@@ -252,7 +270,6 @@ function _update_res_cache!(cache::ResGrad)
     end
 end
 
-gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1], cache.norm)^2)
 
 function optimalFrequency(optimisationCache)
     dudt       = optimisationCache.spec_cache[2]

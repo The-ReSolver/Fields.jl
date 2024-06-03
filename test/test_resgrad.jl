@@ -68,6 +68,9 @@ rzdwdy_fun(y, z, t)  = rz_fun(y, z, t)*dwdy_fun(y, z, t)
 rxdudz_fun(y, z, t)  = rx_fun(y, z, t)*dudz_fun(y, z, t)
 rydvdz_fun(y, z, t)  = ry_fun(y, z, t)*dvdz_fun(y, z, t)
 rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
+nsx_fun(y, z, t) = -vdudy_fun(y, z, t) - wdudz_fun(y, z, t) + (1/Re)*(d2udy2_fun(y, z, t) + d2udz2_fun(y, z, t)) + Ro*v_fun(y, z, t)
+nsy_fun(y, z, t) = -vdvdy_fun(y, z, t) - wdvdz_fun(y, z, t) + (1/Re)*(d2vdy2_fun(y, z, t) + d2vdz2_fun(y, z, t)) - Ro*u_fun(y, z, t)
+nsz_fun(y, z, t) = -vdwdy_fun(y, z, t) - wdwdz_fun(y, z, t) + (1/Re)*(d2wdy2_fun(y, z, t) + d2wdz2_fun(y, z, t))
 
 # TODO: check allocated of update methods
 @testset "Residual Gradient Velocity            " begin
@@ -125,6 +128,18 @@ end
     @test symmetric
 end
 
+# TODO: make this test proper by actually calculating the inner-product manually
+@testset "Residual Frequency Gradient           " begin
+    # assign velocity and residual fields
+    cache.spec_cache[1]  .= FFT!(VectorField(grid), VectorField(grid, u_fun,  v_fun,  w_fun,  dealias=true))
+    cache.spec_cache[10] .= FFT!(VectorField(grid), VectorField(grid, rx_fun, ry_fun, rz_fun, dealias=true))
+
+    # run the cache update
+    Fields._update_vel_cache!(cache)
+
+    @test Fields.frequencyGradient(cache) ≈ dot(FFT!(VectorField(grid), VectorField(grid, dudt_fun,  dvdt_fun,  dwdt_fun, dealias=true)), FFT!(VectorField(grid), VectorField(grid, rx_fun, ry_fun, rz_fun, dealias=true)))/ω atol=1e-12
+end
+
 @testset "Optimal Frequency                     " begin
     # set velocity profile
     cache.spec_cache[1] .= FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true))
@@ -134,9 +149,6 @@ end
 
     # compute the optimal frequency manually
     duds = FFT!(VectorField(grid), VectorField(grid, dudt_fun, dvdt_fun, dwdt_fun, dealias=true))./ω
-    nsx_fun(y, z, t) = -vdudy_fun(y, z, t) - wdudz_fun(y, z, t) + (1/Re)*(d2udy2_fun(y, z, t) + d2udz2_fun(y, z, t)) + Ro*v_fun(y, z, t)
-    nsy_fun(y, z, t) = -vdvdy_fun(y, z, t) - wdvdz_fun(y, z, t) + (1/Re)*(d2vdy2_fun(y, z, t) + d2vdz2_fun(y, z, t)) - Ro*u_fun(y, z, t)
-    nsz_fun(y, z, t) = -vdwdy_fun(y, z, t) - wdwdz_fun(y, z, t) + (1/Re)*(d2wdy2_fun(y, z, t) + d2wdz2_fun(y, z, t))
     navierStokesRHS = FFT!(VectorField(grid), VectorField(grid, nsx_fun, nsy_fun, nsz_fun, dealias=true))
 
     @test Fields.optimalFrequency(cache) ≈ dot(duds, navierStokesRHS)/(norm(duds)^2) atol=1e-6
