@@ -3,8 +3,7 @@
 # projection.
 
 # TODO: simplify this
-# TODO: add multi-threaded option to constructor
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN, IPLAN}
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN, IPLAN}
     out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}}
@@ -20,6 +19,9 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, P
     function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false) where {S}
         pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
         pad_factor = Float64(pad_factor)
+
+        # check if multiple threads are available
+        multithreaded = Base.Threads.nthreads() > 1
 
         # initialise output vector field
         out = SpectralField(grid, ψs)
@@ -41,6 +43,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, P
             size(ψs, 2),
             free_mean,
             include_period,
+            multithreaded,
             typeof(norm),
             (S[1], S[2], S[3]),
             typeof(grid.Dy[1]),
@@ -62,7 +65,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, P
     end
 end
 
-function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M, Nz, Nt}, compute_grad::Bool=true) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD}
+function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(a::SpectralField{M, Nz, Nt}, compute_grad::Bool=true) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED}
     # assign aliases
     u         = f.spec_cache[1]
     dudt      = f.spec_cache[2]
@@ -91,7 +94,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
     @view(u[1][:, 1, 1]) .+= f.base
 
     # compute all the terms with only velocity
-    _update_vel_cache!(f)
+    _update_vel_cache!(f, MULTITHREADED)
 
     # compute the navier-stokes
     @. ns = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2)
@@ -102,7 +105,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
 
     if compute_grad
         # compute all the terms for the variational evolution
-        _update_res_cache!(f)
+        _update_res_cache!(f, MULTITHREADED)
 
         # compute the RHS of the evolution equation
         # TODO: try without the factors of half to see if the periodic optimisation works any better
@@ -153,7 +156,51 @@ function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, true})(F, G, a::Spectral
 end
 
 
-function _update_vel_cache!(cache::ResGrad)
+_update_vel_cache!(cache::ResGrad, multithreaded::Bool) = multithreaded ? _update_vel_cache_mt!(cache) : _update_vel_cache_st!(cache)
+_update_res_cache!(cache::ResGrad, multithreaded::Bool) = multithreaded ? _update_res_cache_mt!(cache) : _update_res_cache_st!(cache)
+
+function _update_vel_cache_st!(cache::ResGrad)
+    # assign aliases
+    u       = cache.spec_cache[1]
+    dudt    = cache.spec_cache[2]
+    dudy    = cache.spec_cache[3]
+    dudz    = cache.spec_cache[4]
+    d2udy2  = cache.spec_cache[5]
+    d2udz2  = cache.spec_cache[6]
+    vdudy   = cache.spec_cache[7]
+    wdudz   = cache.spec_cache[8]
+    u_p     = cache.phys_cache[1]
+    dudy_p  = cache.phys_cache[2]
+    dudz_p  = cache.phys_cache[3]
+    vdudy_p = cache.phys_cache[4]
+    wdudz_p = cache.phys_cache[5]
+    FFT!    = cache.fft
+    IFFT!   = cache.ifft
+
+    # compute all the derivatives of the field
+    ddt!(u, dudt)
+    ddy!(u, dudy)
+    ddz!(u, dudz)
+    d2dy2!(u, d2udy2)
+    d2dz2!(u, d2udz2)
+
+    # compute the nonlinear terms
+    IFFT!(u_p, u)
+    IFFT!(dudy_p, dudy)
+    IFFT!(dudz_p, dudz)
+    vdudy_p[1] .= u_p[2].*dudy_p[1]
+    vdudy_p[2] .= u_p[2].*dudy_p[2]
+    vdudy_p[3] .= u_p[2].*dudy_p[3]
+    wdudz_p[1] .= u_p[3].*dudz_p[1]
+    wdudz_p[2] .= u_p[3].*dudz_p[2]
+    wdudz_p[3] .= u_p[3].*dudz_p[3]
+    FFT!(vdudy, vdudy_p)
+    FFT!(wdudz, wdudz_p)
+
+    return cache
+end
+
+function _update_vel_cache_mt!(cache::ResGrad)
     # assign aliases
     u       = cache.spec_cache[1]
     dudt    = cache.spec_cache[2]
@@ -201,7 +248,66 @@ function _update_vel_cache!(cache::ResGrad)
     return cache
 end
 
-function _update_res_cache!(cache::ResGrad)
+function _update_res_cache_st!(cache::ResGrad)
+    # assign aliases
+    r       = cache.spec_cache[10]
+    drdt    = cache.spec_cache[11]
+    drdy    = cache.spec_cache[12]
+    drdz    = cache.spec_cache[13]
+    d2rdy2  = cache.spec_cache[14]
+    d2rdz2  = cache.spec_cache[15]
+    vdrdy   = cache.spec_cache[16]
+    wdrdz   = cache.spec_cache[17]
+    rx∇u    = cache.spec_cache[18]
+    ry∇v    = cache.spec_cache[19]
+    rz∇w    = cache.spec_cache[20]
+    u_p     = cache.phys_cache[1]
+    dudy_p  = cache.phys_cache[2]
+    dudz_p  = cache.phys_cache[3]
+    r_p     = cache.phys_cache[6]
+    drdy_p  = cache.phys_cache[7]
+    drdz_p  = cache.phys_cache[8]
+    vdrdy_p = cache.phys_cache[9]
+    wdrdz_p = cache.phys_cache[10]
+    rx∇u_p  = cache.phys_cache[11]
+    ry∇v_p  = cache.phys_cache[12]
+    rz∇w_p  = cache.phys_cache[13]
+    FFT!    = cache.fft
+    IFFT!   = cache.ifft
+
+    # compute the derivatives of the residual
+    ddt!(r, drdt)
+    ddy!(r, drdy)
+    ddz!(r, drdz)
+    d2dy2!(r, d2rdy2)
+    d2dz2!(r, d2rdz2)
+
+    # compute the nonlienar terms
+    IFFT!(r_p, r)
+    IFFT!(drdy_p, drdy)
+    IFFT!(drdz_p, drdz)
+    vdrdy_p[1] .= u_p[2].*drdy_p[1]
+    vdrdy_p[2] .= u_p[2].*drdy_p[2]
+    vdrdy_p[3] .= u_p[2].*drdy_p[3]
+    wdrdz_p[1] .= u_p[3].*drdz_p[1]
+    wdrdz_p[2] .= u_p[3].*drdz_p[2]
+    wdrdz_p[3] .= u_p[3].*drdz_p[3]
+    rx∇u_p[2] .= r_p[1].*dudy_p[1]
+    rx∇u_p[3] .= r_p[1].*dudz_p[1]
+    ry∇v_p[2] .= r_p[2].*dudy_p[2]
+    ry∇v_p[3] .= r_p[2].*dudz_p[2]
+    rz∇w_p[2] .= r_p[3].*dudy_p[3]
+    rz∇w_p[3] .= r_p[3].*dudz_p[3]
+    FFT!(vdrdy, vdrdy_p)
+    FFT!(wdrdz, wdrdz_p)
+    FFT!(rx∇u, rx∇u_p)
+    FFT!(ry∇v, ry∇v_p)
+    FFT!(rz∇w, rz∇w_p)
+
+    return cache
+end
+
+function _update_res_cache_mt!(cache::ResGrad)
     # assign aliases
     r       = cache.spec_cache[10]
     drdt    = cache.spec_cache[11]

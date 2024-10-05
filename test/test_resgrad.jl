@@ -81,7 +81,7 @@ rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
     cache.spec_cache[1] .= FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true))
 
     # compute the cache
-    Fields._update_vel_cache!(cache)
+    Fields._update_vel_cache!(cache, Base.Threads.nthreads() > 1)
 
     # test for correctness
     @test cache.spec_cache[2]  ≈ FFT!(VectorField(grid), VectorField(grid, dudt_fun, dvdt_fun, dwdt_fun,       dealias=true))
@@ -99,8 +99,8 @@ end
     cache.spec_cache[10] .= FFT!(VectorField(grid), VectorField(grid, rx_fun, ry_fun, rz_fun, dealias=true))
 
     # update the cache
-    Fields._update_vel_cache!(cache)
-    Fields._update_res_cache!(cache)
+    Fields._update_vel_cache!(cache, Base.Threads.nthreads() > 1)
+    Fields._update_res_cache!(cache, Base.Threads.nthreads() > 1)
 
     # test for correctness
     @test cache.spec_cache[11] ≈ FFT!(VectorField(grid), VectorField(grid, drxdt_fun, drydt_fun, drzdt_fun,        dealias=true))
