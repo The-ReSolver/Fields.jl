@@ -149,17 +149,3 @@ end
 
     @test cache(a, false)[3]*2*(2π/ω)*(2π/β) == dRdω_fd
 end
-
-@testset "Optimal Frequency                     " begin
-    # set velocity profile
-    cache.spec_cache[1] .= FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true))
-
-    # run the cache update
-    Fields._update_vel_cache!(cache)
-
-    # compute the optimal frequency manually
-    duds = FFT!(VectorField(grid), VectorField(grid, dudt_fun, dvdt_fun, dwdt_fun, dealias=true))./ω
-    navierStokesRHS = FFT!(VectorField(grid), VectorField(grid, nsx_fun, nsy_fun, nsz_fun, dealias=true))
-
-    @test Fields.optimalFrequency(cache) ≈ dot(duds, navierStokesRHS)/(norm(duds)^2) atol=1e-6
-end

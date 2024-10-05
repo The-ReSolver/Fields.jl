@@ -267,18 +267,3 @@ function _update_res_cache!(cache::ResGrad)
         Base.Threads.@spawn FFT!(rz∇w, rz∇w_p)
     end
 end
-
-
-function optimalFrequency(optimisationCache)
-    dudt       = optimisationCache.spec_cache[2]
-    d2udy2     = optimisationCache.spec_cache[5]
-    d2udz2     = optimisationCache.spec_cache[6]
-    vdudy      = optimisationCache.spec_cache[7]
-    wdudz      = optimisationCache.spec_cache[8]
-    crossprod  = optimisationCache.spec_cache[22]
-    nsOperator = optimisationCache.spec_cache[23]
-
-    @. nsOperator = -vdudy - wdudz + optimisationCache.Re_recip*(d2udy2 + d2udz2) - optimisationCache.Ro*crossprod
-
-    return get_ω(dudt)*dot(dudt, nsOperator)/(norm(dudt)^2)
-end
