@@ -74,11 +74,8 @@ rzdwdy_fun(y, z, t)  = rz_fun(y, z, t)*dwdy_fun(y, z, t)
 rxdudz_fun(y, z, t)  = rx_fun(y, z, t)*dudz_fun(y, z, t)
 rydvdz_fun(y, z, t)  = ry_fun(y, z, t)*dvdz_fun(y, z, t)
 rzdwdz_fun(y, z, t)  = rz_fun(y, z, t)*dwdz_fun(y, z, t)
-nsx_fun(y, z, t) = -vdudy_fun(y, z, t) - wdudz_fun(y, z, t) + (1/Re)*(d2udy2_fun(y, z, t) + d2udz2_fun(y, z, t)) + Ro*v_fun(y, z, t)
-nsy_fun(y, z, t) = -vdvdy_fun(y, z, t) - wdvdz_fun(y, z, t) + (1/Re)*(d2vdy2_fun(y, z, t) + d2vdz2_fun(y, z, t)) - Ro*u_fun(y, z, t)
-nsz_fun(y, z, t) = -vdwdy_fun(y, z, t) - wdwdz_fun(y, z, t) + (1/Re)*(d2wdy2_fun(y, z, t) + d2wdz2_fun(y, z, t))
 
-# TODO: check allocated of update methods
+
 @testset "Residual Gradient Velocity            " begin
     # assign velocity field
     cache.spec_cache[1] .= FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true))

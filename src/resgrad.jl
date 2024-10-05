@@ -266,4 +266,6 @@ function _update_res_cache!(cache::ResGrad)
         Base.Threads.@spawn FFT!(ry∇v, ry∇v_p)
         Base.Threads.@spawn FFT!(rz∇w, rz∇w_p)
     end
+
+    return cache
 end
