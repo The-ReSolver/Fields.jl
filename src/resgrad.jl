@@ -108,6 +108,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
         _update_res_cache!(f)
 
         # compute the RHS of the evolution equation
+        # TODO: try without the factors of half to see if the periodic optimisation works any better
         # TODO: where the hell do the factors of half come from???
         @. dudτ = -vdrdy - wdrdz + rx∇u + ry∇v + rz∇w
         dudτ[1][:, 1, 2:end] .*= 0.5
@@ -136,6 +137,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
     end
 end
 
+# TODO: I need to sort out the different scalings used and the implicit effect it has on the results
 gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1], cache.norm)^2)
 frequencyGradient(cache::ResGrad) = dot(cache.spec_cache[2], cache.spec_cache[10])/get_ω(cache.spec_cache[1])
 

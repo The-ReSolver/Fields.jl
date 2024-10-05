@@ -4,14 +4,20 @@ Re = 100.0; Ro = 0.5
 y = chebpts(Ny)
 Dy = chebdiff(Ny)
 Dy2 = chebddiff(Ny)
+ws = chebws(Ny)
 ω = 1.0
 β = 1.0
-grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Ny), ω, β)
+grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 FFT! = FFTPlan!(grid, true, flags=ESTIMATE)
-modes = Array{ComplexF64}(undef, 3*Ny, M, (Nz >> 1) + 1, Nt)
+
+# generate orthogonal modes
+modes = zeros(ComplexF64, 3*Ny, M, (Nz >> 1) + 1, Nt)
+for nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
+    modes[:, :, nz, nt] .= Matrix(qr(modes[:, :, nz, nt]))
+end
 
 # initialise residual gradient cache
-cache = ResGrad(grid, modes, y, Re, Ro)
+cache = ResGrad(grid, modes, y, Re, Ro, include_period=true)
 
 # initialise functions
 u_fun(y, z, t)       = (y^3)*exp(cos(z))*sin(t)
@@ -128,16 +134,20 @@ end
     @test symmetric
 end
 
-# TODO: make this test proper by actually calculating the inner-product manually
 @testset "Residual Frequency Gradient           " begin
-    # assign velocity and residual fields
-    cache.spec_cache[1]  .= FFT!(VectorField(grid), VectorField(grid, u_fun,  v_fun,  w_fun,  dealias=true))
-    cache.spec_cache[10] .= FFT!(VectorField(grid), VectorField(grid, rx_fun, ry_fun, rz_fun, dealias=true))
+    # get velocity field
+    a = project!(SpectralField(grid, modes), FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true)), ws, modes)
 
-    # run the cache update
-    Fields._update_vel_cache!(cache)
+    # compute finite difference approximation of gradient
+    eps = 1e-5 # NOTE: since the underlying function is quadratic, the central-differencing approximation does not depend on the step-size used (in addition to being exact)
+    grid.dom[2] += eps
+    R_forw = cache(a, false)[2]
+    grid.dom[2] -= 2*eps
+    R_back = cache(a, false)[2]
+    grid.dom[2] += eps
+    dRdω_fd = (R_forw - R_back)/(2*eps)
 
-    @test Fields.frequencyGradient(cache) ≈ dot(FFT!(VectorField(grid), VectorField(grid, dudt_fun,  dvdt_fun,  dwdt_fun, dealias=true)), FFT!(VectorField(grid), VectorField(grid, rx_fun, ry_fun, rz_fun, dealias=true)))/ω atol=1e-12
+    @test cache(a, false)[3]*2*(2π/ω)*(2π/β) == dRdω_fd
 end
 
 @testset "Optimal Frequency                     " begin
