@@ -3,6 +3,7 @@
 # projection.
 
 # TODO: simplify this
+# TODO: add multi-threaded option to constructor
 struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN, IPLAN}
     out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
@@ -89,14 +90,14 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
     expand!(u, a, f.modes)
 
     # set velocity field mean
-    u[1][:, 1, 1] .+= f.base
+    @view(u[1][:, 1, 1]) .+= f.base
 
     # compute all the terms with only velocity
     _update_vel_cache!(f)
 
     # compute the navier-stokes
     @. ns = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2)
-    cross!(ns, [0, 0, f.Ro], u)
+    cross_k!(ns, u, f.Ro)
 
     # convert to residual in terms of modal basis
     expand!(r, mul!(s̃, f.norm, project!(s, ns, f.ws, f.modes)), f.modes)
@@ -109,14 +110,14 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
         # TODO: try without the factors of half to see if the periodic optimisation works any better
         # TODO: where the hell do the factors of half come from???
         @. dudτ = -vdrdy - wdrdz + rx∇u + ry∇v + rz∇w
-        dudτ[1][:, 1, 2:end] .*= 0.5
-        dudτ[2][:, 1, 2:end] .*= 0.5
-        dudτ[3][:, 1, 2:end] .*= 0.5
+        @view(dudτ[1][:, 1, 2:end]) .*= 0.5
+        @view(dudτ[2][:, 1, 2:end]) .*= 0.5
+        @view(dudτ[3][:, 1, 2:end]) .*= 0.5
         @. dudτ += -drdt - f.Re_recip*(d2rdy2 + d2rdz2)
-        cross!(dudτ, [0, 0, -f.Ro], r)
-        dudτ[1][:, 1, 1] .*= 0.5
-        dudτ[2][:, 1, 1] .*= 0.5
-        dudτ[3][:, 1, 1] .*= 0.5
+        cross_k!(dudτ, r, -f.Ro)
+        @view(dudτ[1][:, 1, 1]) .*= 0.5
+        @view(dudτ[2][:, 1, 1]) .*= 0.5
+        @view(dudτ[3][:, 1, 1]) .*= 0.5
 
         # project to get velocity coefficient evolution
         project!(f.out, dudτ, f.ws, f.modes)
