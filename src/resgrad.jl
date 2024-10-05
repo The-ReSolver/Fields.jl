@@ -183,11 +183,10 @@ function _update_vel_cache!(cache::ResGrad)
     end
 
     # compute the nonlinear terms
-    @sync begin
-        Base.Threads.@spawn IFFT!(u_p, u)
-        Base.Threads.@spawn IFFT!(dudy_p, dudy)
-        Base.Threads.@spawn IFFT!(dudz_p, dudz)
-    end
+    # NOTE: for some reason including these set of IFFTs messes up the computation for multiple threads
+    IFFT!(u_p, u)
+    IFFT!(dudy_p, dudy)
+    IFFT!(dudz_p, dudz)
     @sync begin
         Base.Threads.@spawn vdudy_p[1] .= u_p[2].*dudy_p[1]
         Base.Threads.@spawn vdudy_p[2] .= u_p[2].*dudy_p[2]
