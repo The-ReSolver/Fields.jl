@@ -33,4 +33,3 @@ function readVectorField(path; name::String="field")
     end
     return u
 end
-

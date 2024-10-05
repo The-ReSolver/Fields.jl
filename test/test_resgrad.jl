@@ -133,7 +133,7 @@ end
 
 @testset "Residual Frequency Gradient           " begin
     # get velocity field
-    a = project!(SpectralField(grid, modes), FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true)), ws, modes)
+    a = project!(SpectralField(grid, modes), FFT!(VectorField(grid), VectorField(grid, u_fun, v_fun, w_fun, dealias=true)), modes)
 
     # compute finite difference approximation of gradient
     eps = 1e-5 # NOTE: since the underlying function is quadratic, the central-differencing approximation does not depend on the step-size used (in addition to being exact)

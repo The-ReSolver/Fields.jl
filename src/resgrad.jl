@@ -7,7 +7,6 @@
 struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN, IPLAN}
     out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
-    ws::Vector{Float64}
     proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}}
     spec_cache::Vector{VectorField{3, SpectralField{Ny, Nz, Nt, Grid{S, T, D}, T, false, Array{Complex{T}, 3}}}}
     phys_cache::Vector{VectorField{3, PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}, DEALIAS, PADFACTOR}}}
@@ -51,7 +50,6 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, P
             typeof(FFT!.plan),
             typeof(IFFT!.plan)}(out,
                                 ψs,
-                                get_ws(grid),
                                 proj_cache,
                                 spec_cache,
                                 phys_cache,
@@ -100,7 +98,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
     cross_k!(ns, u, f.Ro)
 
     # convert to residual in terms of modal basis
-    expand!(r, mul!(s̃, f.norm, project!(s, ns, f.ws, f.modes)), f.modes)
+    expand!(r, mul!(s̃, f.norm, project!(s, ns, f.modes)), f.modes)
 
     if compute_grad
         # compute all the terms for the variational evolution
@@ -120,7 +118,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
         @view(dudτ[3][:, 1, 1]) .*= 0.5
 
         # project to get velocity coefficient evolution
-        project!(f.out, dudτ, f.ws, f.modes)
+        project!(f.out, dudτ, f.modes)
 
         # take off the mean profile
         if !FREEMEAN
