@@ -26,7 +26,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, NORM, S, D, T, DEALIAS, P
 
         # create field cache
         proj_cache = [SpectralField(grid, ψs)                           for _ in 1:3]
-        spec_cache = [VectorField(grid, fieldType=SpectralField)        for _ in 1:23]
+        spec_cache = [VectorField(grid, fieldType=SpectralField)        for _ in 1:21]
         phys_cache = [VectorField(grid, dealias, pad_factor=pad_factor) for _ in 1:13]
 
         # create transform plans
@@ -82,7 +82,6 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
     ry∇v      = f.spec_cache[19]
     rz∇w      = f.spec_cache[20]
     dudτ      = f.spec_cache[21]
-    crossprod = f.spec_cache[22]
     s         = f.proj_cache[1]
     s̃         = f.proj_cache[3]
 
@@ -96,9 +95,8 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
     _update_vel_cache!(f)
 
     # compute the navier-stokes
-    cross!(crossprod, [0, 0, 1], u)
-    # TODO: just re-use the ns field
-    @. ns = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2) + f.Ro*crossprod
+    @. ns = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2)
+    cross!(ns, [0, 0, f.Ro], u)
 
     # convert to residual in terms of modal basis
     expand!(r, mul!(s̃, f.norm, project!(s, ns, f.ws, f.modes)), f.modes)
@@ -114,9 +112,8 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD})(a::SpectralField{M
         dudτ[1][:, 1, 2:end] .*= 0.5
         dudτ[2][:, 1, 2:end] .*= 0.5
         dudτ[3][:, 1, 2:end] .*= 0.5
-        # TODO: try cross product by passing reference rather than copying values
-        cross!(crossprod, [0, 0, 1], r)
-        @. dudτ += -drdt - f.Re_recip*(d2rdy2 + d2rdz2) - f.Ro*crossprod
+        @. dudτ += -drdt - f.Re_recip*(d2rdy2 + d2rdz2)
+        cross!(dudτ, [0, 0, -f.Ro], r)
         dudτ[1][:, 1, 1] .*= 0.5
         dudτ[2][:, 1, 1] .*= 0.5
         dudτ[3][:, 1, 1] .*= 0.5
@@ -155,7 +152,6 @@ function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, true})(F, G, a::Spectral
     G === nothing ? F = f(a, false)[2] : (output = f(a, true)[2:3]; _velocityCoefficientsToVector!(G, f.out); G[end] = output[2])
     return output[1]
 end
-
 
 
 function _update_vel_cache!(cache::ResGrad)
