@@ -2,20 +2,20 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, G, T, P, FFTPLAN, IFFTPLAN}
-    out::SpectralField{M, Nz, Nt, G, T, true, Array{Complex{T}, 3}}
+struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, D, P}
+    out::SpectralField{G, true}
     modes::Array{ComplexF64, 4}
-    proj_cache::Vector{SpectralField{M, Nz, Nt, G, T, true, Array{Complex{T}, 3}}}
-    spec_cache::Vector{VectorField{3, SpectralField{Ny, Nz, Nt, G, T, false, Array{Complex{T}, 3}}}}
-    phys_cache::Vector{VectorField{3, P}}
-    fft::FFTPLAN
-    ifft::IFFTPLAN
+    proj_cache::Vector{SpectralField{G, true}}
+    spec_cache::Vector{VectorField{3, SpectralField{G, false}}}
+    phys_cache::Vector{VectorField{3, PhysicalField{G, D, P}}}
+    fft::FFTPlan!{G, D}
+    ifft::IFFTPlan!{G, D}
     base::Vector{Float64}
     norm::NORM
-    Re_recip::T
-    Ro::T
+    Re_recip::Float64
+    Ro::Float64
 
-    function ResGrad(grid::Grid{S}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false) where {S}
+    function ResGrad(grid::Grid{Ny, Nz, Nt}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false) where {Ny, Nz, Nt}
         pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
         pad_factor = Float64(pad_factor)
 
@@ -34,15 +34,11 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, G, T
         FFT! = FFTPlan!(grid, dealias, pad_factor=pad_factor)
         IFFT! = IFFTPlan!(grid, dealias, pad_factor=pad_factor)
 
-        # convert parameters to compatible type
-        Re = convert(eltype(phys_cache[1][1]), Re)
-        Ro = convert(eltype(phys_cache[1][1]), Ro)
-
-        new{S..., size(ψs, 2), free_mean, include_period, multithreaded, typeof(norm), typeof(grid), eltype(phys_cache[1][1]), eltype(phys_cache[1]), typeof(FFT!), typeof(IFFT!)}(out, ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Re, Ro)
+        new{typeof(grid), size(ψs, 2), free_mean, include_period, multithreaded, typeof(norm), dealias, pad_factor}(out, ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro))
     end
 end
 
-function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(a::SpectralField{M, Nz, Nt}, compute_grad::Bool=true) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED}
+function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(a::SpectralField{<:Grid{Ny, Nz, Nt}, true}, compute_grad::Bool=true) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED}
     # assign aliases
     u         = f.spec_cache[1]
     dudt      = f.spec_cache[2]
@@ -113,7 +109,7 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(a::
     end
 end
 
-gr(s::SpectralField, norm_scale::NormScaling) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
+gr(s, norm_scale) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
 frequencyGradient(dudt, r) = get_β(r)*dot(dudt, r)/(8π^2)
 
 

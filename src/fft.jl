@@ -6,8 +6,6 @@
 #   - Nz_spec = (Nz_phys >> 1) + 1
 #   - Nt_spec = Nt_phys
 
-# key to proper symmetry is the identity "((Nt - 1) >> 1) + 1"
-
 const ESTIMATE = FFTW.ESTIMATE
 const EXHAUSTIVE = FFTW.EXHAUSTIVE
 const MEASURE = FFTW.MEASURE
@@ -59,8 +57,9 @@ end
 
 apply_mask!(padded::Array{T}) where {T} = (padded .= zero(T); return padded)
 
-function apply_symmetry!(u::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
-    for nt in 2:(((Nt - 1) >> 1) + 1), ny in 1:Ny
+function apply_symmetry!(u::AbstractArray{ComplexF64, 3})
+    S = size(u)
+    for nt in 2:(((S[3] - 1) >> 1) + 1), ny in 1:S[1]
         pos = u[ny, 1, nt]
         neg = u[ny, 1, end - nt + 2]
         _re = 0.5*(real(pos) + real(neg))
@@ -72,31 +71,27 @@ function apply_symmetry!(u::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
 end
 
 
-struct FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
-    plan::PLAN
+struct FFTPlan!{G, DEALIAS}
+    plan::FFTW.rFFTWPlan{Float64, -1, false, 3, Vector{Int}}
     padded::Array{ComplexF64, 3}
 
-    function FFTPlan!(u::PhysicalField{Ny, Nz, Nt}, dealias::Bool=false;
-                        pad_factor::Float64=3/2,
-                        flags::UInt32=EXHAUSTIVE,
-                        timelimit::Real=NO_TIMELIMIT,
-                        order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
+    function FFTPlan!(u::PhysicalField{G}, dealias::Bool=false; pad_factor::Float64=3/2, flags::UInt32=EXHAUSTIVE, timelimit::Real=NO_TIMELIMIT, order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt, G<:Grid{Ny, Nz, Nt}}
         Nz_padded, Nt_padded = padded_size(Nz, Nt, pad_factor)
         padded = dealias ? zeros(ComplexF64, Ny, (Nz_padded >> 1) + 1, Nt_padded) : zeros(ComplexF64, 0, 0, 0)
         plan = FFTW.plan_rfft(similar(parent(u)), order; flags=flags, timelimit=timelimit)
-        new{Ny, Nz, Nt, dealias, typeof(plan)}(plan, padded)
+        new{G, dealias}(plan, padded)
     end
 end
-FFTPlan!(grid::Grid{S, T}, dealias::Bool=false; pad_factor::Float64=3/2, flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = FFTPlan!(PhysicalField(grid, dealias, T, pad_factor=pad_factor), dealias; pad_factor=pad_factor, flags=flags, timelimit=timelimit, order=order)
+FFTPlan!(grid::Grid, dealias::Bool=false; pad_factor::Float64=3/2, flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) = FFTPlan!(PhysicalField(grid, dealias, pad_factor=pad_factor), dealias; pad_factor=pad_factor, flags=flags, timelimit=timelimit, order=order)
 
-function (f::FFTPlan!{Ny, Nz, Nt, true})(û::SpectralField{Ny, Nz, Nt}, u::PhysicalField{Ny, Nz, Nt, <:Any, <:Any, <:Any, true}) where {Ny, Nz, Nt}
+function (f::FFTPlan!{<:Grid{Ny, Nz, Nt}, true})(û::SpectralField{<:Grid{Ny, Nz, Nt}}, u::PhysicalField{<:Grid{Ny, Nz, Nt}, true}) where {Ny, Nz, Nt}
     FFTW.unsafe_execute!(f.plan, parent(u), f.padded)
     copy_to_truncated!(û, f.padded)
     û .*= (1/prod(size(u)[2:3]))
     return û
 end
 
-function (f::FFTPlan!{Ny, Nz, Nt, false})(û::SpectralField{Ny, Nz, Nt}, u::PhysicalField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function (f::FFTPlan!{<:Grid{Ny, Nz, Nt}, false})(û::SpectralField{<:Grid{Ny, Nz, Nt}}, u::PhysicalField{<:Grid{Ny, Nz, Nt}, false}) where {Ny, Nz, Nt}
     FFTW.unsafe_execute!(f.plan, parent(u), parent(û))
     û .*= (1/(Nz*Nt))
     return û
@@ -110,15 +105,11 @@ function (f::FFTPlan!)(û::VectorField{N, S}, u::VectorField{N, P}) where {N, S
 end
 
 
-struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
-    plan::PLAN
+struct IFFTPlan!{G, DEALIAS}
+    plan::FFTW.rFFTWPlan{ComplexF64, 1, false, 3, Vector{Int}}
     padded::Array{ComplexF64, 3}
 
-    function IFFTPlan!(û::SpectralField{Ny, Nz, Nt}, dealias::Bool=false;
-                        pad_factor::Float64=3/2,
-                        flags::UInt32=EXHAUSTIVE,
-                        timelimit::Real=NO_TIMELIMIT,
-                        order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt}
+    function IFFTPlan!(û::SpectralField{G}, dealias::Bool=false; pad_factor::Float64=3/2, flags::UInt32=EXHAUSTIVE, timelimit::Real=NO_TIMELIMIT, order::Vector{Int}=[2, 3]) where {Ny, Nz, Nt, G<:Grid{Ny, Nz, Nt}}
         if dealias
             Nz_padded, Nt_padded = padded_size(Nz, Nt, pad_factor)
             padded = zeros(ComplexF64, Ny, (Nz_padded >> 1) + 1, Nt_padded)
@@ -127,19 +118,19 @@ struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
             padded = similar(parent(û))
             plan = FFTW.plan_brfft(similar(parent(û)), Nz, order; flags=flags, timelimit=timelimit)
         end
-        new{Ny, Nz, Nt, dealias, typeof(plan)}(plan, padded)
+        new{G, dealias}(plan, padded)
     end
 end
-IFFTPlan!(grid::Grid{S, T}, dealias::Bool=false; pad_factor::Float64=3/2, flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T), dealias; pad_factor=pad_factor, flags=flags, timelimit=timelimit, order=order)
+IFFTPlan!(grid::Grid, dealias::Bool=false; pad_factor::Float64=3/2, flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) = IFFTPlan!(SpectralField(grid), dealias; pad_factor=pad_factor, flags=flags, timelimit=timelimit, order=order)
 
-function (f::IFFTPlan!{Ny, Nz, Nt, true})(u::PhysicalField{Ny, Nz, Nt, <:Any, <:Any, <:Any, true}, û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
+function (f::IFFTPlan!{<:Grid{Ny, Nz, Nt}, true})(u::PhysicalField{<:Grid{Ny, Nz, Nt}, true}, û::SpectralField{<:Grid{Ny, Nz, Nt}}) where {Ny, Nz, Nt}
     apply_symmetry!(û)
     copy_to_padded!(apply_mask!(f.padded), û)
     FFTW.unsafe_execute!(f.plan, f.padded, parent(u))
     return u
 end
 
-function (f::IFFTPlan!{Ny, Nz, Nt, false})(u::PhysicalField{Ny, Nz, Nt}, û::SpectralField{Ny, Nz, Nt}, safe::Bool=true) where {Ny, Nz, Nt}
+function (f::IFFTPlan!{<:Grid{Ny, Nz, Nt}, false})(u::PhysicalField{<:Grid{Ny, Nz, Nt}, false}, û::SpectralField{<:Grid{Ny, Nz, Nt}}, safe::Bool=true) where {Ny, Nz, Nt}
     apply_symmetry!(û)
     if safe
         f.padded .= û
@@ -158,7 +149,7 @@ function (f::IFFTPlan!)(u::VectorField{N, P}, û::VectorField{N, S}) where {N, 
 end
 
 
-function (f::IFFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt}, padSize::NTuple{2, Int}) where {Ny, Nz, Nt}
+function (f::IFFTPlan!{<:Grid{Ny, Nz, Nt}})(û::SpectralField{<:Grid{Ny, Nz, Nt}}, padSize::NTuple{2, Int}) where {Ny, Nz, Nt}
     grid_p = interpolate(get_grid(û), padSize)
     ûp = SpectralField(grid_p)
     u = PhysicalField(grid_p)
@@ -174,7 +165,7 @@ function (f::IFFTPlan!{Ny, Nz, Nt})(û::SpectralField{Ny, Nz, Nt}, padSize::NTu
     return u
 end
 
-function (f::IFFTPlan!{Ny, Nz, Nt})(û::VectorField{N, S}, padSize::NTuple{2, Int}) where {N, Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}}
+function (f::IFFTPlan!{<:Grid{Ny, Nz, Nt}})(û::VectorField{N, S}, padSize::NTuple{2, Int}) where {N, Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}}
     grid_p = interpolate(get_grid(û), padSize)
     ûp = VectorField(grid_p)
     u = VectorField(grid_p, fieldType=PhysicalField)

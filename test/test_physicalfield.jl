@@ -10,8 +10,8 @@
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 
         # intialise using different constructors
-        @test PhysicalField(grid) isa PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, false}
-        @test PhysicalField(grid, true) isa PhysicalField{Ny, Nz, Nt, typeof(grid), Float64, Array{Float64, 3}, true}
+        @test PhysicalField(grid) isa PhysicalField{typeof(grid), false, 1.5}
+        @test PhysicalField(grid, true) isa PhysicalField{typeof(grid), true, 1.5}
 
         # construct from function
         fun(y, z, t) = (1 - y^2)*exp(cos(β*z))*atan(sin(ω*t))
@@ -63,10 +63,8 @@ end
         Dy = rand(Float64, (Ny, Ny))
         Dy2 = rand(Float64, (Ny, Ny))
         ws = chebws(Ny)
-        # ω = abs(randn())
-        # β = abs(randn())
-        ω = 2π
-        β = 2π
+        ω = abs(randn())
+        β = abs(randn())
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
 
         _, _, t = points(grid)

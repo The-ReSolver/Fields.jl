@@ -16,8 +16,8 @@
         u2 = SpectralField(grid, rand(ComplexF64, 3*Ny, M, (Nz >> 1) + 1, Nt))
 
         # intialise using different constructors
-        @test u1 isa SpectralField{Ny, Nz, Nt, typeof(grid), Float64, false, Array{Complex{Float64}, 3}}
-        @test u2 isa SpectralField{M, Nz, Nt, typeof(grid), Float64, true, Array{Complex{Float64}, 3}}
+        @test u1 isa SpectralField{typeof(grid), false}
+        @test u2 isa SpectralField{typeof(grid), true}
 
         # test size method
         @test size(u1) == (Ny, (Nz >> 1) + 1, Nt)

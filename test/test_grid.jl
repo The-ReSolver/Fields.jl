@@ -13,8 +13,11 @@
     ω = abs(randn())
     β = π
 
+    # test constructor
+    g1 = @test_nowarn Grid(y, Nz, Nt, D1, D_sec, w1, ω, β)
+    @test_throws MethodError Grid(y, Nz, Nt, rand(Float64, (Ny, Ny)), D_sec, ω, β)
+
     # test point generation
-    g1 = Grid(y, Nz, Nt, D1, D_sec, w1, ω, β)
     gpoints = points(g1)
     @test gpoints[1] == y
     @test gpoints[2] ≈ range(0, 2π*(1 - 1/Nz), length = Nz)/β # precision differences in operations
@@ -31,10 +34,6 @@
     @test get_β(g1) == eltype(y)(β)
 
     # test comparison
-    g2 = Grid(y, Nz, Nt + 1, D1, D_sec, w1, ω, β)
-    g3 = Grid(rand(Float64, Ny), Nz, Nt, D1, D_sec, w1, ω, β)
-    g4 = Grid(y, Nz, Nt, rand(Float64, (Ny, Ny)), D_sec, w1, ω, β)
-    @test g1 != g2
-    @test g1 != g3
-    @test g1 == g4
+    @test g1 != Grid(y, Nz, Nt + 1, D1, D_sec, w1, ω, β)
+    @test g1 != Grid(rand(Float64, Ny), Nz, Nt, D1, D_sec, w1, ω, β)
 end

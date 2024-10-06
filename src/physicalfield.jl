@@ -1,16 +1,16 @@
 # This file contains the custom type to define a scalar field in physical space
 # for a rotating plane couette flow.
 
-struct PhysicalField{Ny, Nz, Nt, G, T<:Real, A, DEALIAS, PADFACTOR} <: AbstractArray{T, 3}
-    data::A
+struct PhysicalField{G, DEALIAS, PADFACTOR} <: AbstractArray{Float64, 3}
+    data::Array{Float64, 3}
     grid::G
 
-    PhysicalField{DEALIAS, PADFACTOR}(grid::Grid{S}, field::AbstractArray{T, 3}) where {DEALIAS, PADFACTOR, S, T} = new{S..., typeof(grid), T, typeof(field), DEALIAS, PADFACTOR}(field, grid)
+    PhysicalField{DEALIAS, PADFACTOR}(grid::Grid, field::AbstractArray{T, 3}) where {DEALIAS, PADFACTOR, T} = new{typeof(grid), DEALIAS, PADFACTOR}(Float64.(field), grid)
 end
 
 # outer constructors
-PhysicalField(grid::Grid{S}, fun, dealias::Bool=false, ::Type{T}=Float64; pad_factor::Real=3/2) where {T, S} = PhysicalField{dealias, pad_factor}(grid, field_from_function(fun, points(grid), grid.dom, Val(dealias), pad_factor))
-PhysicalField(grid::Grid{S}, dealias::Bool=false, ::Type{T}=Float64; pad_factor::Real=3/2) where {S, T<:Real} = PhysicalField(grid, (y,z,t)->zero(T), dealias, T, pad_factor=pad_factor)
+PhysicalField(grid::Grid, fun, dealias::Bool=false; pad_factor::Real=3/2) = PhysicalField{dealias, pad_factor}(grid, field_from_function(fun, points(grid), grid.dom, Val(dealias), pad_factor))
+PhysicalField(grid::Grid, dealias::Bool=false; pad_factor::Real=3/2) = PhysicalField(grid, (y,z,t)->zero(Float64), dealias, pad_factor=pad_factor)
 
 function field_from_function(fun, grid_points, dom, ::Val{true}, pad_factor)
     Nz, Nt = length.(grid_points[2:3])
@@ -27,7 +27,7 @@ Base.size(u::PhysicalField) = size(parent(u))
 Base.IndexStyle(::Type{<:PhysicalField}) = Base.IndexLinear()
 
 # similar
-Base.similar(u::PhysicalField{Ny, Nz, Nt, G, T, A, DEALIAS, PADFACTOR}, ::Type{S}=eltype(u)) where {Ny, Nz, Nt, G, T, A, DEALIAS, PADFACTOR, S} = PhysicalField(u.grid, DEALIAS, S, pad_factor=PADFACTOR)
+Base.similar(u::PhysicalField{G, DEALIAS, PADFACTOR}) where {G, DEALIAS, PADFACTOR} = PhysicalField(get_grid(u), DEALIAS, pad_factor=PADFACTOR)
 Base.copy(u::PhysicalField) = (v = similar(u); v .= u; v)
 
 # method to extract grid

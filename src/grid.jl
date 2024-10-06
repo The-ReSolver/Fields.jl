@@ -2,19 +2,17 @@
 # important information about how to perform operations on a given grid, such
 # as inner product/norms and derivatives.
 
-struct Grid{S, T<:AbstractFloat, M<:AbstractMatrix}
-    y::Vector{T}
-    Dy::NTuple{2, M}
-    ws::Vector{T}
-    dom::Vector{T}
+struct Grid{Ny, Nz, Nt, D<:AbstractMatrix}
+    y::Vector{Float64}
+    Dy::NTuple{2, D}
+    ws::Vector{Float64}
+    dom::Vector{Float64}
 
-    function Grid(y::AbstractVector{T}, Nz::Int, Nt::Int, Dy::AbstractMatrix, Dy2::AbstractMatrix, ws::Vector, ω::Real, β::Real) where {T}
-        new{(length(y), Nz, Nt), T, typeof(T.(Dy))}(y, (T.(Dy), T.(Dy2)), T.(ws), [T(β), T(ω)])
-    end
+    Grid(y::Vector, Nz::Int, Nt::Int, Dy::D, Dy2::D, ws::Vector, ω::Real, β::Real) where {D} = new{length(y), Nz, Nt, D}(y, (Dy, Dy2), Float64.(ws), Float64[β, ω])
 end
 
 # get points
-points(g::Grid{S}) where {S} = (g.y, ntuple(i -> (0:(S[i + 1] - 1))/(S[i + 1])*(2π/g.dom[i]), 2)...)
+points(g::Grid{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (g.y, ntuple(i -> (0:((Nz, Nt)[i] - 1))/((Nz, Nt)[i])*(2π/g.dom[i]), 2)...)
 
 # get other fields
 get_Dy(g::Grid) = g.Dy[1]
@@ -24,9 +22,9 @@ get_β(g::Grid) = g.dom[1]
 get_ω(g::Grid) = g.dom[2]
 
 # number of points in grid
-Base.size(::Grid{S}) where {S} = S
+Base.size(::Grid{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
 
 # overload equality method
-Base.:(==)(x::Grid{Sx}, y::Grid{Sy}) where {Sx, Sy} = (x.y == y.y && Sx[2] == Sy[2] && Sx[3] == Sy[3])
+Base.:(==)(x1::Grid{Ny1, Nz1, Nt1}, x2::Grid{Ny2, Nz2, Nt2}) where {Ny1, Nz1, Nt1, Ny2, Nz2, Nt2} = (x1.y == x2.y && Nz1 == Nz2 && Nt1 == Nt2)
 
-interpolate(grid::Grid, S::NTuple{2, Int}) = Grid(grid.y, S..., grid.Dy..., grid.ws, get_ω(grid), get_β(grid))
+interpolate(grid::Grid, Nz::Int, Nt::Int) = Grid(grid.y, Nz, Nt, get_Dy(grid), get_Dy2(grid), get_ws(grid), get_ω(grid), get_β(grid))

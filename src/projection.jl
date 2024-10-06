@@ -10,9 +10,9 @@ channel_int(u::AbstractVector{<:Number}, w::AbstractVector{<:Number}, v::Abstrac
 """
     Project a vector field onto a set of modes, returning the projected field
 """
-function project!(a::SpectralField{M, Nz, Nt, G, T, true}, u::VectorField{N, S}, modes::AbstractArray{ComplexF64, 4}) where {M, Ny, Nz, Nt, G, T, N, S<:SpectralField{Ny, Nz, Nt, G, T, false}}
-    for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), m in 1:M
-        a[m, nz, nt] = zero(T)
+function project!(a::SpectralField{<:Grid{Ny, Nz, Nt}, true}, u::VectorField{N, S}, modes::AbstractArray{ComplexF64, 4}) where {Ny, Nz, Nt, N, S<:SpectralField{<:Grid{Ny, Nz, Nt}, false}}
+    for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), m in axes(a, 1)
+        a[m, nz, nt] = 0.0
         for i in eachindex(u)
             a[m, nz, nt] += channel_int(@view(modes[(Ny*(i - 1) + 1):Ny*i, m, nz, nt]), get_grid(a).ws, @view(u[i][:, nz, nt]))
         end
@@ -22,7 +22,7 @@ function project!(a::SpectralField{M, Nz, Nt, G, T, true}, u::VectorField{N, S},
 end
 project(u::VectorField{N, S}, modes::AbstractArray{ComplexF64, 4}) where {N, S<:SpectralField} = project!(SpectralField(get_grid(u), modes), u, modes)
 
-function expand!(u::VectorField{N, S}, a::SpectralField{M, Nz, Nt, G, T, true}, modes::AbstractArray{ComplexF64, 4}) where {M, Ny, Nz, Nt, G, T, N, S<:SpectralField{Ny, Nz, Nt, G, T, false}}
+function expand!(u::VectorField{N, S}, a::SpectralField{<:Grid{Ny, Nz, Nt}, true}, modes::AbstractArray{ComplexF64, 4}) where {Ny, Nz, Nt, N, S<:SpectralField{<:Grid{Ny, Nz, Nt}, false}}
     for i in eachindex(u), nt in 1:Nt, nz in 1:((Nz >> 1) + 1)
         mul!(@view(u[i][:, nz, nt]), @view(modes[(Ny*(i - 1) + 1):Ny*i, :, nz, nt]), @view(a[:, nz, nt]))
     end

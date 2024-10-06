@@ -190,10 +190,10 @@ end
 
 dns2field!(U::VectorField{3, S},
             u::VectorField{3, P},
-            FFT!::FFTPlan!{Ny, Nz, Nt},
-            data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}, P<:PhysicalField{Ny, Nz, Nt}} = FFT!(U, dns2field!(u, data))
+            FFT!::FFTPlan!{<:Grid{Ny, Nz, Nt}},
+            data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}, P<:PhysicalField{<:Grid{Ny, Nz, Nt}}} = FFT!(U, dns2field!(u, data))
 
-function dns2field!(U::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, P<:PhysicalField{Ny, Nz, Nt}}
+function dns2field!(U::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, P<:PhysicalField{<:Grid{Ny, Nz, Nt}}}
     # loop over snaps and assign each velocity component
     for (i, snaps) in enumerate(data)
         U[1][:, :, i] .= snaps[1]
@@ -204,8 +204,8 @@ function dns2field!(U::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, 
     return correct_mean!(data, U)
 end
 
-correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, S}) where {Ny, Nz, Nt, S<:SpectralField{Ny, Nz, Nt}} = (u[1][:, 1, 1] .+= data.y; return u)
-function correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, P}) where {Ny, Nz, Nt, P<:PhysicalField{Ny, Nz, Nt}}
+correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, S}) where {Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}} = (u[1][:, 1, 1] .+= data.y; return u)
+function correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, P}) where {Ny, Nz, Nt, P<:PhysicalField{<:Grid{Ny, Nz, Nt}}}
     for nt in 1:Nt, nz in 1:Nz
         u[1][:, nz, nt] .+= data.y
     end
