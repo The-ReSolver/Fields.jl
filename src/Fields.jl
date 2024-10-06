@@ -1,6 +1,6 @@
 module Fields
 
-using FFTW, LinearAlgebra, IniFile, Mmap, RecipesBase, JLD2
+using FFTW, LinearAlgebra, IniFile, Mmap
 
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!, vorticity!
 export FFTPlan!, IFFTPlan!, apply_symmetry!
@@ -29,7 +29,6 @@ include("projection.jl")
 include("fft.jl")
 include("derivatives.jl")
 include("dns2field.jl")
-include("plot_vectorfield.jl")
 include("resgrad.jl")
 include("vectorToField.jl")
 include("kineticenergy.jl")
