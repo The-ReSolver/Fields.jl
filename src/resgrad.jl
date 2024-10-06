@@ -130,15 +130,14 @@ function (f::ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(a::
     end
 
     if INCLUDEPERIOD
-        return f.out, gr(f), frequencyGradient(f)
+        return f.out, gr(s, f.norm), frequencyGradient(dudt, r)
     else
-        return f.out, gr(f)
+        return f.out, gr(s, f.norm)
     end
 end
 
-# TODO: I need to sort out the different scalings used and the implicit effect it has on the results
-gr(cache::ResGrad) = ((get_β(cache.spec_cache[1])*get_ω(cache.spec_cache[1]))/(16π^2))*(norm(cache.proj_cache[1], cache.norm)^2)
-frequencyGradient(cache::ResGrad) = dot(cache.spec_cache[2], cache.spec_cache[10])/get_ω(cache.spec_cache[1])
+gr(s::SpectralField, norm_scale::NormScaling) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
+frequencyGradient(dudt, r) = get_β(r)*dot(dudt, r)/(8π^2)
 
 
 function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, false})(F, G, a::SpectralField)

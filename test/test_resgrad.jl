@@ -144,5 +144,5 @@ end
     grid.dom[2] += eps
     dRdω_fd = (R_forw - R_back)/(2*eps)
 
-    @test cache(a, false)[3]*2*(2π/ω)*(2π/β) == dRdω_fd
+    @test cache(a, false)[3] == dRdω_fd
 end
