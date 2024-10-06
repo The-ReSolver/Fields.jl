@@ -17,9 +17,6 @@ SpectralField(grid::Grid{S}, ::Type{T}=Float64) where {S, T<:Real} = SpectralFie
 # construct projected field from grid and modes
 SpectralField(grid::Grid{S}, modes, ::Type{T}=Float64) where {S, T<:Real} = SpectralField{true}(zeros(Complex{T}, size(modes, 2), (S[2] >> 1) + 1, S[3]), grid)
 
-# special constructor for optimisation read-write
-SpectralField(::Any, grid::Grid, modes::Array{ComplexF64, 4}, rest...) = SpectralField(grid, modes)
-
 # define interface
 Base.size(U::SpectralField) = size(parent(U))
 Base.IndexStyle(::Type{<:SpectralField}) = Base.IndexLinear()
