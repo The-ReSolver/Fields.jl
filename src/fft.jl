@@ -132,7 +132,6 @@ struct IFFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
 end
 IFFTPlan!(grid::Grid{S, T}, dealias::Bool=false; pad_factor::Float64=3/2, flags=EXHAUSTIVE, timelimit=NO_TIMELIMIT, order=[2, 3]) where {S, T} = IFFTPlan!(SpectralField(grid, T), dealias; pad_factor=pad_factor, flags=flags, timelimit=timelimit, order=order)
 
-# TODO: should come up with a better way to do this than just applying symmetry manually
 function (f::IFFTPlan!{Ny, Nz, Nt, true})(u::PhysicalField{Ny, Nz, Nt, <:Any, <:Any, <:Any, true}, û::SpectralField{Ny, Nz, Nt}) where {Ny, Nz, Nt}
     apply_symmetry!(û)
     copy_to_padded!(apply_mask!(f.padded), û)

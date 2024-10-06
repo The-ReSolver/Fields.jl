@@ -2,15 +2,14 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-# TODO: simplify this
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, S, D, T, DEALIAS, PADFACTOR, PLAN, IPLAN}
-    out::SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, G, T, DEALIAS, PADFACTOR, FFTPLAN, IFFTPLAN}
+    out::SpectralField{M, Nz, Nt, G, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
-    proj_cache::Vector{SpectralField{M, Nz, Nt, Grid{S, T, D}, T, true, Array{Complex{T}, 3}}}
-    spec_cache::Vector{VectorField{3, SpectralField{Ny, Nz, Nt, Grid{S, T, D}, T, false, Array{Complex{T}, 3}}}}
-    phys_cache::Vector{VectorField{3, PhysicalField{Ny, Nz, Nt, Grid{S, T, D}, T, Array{T, 3}, DEALIAS, PADFACTOR}}}
-    fft::FFTPlan!{Ny, Nz, Nt, DEALIAS, PLAN}
-    ifft::IFFTPlan!{Ny, Nz, Nt, DEALIAS, IPLAN}
+    proj_cache::Vector{SpectralField{M, Nz, Nt, G, T, true, Array{Complex{T}, 3}}}
+    spec_cache::Vector{VectorField{3, SpectralField{Ny, Nz, Nt, G, T, false, Array{Complex{T}, 3}}}}
+    phys_cache::Vector{VectorField{3, PhysicalField{Ny, Nz, Nt, G, T, Array{T, 3}, DEALIAS, PADFACTOR}}}
+    fft::FFTPLAN
+    ifft::IFFTPLAN
     base::Vector{Float64}
     norm::NORM
     Re_recip::T
@@ -39,29 +38,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, S, D
         Re = convert(eltype(phys_cache[1][1]), Re)
         Ro = convert(eltype(phys_cache[1][1]), Ro)
 
-        new{S...,
-            size(ψs, 2),
-            free_mean,
-            include_period,
-            multithreaded,
-            typeof(norm),
-            (S[1], S[2], S[3]),
-            typeof(grid.Dy[1]),
-            eltype(phys_cache[1][1]),
-            dealias,
-            pad_factor,
-            typeof(FFT!.plan),
-            typeof(IFFT!.plan)}(out,
-                                ψs,
-                                proj_cache,
-                                spec_cache,
-                                phys_cache,
-                                FFT!,
-                                IFFT!,
-                                base_prof,
-                                norm,
-                                1/Re,
-                                Ro)
+        new{S..., size(ψs, 2), free_mean, include_period, multithreaded, typeof(norm), typeof(grid), eltype(phys_cache[1][1]), dealias, pad_factor, typeof(FFT!), typeof(IFFT!)}(out, ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Re, Ro)
     end
 end
 
