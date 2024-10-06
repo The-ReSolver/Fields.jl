@@ -2,12 +2,12 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, G, T, DEALIAS, PADFACTOR, FFTPLAN, IFFTPLAN}
+struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, G, T, P, FFTPLAN, IFFTPLAN}
     out::SpectralField{M, Nz, Nt, G, T, true, Array{Complex{T}, 3}}
     modes::Array{ComplexF64, 4}
     proj_cache::Vector{SpectralField{M, Nz, Nt, G, T, true, Array{Complex{T}, 3}}}
     spec_cache::Vector{VectorField{3, SpectralField{Ny, Nz, Nt, G, T, false, Array{Complex{T}, 3}}}}
-    phys_cache::Vector{VectorField{3, PhysicalField{Ny, Nz, Nt, G, T, Array{T, 3}, DEALIAS, PADFACTOR}}}
+    phys_cache::Vector{VectorField{3, P}}
     fft::FFTPLAN
     ifft::IFFTPLAN
     base::Vector{Float64}
@@ -38,7 +38,7 @@ struct ResGrad{Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, G, T
         Re = convert(eltype(phys_cache[1][1]), Re)
         Ro = convert(eltype(phys_cache[1][1]), Ro)
 
-        new{S..., size(ψs, 2), free_mean, include_period, multithreaded, typeof(norm), typeof(grid), eltype(phys_cache[1][1]), dealias, pad_factor, typeof(FFT!), typeof(IFFT!)}(out, ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Re, Ro)
+        new{S..., size(ψs, 2), free_mean, include_period, multithreaded, typeof(norm), typeof(grid), eltype(phys_cache[1][1]), eltype(phys_cache[1]), typeof(FFT!), typeof(IFFT!)}(out, ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Re, Ro)
     end
 end
 
