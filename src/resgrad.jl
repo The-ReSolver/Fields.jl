@@ -72,13 +72,6 @@ end
 
 function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(dR::S, a::S) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, S<:SpectralField{<:Grid{Ny, Nz, Nt}, true}}
     # assign aliases
-    u         = f.spec_cache[1]
-    dudt      = f.spec_cache[2]
-    d2udy2    = f.spec_cache[5]
-    d2udz2    = f.spec_cache[6]
-    vdudy     = f.spec_cache[7]
-    wdudz     = f.spec_cache[8]
-    ns        = f.spec_cache[9]
     r         = f.spec_cache[10]
     drdt      = f.spec_cache[11]
     d2rdy2    = f.spec_cache[14]
@@ -89,24 +82,9 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     ry∇v      = f.spec_cache[19]
     rz∇w      = f.spec_cache[20]
     dudτ      = f.spec_cache[21]
-    s         = f.proj_cache[1]
-    s̃         = f.proj_cache[2]
 
-    # convert velocity coefficients to full-space
-    expand!(u, a, f.modes)
-
-    # set velocity field mean
-    @view(u[1][:, 1, 1]) .+= f.base
-
-    # compute all the terms with only velocity
-    _update_vel_cache!(f, MULTITHREADED)
-
-    # compute the navier-stokes
-    @. ns = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2)
-    cross_k!(ns, u, f.Ro)
-
-    # convert to residual in terms of modal basis
-    expand!(r, mul!(s̃, f.norm, project!(s, ns, f.modes)), f.modes)
+    # compute residual and frequency gradient
+    R, dRdω = f(a)
 
     # compute all the terms for the variational evolution
     _update_res_cache!(f, MULTITHREADED)
@@ -133,9 +111,9 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     end
 
     if INCLUDEPERIOD
-        return gr(s, f.norm), frequencyGradient(dudt, r)
+        return R, dRdω
     else
-        return gr(s, f.norm)
+        return R
     end
 end
 
