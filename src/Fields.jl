@@ -12,10 +12,10 @@ export VectorField, energy
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 export project, project!, reverse_project!, expand!
 export Evolution, Constraint
-export ResGrad, optimalFrequency
+export fieldToVector!, vectorToField!
+export ResGrad
 export gd!, optimise!, OptOptions, Callback
 export generateGridOfModes
-export writeSpectralField, readSpectralField, writeVectorField, readVectorField
 
 export DNSData, loadDNS, dns2field!, dns2field, correct_mean!, mean!, mean
 

@@ -117,13 +117,14 @@ end
 
 @testset "Residual Gradient Symmetry            " begin
     a = SpectralField(grid, modes)
+    grad = similar(a)
     a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
     a[:, 1, 1] .= real.(a[:, 1, 1])
     Fields.apply_symmetry!(a)
-    cache(a)
+    cache(grad, a)
     symmetric = true
     for i in 2:(((Nt - 1) >> 1) + 1)
-        if !isapprox(cache.out[:, 1, i], cache.out[:, 1, end - i + 2], rtol=1e-6)
+        if !isapprox(grad[:, 1, i], grad[:, 1, end - i + 2], rtol=1e-6)
             symmetric = false
             break
         end
@@ -138,11 +139,11 @@ end
     # compute finite difference approximation of gradient
     eps = 1e-5 # NOTE: since the underlying function is quadratic, the central-differencing approximation does not depend on the step-size used (in addition to being exact)
     grid.dom[2] += eps
-    R_forw = cache(a, false)[2]
+    R_forw = cache(a)[1]
     grid.dom[2] -= 2*eps
-    R_back = cache(a, false)[2]
+    R_back = cache(a)[1]
     grid.dom[2] += eps
     dRdω_fd = (R_forw - R_back)/(2*eps)
 
-    @test cache(a, false)[3] == dRdω_fd
+    @test cache(a)[2] == dRdω_fd
 end

@@ -153,12 +153,12 @@ end
 
 function (fg::ResGrad{GRID, M, FREEMEAN, true})(R, G, x::Vector) where {GRID, M, FREEMEAN}
     dRda = fg.proj_cache[4]
-    a = _vectorToVelocityCoefficients!(fg.proj_cache[3], x)
+    a = vectorToField!(fg.proj_cache[3], x)
     if G === nothing
         R = fg(a)[2]
     else
         R, dRdω = fg(dRda, a)
-        _velocityCoefficientsToVector!(G, dRda, dRdω)
+        fieldToVector!(G, dRda, dRdω)
     end
     return R
 end

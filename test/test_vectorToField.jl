@@ -7,7 +7,7 @@
     modes = rand(ComplexF64, 3*Ny, M, (Nz >> 1) + 1, Nt)
     a = SpectralField(g, modes)
     a .= rand(ComplexF64, M, (Nz >> 1) + 1, Nt)
-    vector = Vector{Float64}(undef, 2*Ny*(Nz >> 1 + 1)*Nt + 1)
+    vector = Vector{Float64}(undef, 2*Ny*((Nz >> 1) + 1)*Nt + 1)
 
-    @test Fields._vectorToVelocityCoefficients!(similar(a), Fields._velocityCoefficientsToVector!(vector, a)) == a
+    @test vectorToField!(similar(a), fieldToVector!(vector, a, ω0)) == a
 end
