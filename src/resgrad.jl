@@ -3,7 +3,6 @@
 # projection.
 
 struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, D, P}
-    out::SpectralField{G, true}
     modes::Array{ComplexF64, 4}
     proj_cache::Vector{SpectralField{G, true}}
     spec_cache::Vector{VectorField{3, SpectralField{G, false}}}
@@ -22,11 +21,8 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, D, P}
         # check if multiple threads are available
         multithreaded = Base.Threads.nthreads() > 1
 
-        # initialise output vector field
-        out = SpectralField(grid, ψs)
-
         # create field cache
-        proj_cache = [SpectralField(grid, ψs)                           for _ in 1:3]
+        proj_cache = [SpectralField(grid, ψs)                           for _ in 1:4]
         spec_cache = [VectorField(grid, fieldType=SpectralField)        for _ in 1:21]
         phys_cache = [VectorField(grid, dealias, pad_factor=pad_factor) for _ in 1:13]
 
@@ -34,11 +30,47 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, D, P}
         FFT! = FFTPlan!(grid, dealias, pad_factor=pad_factor)
         IFFT! = IFFTPlan!(grid, dealias, pad_factor=pad_factor)
 
-        new{typeof(grid), size(ψs, 2), free_mean, include_period, multithreaded, typeof(norm), dealias, pad_factor}(out, ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro))
+        new{typeof(grid), size(ψs, 2), free_mean, include_period, multithreaded, typeof(norm), dealias, pad_factor}(ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro))
     end
 end
 
-function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(a::SpectralField{<:Grid{Ny, Nz, Nt}, true}, compute_grad::Bool=true) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED}
+function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(a::SpectralField{<:Grid{Ny, Nz, Nt}, true}) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED}
+    # assign aliases
+    u         = f.spec_cache[1]
+    dudt      = f.spec_cache[2]
+    d2udy2    = f.spec_cache[5]
+    d2udz2    = f.spec_cache[6]
+    vdudy     = f.spec_cache[7]
+    wdudz     = f.spec_cache[8]
+    ns        = f.spec_cache[9]
+    r         = f.spec_cache[10]
+    s         = f.proj_cache[1]
+    s̃         = f.proj_cache[2]
+
+    # convert velocity coefficients to full-space
+    expand!(u, a, f.modes)
+
+    # set velocity field mean
+    @view(u[1][:, 1, 1]) .+= f.base
+
+    # compute all the terms with only velocity
+    _update_vel_cache!(f, MULTITHREADED)
+
+    # compute the navier-stokes
+    @. ns = dudt + vdudy + wdudz - f.Re_recip*(d2udy2 + d2udz2)
+    cross_k!(ns, u, f.Ro)
+
+    # convert to residual in terms of modal basis
+    expand!(r, mul!(s̃, f.norm, project!(s, ns, f.modes)), f.modes)
+
+    if INCLUDEPERIOD
+        return gr(s, f.norm), frequencyGradient(dudt, r)
+    else
+        return gr(s, f.norm)
+    end
+end
+
+function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(dR::S, a::S) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, S<:SpectralField{<:Grid{Ny, Nz, Nt}, true}}
     # assign aliases
     u         = f.spec_cache[1]
     dudt      = f.spec_cache[2]
@@ -58,7 +90,7 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     rz∇w      = f.spec_cache[20]
     dudτ      = f.spec_cache[21]
     s         = f.proj_cache[1]
-    s̃         = f.proj_cache[3]
+    s̃         = f.proj_cache[2]
 
     # convert velocity coefficients to full-space
     expand!(u, a, f.modes)
@@ -76,36 +108,34 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     # convert to residual in terms of modal basis
     expand!(r, mul!(s̃, f.norm, project!(s, ns, f.modes)), f.modes)
 
-    if compute_grad
-        # compute all the terms for the variational evolution
-        _update_res_cache!(f, MULTITHREADED)
+    # compute all the terms for the variational evolution
+    _update_res_cache!(f, MULTITHREADED)
 
-        # compute the RHS of the evolution equation
-        # TODO: try without the factors of half to see if the periodic optimisation works any better
-        # TODO: where the hell do the factors of half come from???
-        @. dudτ = -vdrdy - wdrdz + rx∇u + ry∇v + rz∇w
-        @view(dudτ[1][:, 1, 2:end]) .*= 0.5
-        @view(dudτ[2][:, 1, 2:end]) .*= 0.5
-        @view(dudτ[3][:, 1, 2:end]) .*= 0.5
-        @. dudτ += -drdt - f.Re_recip*(d2rdy2 + d2rdz2)
-        cross_k!(dudτ, r, -f.Ro)
-        @view(dudτ[1][:, 1, 1]) .*= 0.5
-        @view(dudτ[2][:, 1, 1]) .*= 0.5
-        @view(dudτ[3][:, 1, 1]) .*= 0.5
+    # compute the RHS of the evolution equation
+    # TODO: try without the factors of half to see if the periodic optimisation works any better
+    # TODO: where the hell do the factors of half come from???
+    @. dudτ = -vdrdy - wdrdz + rx∇u + ry∇v + rz∇w
+    @view(dudτ[1][:, 1, 2:end]) .*= 0.5
+    @view(dudτ[2][:, 1, 2:end]) .*= 0.5
+    @view(dudτ[3][:, 1, 2:end]) .*= 0.5
+    @. dudτ += -drdt - f.Re_recip*(d2rdy2 + d2rdz2)
+    cross_k!(dudτ, r, -f.Ro)
+    @view(dudτ[1][:, 1, 1]) .*= 0.5
+    @view(dudτ[2][:, 1, 1]) .*= 0.5
+    @view(dudτ[3][:, 1, 1]) .*= 0.5
 
-        # project to get velocity coefficient evolution
-        project!(f.out, dudτ, f.modes)
+    # project to get velocity coefficient evolution
+    project!(dR, dudτ, f.modes)
 
-        # take off the mean profile
-        if !FREEMEAN
-            f.out[:, 1, 1] .= 0
-        end
+    # take off the mean profile
+    if !FREEMEAN
+        dR[:, 1, 1] .= 0
     end
 
     if INCLUDEPERIOD
-        return f.out, gr(s, f.norm), frequencyGradient(dudt, r)
+        return gr(s, f.norm), frequencyGradient(dudt, r)
     else
-        return f.out, gr(s, f.norm)
+        return gr(s, f.norm)
     end
 end
 
@@ -113,18 +143,24 @@ gr(s, norm_scale) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
 frequencyGradient(dudt, r) = get_β(r)*dot(dudt, r)/(8π^2)
 
 
-function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, false})(F, G, a::SpectralField)
-    G === nothing ? F = f(a, false)[2] : (F = f(a, true)[2]; G .= f.out)
-    return F
+function (fg::ResGrad{GRID, M, FREEMEAN, false})(R, dRda, a::SpectralField) where {GRID, M, FREEMEAN}
+    if dRda === nothing
+        return fg(a)
+    else
+        return fg(dRda, a)
+    end
 end
 
-function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, true})(F, G, x::Vector{T}) where {T<:Real}
-    a = _vectorToVelocityCoefficients!(f.proj_cache[2], x)
-    return f(F, G, a)
-end
-function (f::ResGrad{<:Any, <:Any, <:Any, <:Any, <:Any, true})(F, G, a::SpectralField)
-    G === nothing ? F = f(a, false)[2] : (output = f(a, true)[2:3]; _velocityCoefficientsToVector!(G, f.out); G[end] = output[2])
-    return output[1]
+function (fg::ResGrad{GRID, M, FREEMEAN, true})(R, G, x::Vector) where {GRID, M, FREEMEAN}
+    dRda = fg.proj_cache[4]
+    a = _vectorToVelocityCoefficients!(fg.proj_cache[3], x)
+    if G === nothing
+        R = fg(a)[2]
+    else
+        R, dRdω = fg(dRda, a)
+        _velocityCoefficientsToVector!(G, dRda, dRdω)
+    end
+    return R
 end
 
 

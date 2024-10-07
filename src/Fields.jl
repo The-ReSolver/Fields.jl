@@ -28,9 +28,9 @@ include("vectorfields.jl")
 include("projection.jl")
 include("fft.jl")
 include("derivatives.jl")
-include("dns2field.jl")
-include("resgrad.jl")
 include("vectorToField.jl")
+include("resgrad.jl")
 include("kineticenergy.jl")
+include("dns2field.jl")
 
 end
