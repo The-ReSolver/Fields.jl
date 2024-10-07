@@ -84,7 +84,7 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     dudτ      = f.spec_cache[21]
 
     # compute residual and frequency gradient
-    R, dRdω = f(a)
+    output = f(a)
 
     # compute all the terms for the variational evolution
     _update_res_cache!(f, MULTITHREADED)
@@ -100,11 +100,7 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
         dR[:, 1, 1] .= 0
     end
 
-    if INCLUDEPERIOD
-        return R, dRdω
-    else
-        return R
-    end
+    return output
 end
 
 
