@@ -2,7 +2,7 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
-struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, D, P}
+struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS, NORM, D, P}
     modes::Array{ComplexF64, 4}
     proj_cache::Vector{SpectralField{G, true}}
     spec_cache::Vector{VectorField{3, SpectralField{G, false}}}
@@ -14,7 +14,7 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, D, P}
     Re_recip::Float64
     Ro::Float64
 
-    function ResGrad(grid::Grid{Ny, Nz, Nt}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false) where {Ny, Nz, Nt}
+    function ResGrad(grid::Grid{Ny, Nz, Nt}, ψs::Array{ComplexF64, 4}, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false, grad_factors::Bool=false) where {Ny, Nz, Nt}
         pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
         pad_factor = Float64(pad_factor)
 
@@ -30,11 +30,11 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, NORM, D, P}
         FFT! = FFTPlan!(grid, dealias, pad_factor=pad_factor)
         IFFT! = IFFTPlan!(grid, dealias, pad_factor=pad_factor)
 
-        new{typeof(grid), size(ψs, 2), free_mean, include_period, multithreaded, typeof(norm), dealias, pad_factor}(ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro))
+        new{typeof(grid), size(ψs, 2), free_mean, include_period, multithreaded, grad_factors, typeof(norm), dealias, pad_factor}(ψs, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro))
     end
 end
 
-function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(a::SpectralField{<:Grid{Ny, Nz, Nt}, true}) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED}
+function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS})(a::SpectralField{<:Grid{Ny, Nz, Nt}, true}) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS}
     # assign aliases
     u         = f.spec_cache[1]
     dudt      = f.spec_cache[2]
@@ -70,7 +70,7 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     end
 end
 
-function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED})(dR::S, a::S) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, S<:SpectralField{<:Grid{Ny, Nz, Nt}, true}}
+function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS})(dR::S, a::S) where {Ny, Nz, Nt, M, FREEMEAN, INCLUDEPERIOD, GRADFACTORS, MULTITHREADED, S<:SpectralField{<:Grid{Ny, Nz, Nt}, true}}
     # assign aliases
     r         = f.spec_cache[10]
     drdt      = f.spec_cache[11]
@@ -90,17 +90,7 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     _update_res_cache!(f, MULTITHREADED)
 
     # compute the RHS of the evolution equation
-    # TODO: try without the factors of half to see if the periodic optimisation works any better
-    # TODO: where the hell do the factors of half come from???
-    @. dudτ = -vdrdy - wdrdz + rx∇u + ry∇v + rz∇w
-    @view(dudτ[1][:, 1, 2:end]) .*= 0.5
-    @view(dudτ[2][:, 1, 2:end]) .*= 0.5
-    @view(dudτ[3][:, 1, 2:end]) .*= 0.5
-    @. dudτ += -drdt - f.Re_recip*(d2rdy2 + d2rdz2)
-    cross_k!(dudτ, r, -f.Ro)
-    @view(dudτ[1][:, 1, 1]) .*= 0.5
-    @view(dudτ[2][:, 1, 1]) .*= 0.5
-    @view(dudτ[3][:, 1, 1]) .*= 0.5
+    gradient!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, f.Re_recip, f.Ro, GRADFACTORS)
 
     # project to get velocity coefficient evolution
     project!(dR, dudτ, f.modes)
@@ -116,9 +106,6 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
         return R
     end
 end
-
-gr(s, norm_scale) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
-frequencyGradient(dudt, r) = get_β(r)*dot(dudt, r)/(8π^2)
 
 
 function (fg::ResGrad{GRID, M, FREEMEAN, false})(R, dRda, a::SpectralField) where {GRID, M, FREEMEAN}
@@ -141,6 +128,32 @@ function (fg::ResGrad{GRID, M, FREEMEAN, true})(R, G, x::Vector) where {GRID, M,
     return R
 end
 
+
+gr(s, norm_scale) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
+frequencyGradient(dudt, r) = get_β(r)*dot(dudt, r)/(8π^2)
+gradient!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro, grad_factors) = grad_factors ? _gradientWithFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro) : _gradientWithoutFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
+
+
+
+# Helper functions
+function _gradientWithFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
+    @. dudτ = -vdrdy - wdrdz + rx∇u + ry∇v + rz∇w
+    @view(dudτ[1][:, 1, 2:end]) .*= 0.5
+    @view(dudτ[2][:, 1, 2:end]) .*= 0.5
+    @view(dudτ[3][:, 1, 2:end]) .*= 0.5
+    @. dudτ += -drdt - Re_recip*(d2rdy2 + d2rdz2)
+    cross_k!(dudτ, r, -Ro)
+    @view(dudτ[1][:, 1, 1]) .*= 0.5
+    @view(dudτ[2][:, 1, 1]) .*= 0.5
+    @view(dudτ[3][:, 1, 1]) .*= 0.5
+    return dudτ
+end
+
+function _gradientWithoutFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
+    @. dudτ = -drdt - vdrdy - wdrdz + rx∇u + ry∇v + rz∇w - Re_recip*(d2rdy2 + d2rdz2)
+    cross_k!(dudτ, r, -Ro)
+    return dudτ
+end
 
 _update_vel_cache!(cache::ResGrad, multithreaded::Bool) = multithreaded ? _update_vel_cache_mt!(cache) : _update_vel_cache_st!(cache)
 _update_res_cache!(cache::ResGrad, multithreaded::Bool) = multithreaded ? _update_res_cache_mt!(cache) : _update_res_cache_st!(cache)
