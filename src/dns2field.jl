@@ -4,8 +4,6 @@
 # This will allow the outputs of the DNS to be directly loaded into Julia for
 # manipulation with the rest of the code.
 
-# TODO: this stuff needs re-testing and a clean-up
-
 # -----------------------------------------------------------------------------
 # Custom error for indexing at incorrect times
 # -----------------------------------------------------------------------------
@@ -174,38 +172,25 @@ mean(data::DNSData{Ny}; window::NTuple{2, Real}=(firstindex(data), lastindex(dat
 # Methods to convert simulation directory directly into fields which we know
 # how to manipulate
 # -----------------------------------------------------------------------------
-
-# TODO: fix these
-dns2field(loc::AbstractString; fft_flag::UInt32=ESTIMATE, times::Union{Nothing, NTuple{2, Real}}=nothing, skip_step::Int=1) = dns2field(DNSData(loc)[times, skip_step], fft_flag=fft_flag)
-
-function dns2field(data::DNSData{Ny, Nz, Nt}; fft_flag::UInt32=ESTIMATE) where {Ny, Nz, Nt}
-    # initialise grid, fields, and, and FFT plan
-    grid = Grid(data.y, Nz, Nt, zeros(Ny, Ny), zeros(Ny, Ny), zeros(Ny), 2π/((data.snaps[2] - data.snaps[1])*Nt), data.β)
-    u = VectorField(grid; field_type=:physical)
-    U = VectorField(grid)
-    FFT! = FFTPlan!(grid, flags=fft_flag)
-
-    return dns2field!(U, u, FFT!, data)
-end
-
-dns2field!(U::VectorField{3, S},
-            u::VectorField{3, P},
-            FFT!::FFTPlan!{<:Grid{Ny, Nz, Nt}},
-            data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}, P<:PhysicalField{<:Grid{Ny, Nz, Nt}}} = FFT!(U, dns2field!(u, data))
-
-function dns2field!(U::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, P<:PhysicalField{<:Grid{Ny, Nz, Nt}}}
-    # loop over snaps and assign each velocity component
-    for (i, snaps) in enumerate(data)
-        U[1][:, :, i] .= snaps[1]
-        U[2][:, :, i] .= snaps[2]
-        U[3][:, :, i] .= snaps[3]
+function dnsToSpectralField(data::DNSData{Ny, Nzd, Ntd}, grid::Grid{Ny, Nzg, Ntg}) where {Ny, Nzd, Ntd, Nzg, Ntg}
+    u = VectorField(grid)
+    A = [Array{Float64, 3}(undef, Ny, Nzd, Ntd) for _ in 1:3]
+    for n in 1:3, (i, snap) in enumerate(data)
+        A[n][:, :, i] .= snap[n]
     end
-
-    return correct_mean!(data, U)
+    B = [rfft(A[i], [2, 3])./(Nzd*Ntd) for i in 1:3]
+    for n in 1:3, nz in 1:((minimum([Nzd, Nzg]) >> 1) + 1)
+        u[n][:, nz, 1] .= B[n][:, nz, 1]
+    end
+    for n in 1:3, nz in 1:((minimum([Nzd, Nzg]) >> 1) + 1), nt in 2:((minimum([Ntd, Ntg]) >> 1) + 1)
+        u[n][:, nz, nt] .= B[n][:, nz, nt]
+        u[n][:, nz, end-nt+2] .= B[n][:, nz, end-nt+2]
+    end
+    return u
 end
 
-correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, S}) where {Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}} = (u[1][:, 1, 1] .+= data.y; return u)
-function correct_mean!(data::DNSData{Ny, Nz, Nt}, u::VectorField{3, P}) where {Ny, Nz, Nt, P<:PhysicalField{<:Grid{Ny, Nz, Nt}}}
+correct_mean!(u::VectorField{3, S}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}} = (u[1][:, 1, 1] .+= data.y; return u)
+function correct_mean!(u::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, P<:PhysicalField{<:Grid{Ny, Nz, Nt}}}
     for nt in 1:Nt, nz in 1:Nz
         u[1][:, nz, nt] .+= data.y
     end
