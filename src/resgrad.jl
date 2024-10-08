@@ -2,6 +2,9 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
+# -----------------------------------------------------------------------------
+# Core residual functions
+# -----------------------------------------------------------------------------
 struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS, NORM, D, P}
     modes::Array{ComplexF64, 4}
     proj_cache::Vector{SpectralField{G, true}}
@@ -103,8 +106,15 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     return output
 end
 
+gr(s, norm_scale) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
+frequencyGradient(dudt, r) = get_β(r)*dot(dudt, r)/(8π^2)
+gradient!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro, grad_factors) = grad_factors ? _gradientWithFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro) : _gradientWithoutFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
 
-function (fg::ResGrad{GRID, M, FREEMEAN, false})(R, dRda, a::SpectralField) where {GRID, M, FREEMEAN}
+
+# -----------------------------------------------------------------------------
+# Interface functions for OptimWrapper.jl
+# -----------------------------------------------------------------------------
+function (fg::ResGrad{G, M, FREEMEAN, false})(R, dRda, a::SpectralField) where {G, M, FREEMEAN}
     if dRda === nothing
         return fg(a)
     else
@@ -124,14 +134,24 @@ function (fg::ResGrad{GRID, M, FREEMEAN, true})(R, G, x::Vector) where {GRID, M,
     return R
 end
 
+(fg::ResGrad)(x::Vector) = fg(vectorToField!(fg.proj_cache[3], x))
+function (fg::ResGrad{G, M, FREEMEAN, false})(grad::V, x::V) where {G, M, FREEMEAN, V<:Vector}
+    dRda = fg.proj_cache[4]
+    R = fg(dRda, vectorToField!(fg.proj_cache[3], x))
+    fieldToVector!(grad, dRda, 0)
+    return R
+end
+function (fg::ResGrad{G, M, FREEMEAN, true})(grad::V, x::V) where {G, M, FREEMEAN, V<:Vector}
+    dRda = fg.proj_cache[4]
+    R, dRdω = fg(dRda, vectorToField!(fg.proj_cache[3], x))
+    fieldToVector!(grad, dRda, dRdω)
+    return R
+end
 
-gr(s, norm_scale) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
-frequencyGradient(dudt, r) = get_β(r)*dot(dudt, r)/(8π^2)
-gradient!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro, grad_factors) = grad_factors ? _gradientWithFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro) : _gradientWithoutFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
 
-
-
+# -----------------------------------------------------------------------------
 # Helper functions
+# -----------------------------------------------------------------------------
 function _gradientWithFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
     @. dudτ = -vdrdy - wdrdz + rx∇u + ry∇v + rz∇w
     @view(dudτ[1][:, 1, 2:end]) .*= 0.5
