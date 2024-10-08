@@ -31,7 +31,7 @@ function DNSData(loc::String)
     snaps = _filterDirectoryToSnapshots(loc)
     DNSData{_fetch_param(ini, :Ny, Int), _fetch_param(ini, :Nz, Int), length(snaps)}(loc, ini, _sort_snaps!(snaps))
 end
-loadDNS(loc) = DNSData(string(loc))
+DNSData(loc) = DNSData(string(loc))
 
 function Base.getproperty(data::DNSData{Ny, Nz, Nt}, field::Symbol) where {Ny, Nz, Nt}
     if field === :Ny
@@ -188,6 +188,8 @@ function dnsToSpectralField(data::DNSData{Ny, Nzd, Ntd}, grid::Grid{Ny, Nzg, Ntg
     end
     return u
 end
+
+dnsToSpectralField(data::DNSData{Ny, Nzd, Ntd}, grid::Grid{Ny, Nzg, Ntg}, modes) where {Ny, Nzd, Ntd, Nzg, Ntg} = project!(SpectralField(grid, modes), dnsToSpectralField(data, grid), modes)
 
 correct_mean!(u::VectorField{3, S}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}} = (u[1][:, 1, 1] .+= data.y; return u)
 function correct_mean!(u::VectorField{3, P}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, P<:PhysicalField{<:Grid{Ny, Nz, Nt}}}
