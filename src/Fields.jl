@@ -1,6 +1,6 @@
 module Fields
 
-using FFTW, LinearAlgebra, IniFile, Mmap
+using FFTW, LinearAlgebra, IniFile, Mmap, ResolventAnalysis
 
 export ddy!, d2dy2!, ddz!, d2dz2!, ddt!, vorticity!
 export FFTPlan!, IFFTPlan!, apply_symmetry!

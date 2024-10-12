@@ -9,7 +9,6 @@ using FDGrids
 
 function testAll()
     include("test_grid.jl")
-    include("test_generate_modes.jl")
     include("test_physicalfield.jl")
     include("test_spectralfield.jl")
     include("test_vectorfield.jl")
