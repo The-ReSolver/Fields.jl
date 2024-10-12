@@ -11,7 +11,7 @@ function generateModes!(modes::Array{ComplexF64, 4}, grid::Grid{Ny, Nz, Nt}, M, 
     H = Resolvent(Ny, get_Dy(grid), get_Dy2(grid))
 
     for nt in 1:((Nt >> 1) + 1), nz in 1:((Nz >> 1) + 1)
-        print("$nz/$((Nz >> 1) + 1), $nt/$((Nt >> 1) + 1)                  \r")
+        verbose && print("$nz/$((Nz >> 1) + 1), $nt/$((Nt >> 1) + 1)       \r")
         if nz == nt == 1
             modes[:, :, 1, 1] = svd(H(0, 0, base, Re, Ro), ws, M).U
         elseif nt == 1
@@ -27,4 +27,4 @@ function generateModes!(modes::Array{ComplexF64, 4}, grid::Grid{Ny, Nz, Nt}, M, 
 
     return modes
 end
-generateModes(grid::Grid{Ny, Nz, Nt}, M, Re, Ro; base=ones(Ny), verbose=true) where {Ny, Nz, Nt} = generateModes!(Array{ComplexF64, 4}(undef, 3*Ny, M, (Nz >> 1) + 1, Nt), grid, M, Re, Ro, base=base)
+generateModes(grid::Grid{Ny, Nz, Nt}, M, Re, Ro; base=ones(Ny), verbose=true) where {Ny, Nz, Nt} = generateModes!(Array{ComplexF64, 4}(undef, 3*Ny, M, (Nz >> 1) + 1, Nt), grid, M, Re, Ro, base=base, verbose=verbose)
