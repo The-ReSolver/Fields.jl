@@ -14,7 +14,7 @@ export project, project!, expand!
 export fieldToVector!, vectorToField!
 export ResGrad
 export gd!, optimise!, OptOptions, Callback
-export generateGridOfModes
+export generateModes
 
 export DNSData, dnsToSpectralField, correct_mean!, mean!, mean
 
