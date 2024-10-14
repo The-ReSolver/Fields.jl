@@ -149,7 +149,6 @@ function (f::IFFTPlan!)(u::VectorField{N, P}, û::VectorField{N, S}) where {N, 
 end
 
 
-# TODO: test this
 function ifft(û::VectorField{N, <:SpectralField{<:Grid{Ny, Nz, Nt}}}, Nz_pad::Int, Nt_pad::Int) where {N, Ny, Nz, Nt}
     u = VectorField(interpolate(get_grid(û), Nz_pad, Nt_pad), fieldType=PhysicalField)
     for n in 1:N
