@@ -10,11 +10,10 @@ function generateModes!(modes::Array{ComplexF64, 4}, grid::Grid{Ny, Nz, Nt}, M, 
     # intiialise resolvent operator
     H = Resolvent(Ny, get_Dy(grid), get_Dy2(grid))
 
+    # loop over frequencies computing response modes
     for nt in 1:((Nt >> 1) + 1), nz in 1:((Nz >> 1) + 1)
         verbose && print("$nz/$((Nz >> 1) + 1), $nt/$((Nt >> 1) + 1)       \r")
-        if nz == nt == 1
-            modes[:, :, 1, 1] = svd(H(0, 0, base, Re, Ro), ws, M).U
-        elseif nt == 1
+        if nt == 1
             modes[:, :, nz, 1] .= svd(H((nz - 1)*β, 0, base, Re, Ro), ws, M).U
         elseif nz == 1
             modes[:, :, 1, nt] .= svd(H(0, (nt - 1)*ω, base, Re, Ro), ws, M).U
