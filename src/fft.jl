@@ -149,36 +149,25 @@ function (f::IFFTPlan!)(u::VectorField{N, P}, û::VectorField{N, S}) where {N, 
 end
 
 
-function (f::IFFTPlan!{<:Grid{Ny, Nz, Nt}})(û::SpectralField{<:Grid{Ny, Nz, Nt}}, padSize::NTuple{2, Int}) where {Ny, Nz, Nt}
-    grid_p = interpolate(get_grid(û), padSize)
-    ûp = SpectralField(grid_p)
-    u = PhysicalField(grid_p)
-    for nt in 1:Nt, nz in 2:((Nz >> 1) + 1)
-        ûp[:, nz, nt] .= û[:, nz, nt]
+# TODO: test this
+function ifft(û::VectorField{N, <:SpectralField{<:Grid{Ny, Nz, Nt}}}, Nz_pad::Int, Nt_pad::Int) where {N, Ny, Nz, Nt}
+    u = VectorField(interpolate(get_grid(û), Nz_pad, Nt_pad), fieldType=PhysicalField)
+    for n in 1:N
+        ifft!(u[n], û[n])
     end
-    for nt in 2:((Nt >> 1) + 1)
-        ûp[:, 1, nt] .= û[:, 1, nt]
-        ûp[:, 1, end - nt + 2] .= û[:, 1, end - nt + 2]
-    end
-    ûp[:, 1, 1] .= û[:, 1, 1]
-    u.data .= brfft(parent(ûp), padSize[1], [2, 3])
     return u
 end
+ifft(û::SpectralField{<:Grid{Ny, Nz, Nt}}, Nz_pad::Int, Nt_pad::Int) where {Ny, Nz, Nt} = ifft!(PhysicalField(interpolate(get_grid(û), (Nz_pad, Nt_pad))), û)
 
-function (f::IFFTPlan!{<:Grid{Ny, Nz, Nt}})(û::VectorField{N, S}, padSize::NTuple{2, Int}) where {N, Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}}
-    grid_p = interpolate(get_grid(û), padSize)
-    ûp = VectorField(grid_p)
-    u = VectorField(grid_p, fieldType=PhysicalField)
-    for i in 1:N
-        for nt in 1:Nt, nz in 2:((Nz >> 1) + 1)
-            ûp[i][:, nz, nt] .= û[i][:, nz, nt]
-        end
-        for nt in 2:((Nt >> 1) + 1)
-            ûp[i][:, 1, nt] .= û[i][:, 1, nt]
-            ûp[i][:, 1, end - nt + 2] .= û[i][:, 1, end - nt + 2]
-        end
-        ûp[i][:, 1, 1] .= û[i][:, 1, 1]
-        u[i] .= brfft(parent(ûp[i]), padSize[1], [2, 3])
+function ifft!(u::PhysicalField{<:Grid{Ny, NzP, NtP}}, û::SpectralField{<:Grid{Ny, Nz, Nt}}) where {Ny, NzP, Nz, NtP, Nt}
+    û_interp = SpectralField(get_grid(u))
+    for nz in 1:((Nz >> 1) + 1)
+        û_interp[:, nz, 1] .= û[:, nz, 1]
     end
+    for nt in 2:((Nt >> 1) + 1), nz in 1:((Nz >> 1) + 1)
+        û_interp[:, nz, nt] .= û[:, nz, nt]
+        û_interp[:, nz, end-nt+2] .= û[:, nz, end-nt+2]
+    end
+    parent(u) .= brfft(parent(û_interp), NzP, [2, 3])
     return u
 end
