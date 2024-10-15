@@ -21,9 +21,10 @@
     # initialise original function field
     Ny = 50; Nz = 51; Nt = 51
     y = chebpts(Ny)
-    Dy = chebdiff(Ny); Dy2 = chebddiff(Ny)
-    # Dy = DiffMatrix(y, 5, 1); Dy2 = DiffMatrix(y, 5, 2)
-    grid = Grid(y, Nz, Nt, Dy, Dy2, rand(Float64, Ny), 1.0, 5.8)
+    Dy = chebdiff(Ny)
+    Dy2 = chebddiff(Ny)
+    ws = chebws(Ny)
+    grid = Grid(y, Nz, Nt, Dy, Dy2, ws, 1.0, 5.8)
     u = PhysicalField(grid, u_fun)
     û = SpectralField(grid)
     FFT = FFTPlan!(u, flags=ESTIMATE)

@@ -93,12 +93,3 @@ function ddt!(u::VectorField{N, S}, dudt::VectorField{N, S}) where {N, S<:Spectr
 
     return dudt
 end
-
-function vorticity!(ω::VectorField{3, S}, u::VectorField{3, S}) where {S<:SpectralField}
-    dudy = ddy!(u, similar(u))
-    dudz = ddz!(u, similar(u))
-    ω[1] .=   dudy[3] .- dudz[2]
-    ω[2] .=   dudz[1]
-    ω[3] .= .-dudy[1]
-    return ω
-end
