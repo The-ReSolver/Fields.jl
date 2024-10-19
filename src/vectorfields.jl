@@ -113,6 +113,26 @@ end
 @inline _unpack(i, args::Tuple{Any}) = (unpack(args[1], i),)
 @inline _unpack(::Any, args::Tuple{}) = ()
 
+
+extend(u::VectorField{N, <:PhysicalField{<:Grid{Ny, Nz, Nt}}}, zpadfactor::Int, tpadfactor::Int) where {N, Ny, Nz, Nt} = extend(u, ceil(Int, zpadfactor*Nz), ceil(Int, tpadfactor*Nt))
+function extend(u::VectorField{N, <:PhysicalField}, Nze::Int, Nte::Int) where {N}
+    u_extended = VectorField(extend(get_grid(u), Nze, Nte), fieldType=PhysicalField)
+    for i in 1:N
+        extend!(u_extended[i], u[i])
+    end
+    return u_extended
+end
+
+extend(u::PhysicalField{<:Grid{Ny, Nz, Nt}}, zpadfactor::Float64, tpadfactor::Float64) where {Ny, Nz, Nt} = extend(u, ceil(Int, zpadfactor*Nz), ceil(Int, tpadfactor*Nt))
+extend(u::PhysicalField, Nze::Int, Nte::Int) = extend!(PhysicalField(extend(get_grid(u), Nze, Nte)), u)
+function extend!(u_extended::PhysicalField{<:Grid{Ny, Nze, Nte}}, u::PhysicalField{<:Grid{Ny, Nz, Nt}}) where {Ny, Nz, Nze, Nt, Nte}
+    for nt in 1:Nte, nz in 1:Nze
+        u_extended[:, nz, nt] .= u[:, ((nz - 1) % Nz) + 1, ((nt - 1) % Nt) + 1]
+    end
+    return u_extended
+end
+
+
 # TODO: test these
 function writeField(path, u::SpectralField{<:Grid{Ny, Nz, Nt}, PROJECTED}) where {Ny, Nz, Nt, PROJECTED}
     data = open(path, "w") do f
