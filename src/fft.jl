@@ -156,7 +156,7 @@ function ifft(û::VectorField{N, <:SpectralField{<:Grid{Ny, Nz, Nt}}}, Nz_pad::
     end
     return u
 end
-ifft(û::SpectralField{<:Grid{Ny, Nz, Nt}}, Nz_pad::Int, Nt_pad::Int) where {Ny, Nz, Nt} = ifft!(PhysicalField(interpolate(get_grid(û), (Nz_pad, Nt_pad))), û)
+ifft(û::SpectralField, Nz_pad::Int, Nt_pad::Int) = ifft!(PhysicalField(interpolate(get_grid(û), Nz_pad, Nt_pad)), û)
 
 function ifft!(u::PhysicalField{<:Grid{Ny, NzP, NtP}}, û::SpectralField{<:Grid{Ny, Nz, Nt}}) where {Ny, NzP, Nz, NtP, Nt}
     û_interp = SpectralField(get_grid(u))

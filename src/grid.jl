@@ -28,3 +28,8 @@ Base.size(::Grid{Ny, Nz, Nt}) where {Ny, Nz, Nt} = (Ny, Nz, Nt)
 Base.:(==)(x1::Grid{Ny1, Nz1, Nt1}, x2::Grid{Ny2, Nz2, Nt2}) where {Ny1, Nz1, Nt1, Ny2, Nz2, Nt2} = (x1.y == x2.y && Nz1 == Nz2 && Nt1 == Nt2)
 
 interpolate(grid::Grid, Nz::Int, Nt::Int) = Grid(grid.y, Nz, Nt, get_Dy(grid), get_Dy2(grid), get_ws(grid), get_ω(grid), get_β(grid))
+function extend(grid::Grid{Ny, Nz, Nt}, Nze::Int, Nte::Int) where {Ny, Nz, Nt}
+    β = get_β(grid)*Nz/Nze
+    ω = get_ω(grid)*Nt/Nte
+    return Grid(grid.y, Nze, Nte, get_Dy(grid), get_Dy2(grid), get_ws(grid), ω, β)
+end

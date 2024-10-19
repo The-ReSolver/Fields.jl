@@ -54,3 +54,13 @@ Base.@propagate_inbounds function Base.setindex!(u::PhysicalField, v, I...)
     @inbounds parent(u)[I...] = v
     return v
 end
+
+
+extend(u::PhysicalField{<:Grid{Ny, Nz, Nt}}, zpadfactor::Float64, tpadfactor::Float64) where {Ny, Nz, Nt} = extend(u, ceil(Int, zpadfactor*Nz), ceil(Int, tpadfactor*Nt))
+extend(u::PhysicalField, Nze::Int, Nte::Int) = extend!(PhysicalField(extend(get_grid(u), Nze, Nte)), u)
+function extend!(u_extended::PhysicalField{<:Grid{Ny, Nze, Nte}}, u::PhysicalField{<:Grid{Ny, Nz, Nt}}) where {Ny, Nz, Nze, Nt, Nte}
+    for nt in 1:Nte, nz in 1:Nze
+        u_extended[:, nz, nt] .= u[:, ((nz - 1) % Nz) + 1, ((nt - 1) % Nt) + 1]
+    end
+    return u_extended
+end
