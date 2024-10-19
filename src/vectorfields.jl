@@ -112,3 +112,41 @@ end
 @inline _unpack(i, args::Tuple) = (unpack(args[1], i), _unpack(i, Base.tail(args))...)
 @inline _unpack(i, args::Tuple{Any}) = (unpack(args[1], i),)
 @inline _unpack(::Any, args::Tuple{}) = ()
+
+# TODO: test these
+function writeField(path, u::SpectralField{<:Grid{Ny, Nz, Nt}, PROJECTED}) where {Ny, Nz, Nt, PROJECTED}
+    data = open(path, "w") do f
+        write(f, Ny)
+        write(f, Nz)
+        write(f, Nt)
+        write(f, points(get_grid(u))[1])
+        write(f, get_Dy(u))
+        write(f, get_Dy2(u))
+        write(f, get_ws(u))
+        write(f, get_β(u))
+        write(f, get_ω(u))
+        write(f, parent(u))
+        write(f, PROJECTED)
+    end
+    return data
+end
+
+function readField(path)
+    u = open(path, "r") do f
+        Ny = read(f, Int)
+        Nz = read(f, Int)
+        Nt = read(f, Int)
+        y = read!(f, Vector{Float64}(undef, Ny))
+        Dy = read!(f, Matrix{Float64}(undef, Ny))
+        Dy2 = read!(f, Matrix{Float64}(undef, Ny))
+        ws = read!(f, Vector{Float64}(undef, Ny))
+        β = read(f, Float64)
+        ω = read(f, Float64)
+        coeffs = read!(f, Array{ComplexF64, 3}(undef, Ny, (Nz >> 1) + 1, Nt))
+        projected = read(f, Bool)
+        grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
+        return SpectralField{projected}(coeffs, grid)
+    end
+    return u
+end
+
