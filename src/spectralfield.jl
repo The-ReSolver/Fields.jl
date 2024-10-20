@@ -167,3 +167,16 @@ Base.@propagate_inbounds function Base.setindex!(U::SpectralField, v, I...)
     @inbounds parent(U)[I...] = v
     return v
 end
+
+
+interpolate(u::SpectralField, Nz::Int, Nt::Int) = interpolate!(SpectralField(interpolate(get_grid(u), Nz, Nt)), u)
+function interpolate!(v::SpectralField{<:Grid{Ny, Nzo, Nto}}, u::SpectralField{<:Grid{Ny, Nzi, Nti}}) where {Ny, Nzi, Nzo, Nti, Nto}
+    for nz in 1:((minimum(Nzi, Nzo) >> 1) + 1)
+        v[:, nz, 1] .= u[:, nz, 1]
+    end
+    for nt in 2:((minimum(Nti, Nto) >> 1) + 1), nz in 1:((minimum(Nzi, Nzo) >> 1) + 1)
+        v[:, nz, nt] .= u[:, nz, nt]
+        v[:, nz, end-nt+2] .= u[:, nz, end-nt+2]
+    end
+    return v
+end

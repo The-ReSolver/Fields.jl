@@ -7,7 +7,7 @@ export FFTPlan!, IFFTPlan!, apply_symmetry!
 export ESTIMATE, EXHAUSTIVE, MEASURE, PATIENT, WISDOM_ONLY, NO_TIMELIMIT
 export Grid, points, spectralfield, physicalfield, vectorfield
 export PhysicalField
-export SpectralField, norm, dot, padField
+export SpectralField, norm, dot, interpolate
 export VectorField
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
 export project, project!, expand!
