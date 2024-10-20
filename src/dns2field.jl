@@ -4,6 +4,8 @@
 # This will allow the outputs of the DNS to be directly loaded into Julia for
 # manipulation with the rest of the code.
 
+# TODO: move this stuff out, only keeping to conversion methods in favour of external package
+
 # -----------------------------------------------------------------------------
 # Custom error for indexing at incorrect times
 # -----------------------------------------------------------------------------
@@ -188,7 +190,6 @@ function dnsToSpectralField(data::DNSData{Ny, Nzd, Ntd}, grid::Grid{Ny, Nzg, Ntg
     end
     return u
 end
-
 dnsToSpectralField(data::DNSData{Ny, Nzd, Ntd}, grid::Grid{Ny, Nzg, Ntg}, modes) where {Ny, Nzd, Ntd, Nzg, Ntg} = project!(SpectralField(grid, modes), dnsToSpectralField(data, grid), modes)
 
 correct_mean!(u::VectorField{3, S}, data::DNSData{Ny, Nz, Nt}) where {Ny, Nz, Nt, S<:SpectralField{<:Grid{Ny, Nz, Nt}}} = (u[1][:, 1, 1] .+= data.y; return u)
