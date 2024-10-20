@@ -59,7 +59,7 @@ function cross!(vu::VectorField{3, S}, v::AbstractVector, u::VectorField{3, S}) 
 end
 
 function cross_k!(ku::VectorField{3, S}, u::VectorField{3, S}, mag::Float64) where {S}
-    @. ku[1] += -mag*u[2]
+    @. ku[1] -= mag*u[2]
     @. ku[2] += mag*u[1]
 end
 
