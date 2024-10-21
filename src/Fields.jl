@@ -10,7 +10,7 @@ export PhysicalField
 export SpectralField, norm, dot, interpolate
 export VectorField
 export get_grid, grideq, get_Dy, get_Dy2, get_ws, get_ω, get_β
-export project, project!, expand!
+export project, project!, expand!, project, expand
 export fieldToVector!, vectorToField!
 export ResGrad
 export generateModes
