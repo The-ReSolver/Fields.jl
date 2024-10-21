@@ -126,7 +126,7 @@ function (fg::ResGrad{GRID, M, FREEMEAN, true})(R, G, x::Vector) where {GRID, M,
     dRda = fg.proj_cache[4]
     a = vectorToField!(fg.proj_cache[3], x)
     if G === nothing
-        R = fg(a)[2]
+        R = fg(a)[1]
     else
         R, dRdω = fg(dRda, a)
         fieldToVector!(G, dRda, dRdω)

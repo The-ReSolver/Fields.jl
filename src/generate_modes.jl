@@ -22,6 +22,7 @@ function generateModes!(modes::Array{ComplexF64, 4}, grid::Grid{Ny, Nz, Nt}, M, 
             modes[:, :, nz, nt] = svd(H((nz - 1)*β, (nt - 1)*ω, base, Re, Ro), ws, M).U
             modes[:, :, nz, end-nt+2] = svd(H((nz - 1)*β, (1 - nt)*ω, base, Re, Ro), ws, M).U
         end
+        flush(stdout)
     end
 
     return modes
