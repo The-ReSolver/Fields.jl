@@ -7,7 +7,7 @@
 ddy!(u::SpectralField{<:Grid{Ny, Nz, Nt}}, dudy::SpectralField{<:Grid{Ny, Nz, Nt}}) where {Ny, Nz, Nt} = LinearAlgebra.mul!(dudy, get_Dy(u), u)
 function ddy!(u::VectorField{N, S}, dudy::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
-        ddy!(u[i], dudy[i])
+        @inbounds ddy!(u[i], dudy[i])
     end
 
     return dudy
@@ -16,7 +16,7 @@ end
 d2dy2!(u::SpectralField{<:Grid{Ny, Nz, Nt}}, d2udy2::SpectralField{<:Grid{Ny, Nz, Nt}}) where {Ny, Nz, Nt} = LinearAlgebra.mul!(d2udy2, get_Dy2(u), u)
 function d2dy2!(u::VectorField{N, S}, d2udy2::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
-        d2dy2!(u[i], d2udy2[i])
+        @inbounds d2dy2!(u[i], d2udy2[i])
     end
 
     return d2udy2
@@ -27,17 +27,15 @@ function ddz!(u::SpectralField{<:Grid{Ny, Nz, Nt}}, dudz::SpectralField{<:Grid{N
     β = get_β(u)
 
     # loop over spanwise modes multiplying by modifier
-    @inbounds begin
-        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
-            dudz[ny, nz, nt] = (1im*(nz - 1)*β)*u[ny, nz, nt]
-        end
+    for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+        @inbounds dudz[ny, nz, nt] = (1im*(nz - 1)*β)*u[ny, nz, nt]
     end
 
     return dudz
 end
 function ddz!(u::VectorField{N, S}, dudz::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
-        ddz!(u[i], dudz[i])
+        @inbounds ddz!(u[i], dudz[i])
     end
 
     return dudz
@@ -48,17 +46,15 @@ function d2dz2!(u::SpectralField{<:Grid{Ny, Nz, Nt}}, d2udz2::SpectralField{<:Gr
     β = get_β(u)
 
     # loop over spanwise modes multiplying by modifier
-    @inbounds begin
-        for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
-            d2udz2[ny, nz, nt] = (-(((nz - 1)*β)^2))*u[ny, nz, nt]
-        end
+    for nt in 1:Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+        @inbounds d2udz2[ny, nz, nt] = (-(((nz - 1)*β)^2))*u[ny, nz, nt]
     end
 
     return d2udz2
 end
 function d2dz2!(u::VectorField{N, S}, d2udz2::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
-        d2dz2!(u[i], d2udz2[i])
+        @inbounds d2dz2!(u[i], d2udz2[i])
     end
 
     return d2udz2
@@ -69,18 +65,14 @@ function ddt!(u::SpectralField{<:Grid{Ny, Nz, Nt}}, dudt::SpectralField{<:Grid{N
     ω = get_ω(u)
 
     # loop over positive temporal modes multiplying by modifier
-    @inbounds begin
-        for nt in 1:((Nt >> 1) + 1), nz in 1:((Nz >> 1) + 1), ny in 1:Ny
-            dudt[ny, nz, nt] = (1im*(nt - 1)*ω)*u[ny, nz, nt]
-        end
+    for nt in 1:((Nt >> 1) + 1), nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+        @inbounds dudt[ny, nz, nt] = (1im*(nt - 1)*ω)*u[ny, nz, nt]
     end
 
     # loop over negative temporal modes multiplying by modifier
     if Nt > 1
-        @inbounds begin
-            for nt in ((Nt >> 1) + 2):Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
-                dudt[ny, nz, nt] = (1im*(nt - 1 - Nt)*ω)*u[ny, nz, nt]
-            end
+        for nt in ((Nt >> 1) + 2):Nt, nz in 1:((Nz >> 1) + 1), ny in 1:Ny
+            @inbounds dudt[ny, nz, nt] = (1im*(nt - 1 - Nt)*ω)*u[ny, nz, nt]
         end
     end
 
@@ -88,7 +80,7 @@ function ddt!(u::SpectralField{<:Grid{Ny, Nz, Nt}}, dudt::SpectralField{<:Grid{N
 end
 function ddt!(u::VectorField{N, S}, dudt::VectorField{N, S}) where {N, S<:SpectralField}
     for i in 1:N
-        ddt!(u[i], dudt[i])
+        @inbounds ddt!(u[i], dudt[i])
     end
 
     return dudt
