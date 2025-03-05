@@ -16,8 +16,12 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS, NORM, 
     norm::NORM
     Re_recip::Float64
     Ro::Float64
+    T_offset::Int
+    compute_T::Bool
+    T_relaxation::Float64
 
-    function ResGrad(grid::Grid{Ny, Nz, Nt}, modes, base_prof::Vector{Float64}, Re::Real, Ro::Real; free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false, grad_factors::Bool=false) where {Ny, Nz, Nt}
+    function ResGrad(grid::Grid{Ny, Nz, Nt}, modes, base_prof::Vector{Float64}, Re::Real, Ro::Real;
+                    free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false, grad_factors::Bool=false, T_offset=0, T_relaxation=1) where {Ny, Nz, Nt}
         pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
         pad_factor = Float64(pad_factor)
 
@@ -33,7 +37,7 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS, NORM, 
         FFT! = FFTPlan!(grid, dealias, pad_factor=pad_factor)
         IFFT! = IFFTPlan!(grid, dealias, pad_factor=pad_factor)
 
-        new{typeof(grid), size(modes, 2), free_mean, include_period, multithreaded, grad_factors, typeof(norm), dealias, pad_factor, typeof(modes)}(modes, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro))
+        new{typeof(grid), size(modes, 2), free_mean, include_period, multithreaded, grad_factors, typeof(norm), dealias, pad_factor, typeof(modes)}(modes, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro), T_offset, T_offset > 0 ? false : true, T_relaxation)
     end
 end
 
@@ -67,7 +71,7 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     expand!(r, mul!(s̃, f.norm, project!(s, ns, f.modes)), f.modes)
 
     if INCLUDEPERIOD
-        return gr(s, f.norm), frequencyGradient(dudt, r)
+        return gr(s, f.norm), f.compute_T ? f.T_relaxation*frequencyGradient(dudt, r) : 0.0
     else
         return gr(s, f.norm)
     end
