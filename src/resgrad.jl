@@ -17,7 +17,7 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS, NORM, 
     Re_recip::Float64
     Ro::Float64
     T_offset::Int
-    compute_T::Bool
+    compute_T::Vector{Bool}
     T_relaxation::Float64
 
     function ResGrad(grid::Grid{Ny, Nz, Nt}, modes, base_prof::Vector{Float64}, Re::Real, Ro::Real;
@@ -29,7 +29,7 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS, NORM, 
         multithreaded = Base.Threads.nthreads() > 1
 
         # create field cache
-        proj_cache = [SpectralField(grid, modes)                           for _ in 1:4]
+        proj_cache = [SpectralField(grid, modes)                        for _ in 1:4]
         spec_cache = [VectorField(grid, fieldType=SpectralField)        for _ in 1:21]
         phys_cache = [VectorField(grid, dealias, pad_factor=pad_factor) for _ in 1:13]
 
@@ -37,7 +37,7 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS, NORM, 
         FFT! = FFTPlan!(grid, dealias, pad_factor=pad_factor)
         IFFT! = IFFTPlan!(grid, dealias, pad_factor=pad_factor)
 
-        new{typeof(grid), size(modes, 2), free_mean, include_period, multithreaded, grad_factors, typeof(norm), dealias, pad_factor, typeof(modes)}(modes, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro), T_offset, T_offset > 0 ? false : true, T_relaxation)
+        new{typeof(grid), size(modes, 2), free_mean, include_period, multithreaded, grad_factors, typeof(norm), dealias, pad_factor, typeof(modes)}(modes, proj_cache, spec_cache, phys_cache, FFT!, IFFT!, base_prof, norm, 1/Float64(Re), Float64(Ro), T_offset, T_offset > 0 ? [false] : [true], T_relaxation)
     end
 end
 
@@ -71,7 +71,7 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     expand!(r, mul!(s̃, f.norm, project!(s, ns, f.modes)), f.modes)
 
     if INCLUDEPERIOD
-        return gr(s, f.norm), f.compute_T ? f.T_relaxation*frequencyGradient(dudt, r) : 0.0
+        return gr(s, f.norm), f.compute_T[1] ? f.T_relaxation*frequencyGradient(dudt, r) : 0.0
     else
         return gr(s, f.norm)
     end
