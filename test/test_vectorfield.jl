@@ -139,15 +139,15 @@ function test_vectorfield()
         Dy = chebdiff(Ny)
         Dy2 = chebddiff(Ny)
         ws = chebws(Ny)
-        ω = 1.0
-        β = 1.0
+        ω = abs(rand())
+        β = abs(rand())
         grid = Grid(y, Nz, Nt, Dy, Dy2, ws, ω, β)
         A = Fields.FarazmandScaling(ω, β)
 
         # definition of fields as functions
-        u_func(y, z, t) = (1 - y^2)*exp(cos(z))*atan(sin(t))
-        v_func(y, z, t) = (cos(π*y) + 1)*exp(sin(z))*cos(sin(t))
-        w_func(y, z, t) = sin(atan(y))*(cos(z)/(sin(z)^2 + 1))*exp(cos(t))
+        u_func(y, z, t) = (1 - y^2)*exp(cos(β*z))*atan(sin(ω*t))
+        v_func(y, z, t) = (cos(π*y) + 1)*exp(sin(β*z))*cos(sin(ω*t))
+        w_func(y, z, t) = sin(atan(y))*(cos(β*z)/(sin(β*z)^2 + 1))*exp(cos(ω*t))
 
         # initialise fields
         vec_p = VectorField(PhysicalField(grid, u_func),
@@ -158,7 +158,7 @@ function test_vectorfield()
         FFT!(vec_s, vec_p)
 
         # test norm
-        @test norm(vec_s)^2 ≈ 33.04894874 + 165.2156694 + 13.65625483 rtol=1e-5
+        @test norm(vec_s)^2 ≈ 0.41857 + 2.09248 + 0.172958 rtol=1e-5
 
         # test weights norm
         @test norm(vec_s, A) ≈ sqrt(dot(vec_s, mul!(similar(vec_s), A, vec_s)))

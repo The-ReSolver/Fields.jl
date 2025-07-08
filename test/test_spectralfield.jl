@@ -134,8 +134,8 @@ function test_spectralfield()
                 FFT!(spec2, phys2)
 
                 # test norm
-                @test dot(spec1, spec2)*β*ω ≈ 13.4066 rtol=1e-6
-                @test norm(spec1)^2*β*ω ≈ 58.74334913 rtol=1e-5
+                @test dot(spec1, spec2) ≈ 0.169796 rtol=1e-5
+                @test norm(spec1)^2 ≈ 0.74399 rtol=1e-5
 
                 # test weighted norm
                 @test norm(spec1, A) ≈ sqrt(dot(spec1, mul!(similar(spec1), A, spec1)))

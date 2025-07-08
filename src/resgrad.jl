@@ -97,7 +97,11 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     _update_res_cache!(f, MULTITHREADED)
 
     # compute the RHS of the evolution equation
-    gradient!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, f.Re_recip, f.Ro, GRADFACTORS)
+    @. dudτ = -drdt - vdrdy - wdrdz + rx∇u + ry∇v + rz∇w - f.Re_recip*(d2rdy2 + d2rdz2)
+    cross_k!(dudτ, r, -f.Ro)
+    dudτ[1][1:end, 1, 1] .*= 0.5
+    dudτ[2][1:end, 1, 1] .*= 0.5
+    dudτ[3][1:end, 1, 1] .*= 0.5
 
     # project to get velocity coefficient evolution
     project!(dR, dudτ, f.modes)
@@ -110,9 +114,8 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     return output
 end
 
-gr(s, norm_scale) = ((get_β(s)*get_ω(s))/(16π^2))*(norm(s, norm_scale)^2)
-frequencyGradient(dudt, r) = get_β(r)*dot(dudt, r)/(8π^2)
-gradient!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro, grad_factors) = grad_factors ? _gradientWithFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro) : _gradientWithoutFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
+gr(s, norm_scale) = norm(s, norm_scale)^2/2
+frequencyGradient(dudt, r) = dot(dudt, r)/get_ω(r)
 
 
 # -----------------------------------------------------------------------------
@@ -150,29 +153,6 @@ function (fg::ResGrad{G, M, FREEMEAN, true})(grad::V, x::V) where {G, M, FREEMEA
     R, dRdω = fg(dRda, vectorToField!(fg.proj_cache[3], x))
     fieldToVector!(grad, dRda, dRdω)
     return R
-end
-
-
-# -----------------------------------------------------------------------------
-# Helper functions
-# -----------------------------------------------------------------------------
-function _gradientWithFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
-    @. dudτ = -vdrdy - wdrdz + rx∇u + ry∇v + rz∇w
-    @view(dudτ[1][:, 1, 2:end]) .*= 0.5
-    @view(dudτ[2][:, 1, 2:end]) .*= 0.5
-    @view(dudτ[3][:, 1, 2:end]) .*= 0.5
-    @. dudτ += -drdt - Re_recip*(d2rdy2 + d2rdz2)
-    cross_k!(dudτ, r, -Ro)
-    @view(dudτ[1][:, 1, 1]) .*= 0.5
-    @view(dudτ[2][:, 1, 1]) .*= 0.5
-    @view(dudτ[3][:, 1, 1]) .*= 0.5
-    return dudτ
-end
-
-function _gradientWithoutFactors!(dudτ, r, drdt, vdrdy, wdrdz, rx∇u, ry∇v, rz∇w, d2rdy2, d2rdz2, Re_recip, Ro)
-    @. dudτ = -drdt - vdrdy - wdrdz + rx∇u + ry∇v + rz∇w - Re_recip*(d2rdy2 + d2rdz2)
-    cross_k!(dudτ, r, -Ro)
-    return dudτ
 end
 
 _update_vel_cache!(cache::ResGrad, multithreaded::Bool) = multithreaded ? _update_vel_cache_mt!(cache) : _update_vel_cache_st!(cache)
