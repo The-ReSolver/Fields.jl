@@ -108,7 +108,8 @@ function LinearAlgebra.dot(p::SpectralField{<:Grid{Ny, Nz, Nt}, true}, q::Spectr
 end
 
 LinearAlgebra.norm(p::SpectralField) = sqrt(LinearAlgebra.dot(p, p))
-LinearAlgebra.norm(p::SpectralField, A) = sqrt(LinearAlgebra.dot(p, p, A))
+LinearAlgebra.norm(p::SpectralField, A::NormScaling) = sqrt(LinearAlgebra.dot(p, p, A))
+LinearAlgebra.norm(u::SpectralField, p::Real) = norm(parent(u), p) # method to allow backtracking from LineSearches.jl to work
 Base.maximum(::Function, gradient::SpectralField) = norm(gradient) # this method exists just so Optim.jl uses the correct norm in the trace
 
 function LinearAlgebra.mul!(v::SpectralField{<:Grid{Ny, Nz, Nt}, false}, A::NormScaling, u::SpectralField{<:Grid{Ny, Nz, Nt}, false}) where {Ny, Nz, Nt}
