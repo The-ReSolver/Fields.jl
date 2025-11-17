@@ -2,6 +2,9 @@
 # the variational dynamics given a set of modes to perform a Galerkin
 # projection.
 
+# TODO: check if dot produce of frequency gradient needs to be normalised?
+# TODO: double check if the normalisation is being applied properly
+
 # -----------------------------------------------------------------------------
 # Core residual functions
 # -----------------------------------------------------------------------------
@@ -21,7 +24,7 @@ struct ResGrad{G, M, FREEMEAN, INCLUDEPERIOD, MULTITHREADED, GRADFACTORS, NORM, 
     T_relaxation::Float64
 
     function ResGrad(grid::Grid{Ny, Nz, Nt}, modes, base_prof::Vector{Float64}, Re::Real, Ro::Real;
-                    free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=FarazmandScaling(get_ω(grid), get_β(grid)), include_period::Bool=false, grad_factors::Bool=false, T_offset=0, T_relaxation=1) where {Ny, Nz, Nt}
+                    free_mean::Bool=false, dealias::Bool=true, pad_factor::Real=3/2, norm::Union{NormScaling, Nothing}=UniformScaling(), include_period::Bool=false, grad_factors::Bool=false, T_offset=0, T_relaxation=1) where {Ny, Nz, Nt}
         pad_factor > 1 || throw(ArgumentError("Padding factor for dealiasing must be larger than 1!"))
         pad_factor = Float64(pad_factor)
 
@@ -99,9 +102,15 @@ function (f::ResGrad{<:Grid{Ny, Nz, Nt}, M, FREEMEAN, INCLUDEPERIOD, MULTITHREAD
     # compute the RHS of the evolution equation
     @. dudτ = -drdt - vdrdy - wdrdz + rx∇u + ry∇v + rz∇w - f.Re_recip*(d2rdy2 + d2rdz2)
     cross_k!(dudτ, r, -f.Ro)
-    dudτ[1][1:end, 1, 1] .*= 0.5
-    dudτ[2][1:end, 1, 1] .*= 0.5
-    dudτ[3][1:end, 1, 1] .*= 0.5
+    # dudτ[1][1:end, 1, 1] .*= 0.5
+    # dudτ[2][1:end, 1, 1] .*= 0.5
+    # dudτ[3][1:end, 1, 1] .*= 0.5
+    dudτ[1][1:end, 2:end, 1:end] .*= 2
+    dudτ[2][1:end, 2:end, 1:end] .*= 2
+    dudτ[3][1:end, 2:end, 1:end] .*= 2
+    dudτ[1][1:end, 1,     2:end] .*= 2
+    dudτ[2][1:end, 1,     2:end] .*= 2
+    dudτ[3][1:end, 1,     2:end] .*= 2
 
     # project to get velocity coefficient evolution
     project!(dR, dudτ, f.modes)
